@@ -403,7 +403,7 @@ public class Message extends Thread {
         if (seq == 2444653 || seq == 2445164 || seq == 2445941 || seq == 2445998 || seq == 2448004 || seq == 2449379 || seq == 2453488 || seq == 2455808 || seq == 2456350) {
             log.warn("debug seq:{},{}", seq, message);
         } else {
-            log.info("normal debug seq:{},{}", seq, message);
+            log.warn("normal debug seq:{},{}", seq, message);
         }
 
 
