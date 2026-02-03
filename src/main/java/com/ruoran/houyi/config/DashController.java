@@ -11,6 +11,7 @@ import com.ruoran.houyi.repo.OriginalMsgRepo;
 import com.ruoran.houyi.service.CorpInfoApi;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -63,7 +64,11 @@ public class DashController {
             try {
                 corplistRepo.save(corpInfo);
             }catch (Exception e2){
-                log.error("can't save corpId:{},secret:{},privKey:{}",corpId,data.getMessageSecret(),data.getMessageKey(),e2);
+                log.error("can't save corpId:{},secret:{},privKey:{}",
+                    corpId,
+                    maskSensitiveInfo(data.getMessageSecret()),
+                    maskSensitiveInfo(data.getMessageKey()),
+                    e2);
             }
         }
     }
@@ -119,5 +124,18 @@ public class DashController {
         }else{
             throw new Exception("unkown corpId:"+corpId);
         }
+    }
+    
+    /**
+     * 掩码敏感信息，只显示前4个字符，其余用***替代
+     */
+    private static String maskSensitiveInfo(String value) {
+        if (!StringUtils.hasText(value)) {
+            return "(空)";
+        }
+        if (value.length() <= 4) {
+            return "***";
+        }
+        return value.substring(0, 4) + "***";
     }
 }

@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
 
 /**
  * @author renlu
@@ -24,7 +25,23 @@ public class OssClientConfig {
         ClientBuilderConfiguration configuration = new ClientBuilderConfiguration();
         configuration.setConnectionTimeout(3000);
         configuration.setMaxErrorRetry(3);
-        log.warn("before ossClient:endpoint:{},key:{},secret:{}",ossEndPoint,ossAccessKey,ossAccessSecret);
+        log.warn("before ossClient:endpoint:{},key:{},secret:{}", 
+            ossEndPoint, 
+            maskSensitiveInfo(ossAccessKey), 
+            maskSensitiveInfo(ossAccessSecret));
         return new OSSClientBuilder().build(ossEndPoint, ossAccessKey, ossAccessSecret,configuration);
+    }
+    
+    /**
+     * 掩码敏感信息，只显示前4个字符，其余用***替代
+     */
+    private String maskSensitiveInfo(String value) {
+        if (!StringUtils.hasText(value)) {
+            return "(空)";
+        }
+        if (value.length() <= 4) {
+            return "***";
+        }
+        return value.substring(0, 4) + "***";
     }
 }

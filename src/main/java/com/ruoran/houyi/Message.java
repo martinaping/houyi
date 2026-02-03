@@ -117,7 +117,7 @@ public class Message extends Thread {
         this.prikey = privateKey;
         int state = Finance.Init(sdk, corpId, secret);
         if (state != 0) {
-            log.error("初始化（Finance.init）失败,corpId:{},secret:{}", corpId, secret);
+            log.error("初始化（Finance.init）失败,corpId:{},secret:{}", corpId, maskSensitiveInfo(secret));
         }
 
         this.setName("msg-thread-" + this.corpid);
@@ -529,5 +529,18 @@ public class Message extends Thread {
                 log.error("线程休眠被中断", e);
             }
         } while (true);
+    }
+    
+    /**
+     * 掩码敏感信息，只显示前4个字符，其余用***替代
+     */
+    private static String maskSensitiveInfo(String value) {
+        if (value == null || value.isEmpty()) {
+            return "(空)";
+        }
+        if (value.length() <= 4) {
+            return "***";
+        }
+        return value.substring(0, 4) + "***";
     }
 }

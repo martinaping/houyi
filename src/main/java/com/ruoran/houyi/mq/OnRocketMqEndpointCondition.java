@@ -12,6 +12,11 @@ public class OnRocketMqEndpointCondition implements org.springframework.context.
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
         String endpoint = context.getEnvironment().getProperty("rocketmq.endpoint");
-        return StringUtils.hasText(endpoint);
+        if (StringUtils.hasText(endpoint)) {
+            return true;
+        }
+        // 兼容属性尚未解析时：直接读环境变量（与 application-prod 中 ${ROCKETMQ_ENDPOINT:} 一致）
+        String envEndpoint = context.getEnvironment().getProperty("ROCKETMQ_ENDPOINT");
+        return StringUtils.hasText(envEndpoint);
     }
 }
