@@ -2,18 +2,21 @@ package com.ruoran.houyi.mq;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
 
 /**
  * RocketMQ 生产者适配器
  * 让 RocketMQ 生产者实现 MessageProducerInterface 接口
- * 
+ * 仅当 RocketMQ 已配置（存在 HouyiTcpConstructionMessageProduct）时注册，避免仅使用 Redis MQ 时启动失败。
+ *
  * @author lh
  */
 @Slf4j
 @Component
+@ConditionalOnBean(HouyiTcpConstructionMessageProduct.class)
 public class RocketMqProducerAdapter implements MessageProducerInterface {
-    
+
     @Resource
     private HouyiTcpConstructionMessageProduct rocketMqProducer;
     
