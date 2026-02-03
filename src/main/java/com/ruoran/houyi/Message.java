@@ -403,6 +403,12 @@ public class Message extends Thread {
         if (seq == 2444653 || seq == 2445164 || seq == 2445941 || seq == 2445998 || seq == 2448004 || seq == 2449379 || seq == 2453488 || seq == 2455808 || seq == 2456350) {
             log.warn("debug seq:{},{}", seq, message);
         }
+
+        if (seq == 2449380 || seq == 2453489 ) {
+            log.warn("normal debug seq:{},{}", seq, message);
+        }
+
+
         /*
          * switch 不是一条真正的消息，结构不一样，可以忽略;
          */
