@@ -9,7 +9,6 @@ import org.apache.rocketmq.client.apis.message.Message;
 import org.apache.rocketmq.client.apis.producer.Producer;
 import org.apache.rocketmq.client.apis.producer.SendReceipt;
 import org.json.JSONObject;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 
@@ -23,7 +22,6 @@ import java.nio.charset.StandardCharsets;
  */
 @Slf4j
 @Component
-@ConditionalOnBean(Producer.class)
 public class HouyiTcpConstructionMessageProduct implements MessageProducerInterface {
     
     @Resource

@@ -1,6 +1,8 @@
 package com.ruoran.houyi.mq;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.apis.ClientServiceProvider;
 import org.apache.rocketmq.client.apis.producer.Producer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -72,6 +74,36 @@ public class RocketMqProducerAdapter implements MessageProducerInterface {
                     log.error("  HouyiTcpConstructionMessageProduct Bean 状态: ✅ 存在");
                 } catch (Exception e) {
                     log.error("  HouyiTcpConstructionMessageProduct Bean 状态: ❌ 不存在 (原因: {})", e.getMessage());
+                    
+                    // 检查 HouyiTcpConstructionMessageProduct 的所有依赖
+                    log.error("  依赖检查:");
+                    try {
+                        applicationContext.getBean(Producer.class);
+                        log.error("    Producer: ✅ 存在");
+                    } catch (Exception ex) {
+                        log.error("    Producer: ❌ 不存在 ({})", ex.getMessage());
+                    }
+                    
+                    try {
+                        applicationContext.getBean(ClientServiceProvider.class);
+                        log.error("    ClientServiceProvider: ✅ 存在");
+                    } catch (Exception ex) {
+                        log.error("    ClientServiceProvider: ❌ 不存在 ({})", ex.getMessage());
+                    }
+                    
+                    try {
+                        applicationContext.getBean(MqConfig.class);
+                        log.error("    MqConfig: ✅ 存在");
+                    } catch (Exception ex) {
+                        log.error("    MqConfig: ❌ 不存在 ({})", ex.getMessage());
+                    }
+                    
+                    try {
+                        applicationContext.getBean(MeterRegistry.class);
+                        log.error("    MeterRegistry: ✅ 存在");
+                    } catch (Exception ex) {
+                        log.error("    MeterRegistry: ❌ 不存在 ({})", ex.getMessage());
+                    }
                 }
             }
             
