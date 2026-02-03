@@ -3,7 +3,6 @@ package com.ruoran.houyi.mq;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.apis.producer.Producer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -12,13 +11,12 @@ import org.springframework.util.StringUtils;
 /**
  * RocketMQ 生产者适配器
  * 让 RocketMQ 生产者实现 MessageProducerInterface 接口
- * 仅当 redis.mq.enabled=false 时注册；若 HouyiTcpConstructionMessageProduct 未就绪则注入为 null，使用时再报错，避免启动失败。
+ * 若 HouyiTcpConstructionMessageProduct 未就绪则注入为 null，使用时再报错，避免启动失败。
  *
  * @author lh
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "redis.mq.enabled", havingValue = "false", matchIfMissing = true)
 public class RocketMqProducerAdapter implements MessageProducerInterface {
 
     @Autowired(required = false)
@@ -37,10 +35,8 @@ public class RocketMqProducerAdapter implements MessageProducerInterface {
             
             // 1. 检查配置
             String endpoint = environment.getProperty("rocketmq.endpoint");
-            String redisMqEnabled = environment.getProperty("redis.mq.enabled");
             log.error("配置检查:");
             log.error("  rocketmq.endpoint = {}", StringUtils.hasText(endpoint) ? maskEndpoint(endpoint) : "(未设置)");
-            log.error("  redis.mq.enabled = {}", redisMqEnabled);
             
             // 2. 检查 Producer Bean 是否存在
             boolean producerBeanExists = false;

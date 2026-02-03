@@ -10,7 +10,6 @@ import org.apache.rocketmq.client.apis.consumer.FilterExpression;
 import org.apache.rocketmq.client.apis.consumer.FilterExpressionType;
 import org.apache.rocketmq.client.apis.consumer.SimpleConsumer;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -25,7 +24,6 @@ import java.util.Collections;
  */
 @Slf4j
 @Configuration
-@ConditionalOnProperty(name = "redis.mq.enabled", havingValue = "false", matchIfMissing = true)
 public class RocketMqConsumerConfig {
     
     @Resource

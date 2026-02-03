@@ -9,19 +9,17 @@ import org.apache.rocketmq.client.apis.ClientServiceProvider;
 import org.apache.rocketmq.client.apis.SessionCredentialsProvider;
 import org.apache.rocketmq.client.apis.StaticSessionCredentialsProvider;
 import org.apache.rocketmq.client.apis.producer.Producer;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
  * RocketMQ 5.0 gRPC SDK 生产者配置
- * 仅当 redis.mq.enabled=false 且 rocketmq.endpoint 已配置且非空时加载，避免 endpoint 为空时启动失败。
+ * 仅当 rocketmq.endpoint 已配置且非空时加载，避免 endpoint 为空时启动失败。
  *
  * @author houyi
  */
 @Slf4j
 @Configuration
-@ConditionalOnProperty(name = "redis.mq.enabled", havingValue = "false", matchIfMissing = true)
 @ConditionalOnRocketMqEndpoint
 public class RocketMqProducerConfig {
     

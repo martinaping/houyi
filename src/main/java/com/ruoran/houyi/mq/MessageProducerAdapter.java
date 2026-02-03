@@ -1,25 +1,18 @@
 package com.ruoran.houyi.mq;
 
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
  * 消息生产者适配器
- * 根据配置自动选择使用 RocketMQ 或 Redis
+ * 使用 RocketMQ 作为消息队列
  * 
  * @author lh
  */
 @Slf4j
 @Component
 public class MessageProducerAdapter {
-    
-    @Resource
-    private RedisMqConfig redisMqConfig;
-    
-    @Autowired(required = false)
-    private RedisMqProducer redisMqProducer;
     
     @Autowired(required = false)
     private RocketMqProducerAdapter rocketMqProducer;
@@ -28,11 +21,7 @@ public class MessageProducerAdapter {
      * 获取当前使用的消息生产者
      */
     private MessageProducerInterface getProducer() {
-        if (redisMqConfig.isEnabled()) {
-            return redisMqProducer;
-        } else {
-            return rocketMqProducer;
-        }
+        return rocketMqProducer;
     }
     
     /**
