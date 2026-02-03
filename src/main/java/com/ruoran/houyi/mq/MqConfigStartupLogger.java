@@ -23,6 +23,7 @@ public class MqConfigStartupLogger implements ApplicationRunner, Ordered {
 
     @Override
     public void run(ApplicationArguments args) {
+        // 从 Environment 读取配置
         String endpoint = environment.getProperty("rocketmq.endpoint");
         String envEndpoint = environment.getProperty("ROCKETMQ_ENDPOINT"); // 直接读环境变量
         String username = environment.getProperty("rocketmq.username");
@@ -34,9 +35,26 @@ public class MqConfigStartupLogger implements ApplicationRunner, Ordered {
         String tag = environment.getProperty("rocketmq.tag");
         String retryDelayMs = environment.getProperty("rocketmq.retry-delay-ms");
         String redisMqEnabled = environment.getProperty("redis.mq.enabled");
+        
+        // 尝试从 System.getenv() 直接读取（兼容不同 JDK 版本）
+        String systemEnvEndpoint = null;
+        try {
+            systemEnvEndpoint = System.getenv("ROCKETMQ_ENDPOINT");
+        } catch (Exception e) {
+            log.debug("无法从 System.getenv() 读取 ROCKETMQ_ENDPOINT", e);
+        }
+        
+        // 尝试从 System Properties 读取
+        String systemPropEndpoint = System.getProperty("ROCKETMQ_ENDPOINT");
 
         log.error("========== RocketMQ / Redis MQ 配置（启动时） ==========");
-        log.error("环境变量 ROCKETMQ_ENDPOINT = {}", StringUtils.hasText(envEndpoint) ? envEndpoint : "(未设置)");
+        log.error("JDK 版本: {}", System.getProperty("java.version"));
+        log.error("Spring Boot 版本: {}", org.springframework.boot.SpringBootVersion.getVersion());
+        log.error("--- 环境变量读取方式对比 ---");
+        log.error("Environment.getProperty('ROCKETMQ_ENDPOINT') = {}", StringUtils.hasText(envEndpoint) ? maskEndpoint(envEndpoint) : "(未设置)");
+        log.error("System.getenv('ROCKETMQ_ENDPOINT')          = {}", StringUtils.hasText(systemEnvEndpoint) ? maskEndpoint(systemEnvEndpoint) : "(未设置)");
+        log.error("System.getProperty('ROCKETMQ_ENDPOINT')     = {}", StringUtils.hasText(systemPropEndpoint) ? maskEndpoint(systemPropEndpoint) : "(未设置)");
+        log.error("--- RocketMQ 配置项 ---");
         log.error("配置项 rocketmq.endpoint   = {}", maskEndpoint(endpoint));
         log.error("rocketmq.username         = {}", maskUsername(username));
         log.error("rocketmq.password         = {}", StringUtils.hasText(password) ? "***" : "(空)");
@@ -46,6 +64,7 @@ public class MqConfigStartupLogger implements ApplicationRunner, Ordered {
         log.error("rocketmq.retry-group-id   = {}", retryGroupId);
         log.error("rocketmq.tag              = {}", tag);
         log.error("rocketmq.retry-delay-ms   = {}", retryDelayMs);
+        log.error("--- Redis MQ 配置 ---");
         log.error("redis.mq.enabled          = {} (false=使用RocketMQ, true=使用Redis MQ)", redisMqEnabled);
         log.error("========================================================");
     }
