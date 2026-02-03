@@ -102,9 +102,11 @@
             <scope>test</scope>
         </dependency>
         
+        <!-- MySQL 驱动：显式版本避免与运行时 classpath 中旧版冲突导致 NoClassDefFoundError: ExportControlled -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
+            <version>8.4.0</version>
             <scope>runtime</scope>
         </dependency>
         
