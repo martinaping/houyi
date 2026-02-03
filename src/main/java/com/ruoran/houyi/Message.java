@@ -389,6 +389,11 @@ public class Message extends Thread {
         JSONObject obj = new JSONObject(message);
         String msgid = obj.getString("msgid");
         String action = obj.getString("action");
+
+        // 208606, 209707
+        if (seq == 208606 || seq == 209707) {
+            log.warn("debug seq:{},{}", seq, message);
+        }
         /*
          * switch 不是一条真正的消息，结构不一样，可以忽略;
          */
