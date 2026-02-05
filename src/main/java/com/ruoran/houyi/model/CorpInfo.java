@@ -14,7 +14,7 @@ import jakarta.persistence.*;
 @Table(name="corplist")
 public class CorpInfo {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     long id;
     String corpid;
     String secret;

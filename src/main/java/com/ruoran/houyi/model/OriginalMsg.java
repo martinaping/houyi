@@ -14,7 +14,7 @@ import jakarta.persistence.*;
 })
 public class OriginalMsg {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     long id;
 
     @Column(name="corp_id",columnDefinition = "varchar(32)")

@@ -21,7 +21,7 @@ indexes = {
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
 public class Md5Index {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     long id;
     @Column(name="md5",columnDefinition = "varchar(32)")
     String md5;
