@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.apis.consumer.SimpleConsumer;
 import org.apache.rocketmq.client.apis.message.MessageView;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Component
 public class HouyiTcpRetryConsumer {
 
-    @Resource
+    @Autowired(required = false)
     private SimpleConsumer retrySimpleConsumer;
     
     @Resource

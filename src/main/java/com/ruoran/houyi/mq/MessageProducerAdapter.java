@@ -1,5 +1,6 @@
 package com.ruoran.houyi.mq;
 
+import com.ruoran.houyi.service.RuntimeMetricRecorder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,9 @@ public class MessageProducerAdapter {
     
     @Autowired(required = false)
     private RocketMqProducerAdapter rocketMqProducer;
+
+    @Autowired(required = false)
+    private RuntimeMetricRecorder runtimeMetricRecorder;
     
     /**
      * 获取当前使用的消息生产者
@@ -34,9 +38,18 @@ public class MessageProducerAdapter {
         MessageProducerInterface producer = getProducer();
         if (producer == null) {
             log.error("消息生产者未初始化，无法发送消息");
+            recordPushFailure("消息生产者未初始化");
             throw new IllegalStateException("消息生产者未初始化");
         }
-        producer.send(message, messageKey);
+        try {
+            producer.send(message, messageKey);
+            if (runtimeMetricRecorder != null) {
+                runtimeMetricRecorder.recordPushSuccess();
+            }
+        } catch (RuntimeException ex) {
+            recordPushFailure(ex.getMessage());
+            throw ex;
+        }
     }
     
     /**
@@ -50,9 +63,16 @@ public class MessageProducerAdapter {
         MessageProducerInterface producer = getProducer();
         if (producer == null) {
             log.error("消息生产者未初始化，无法发送延迟消息");
+            recordPushFailure("消息生产者未初始化");
             throw new IllegalStateException("消息生产者未初始化");
         }
-        producer.sendDelayMessage(message, messageKey, delayTimeMs);
+        try {
+            producer.sendDelayMessage(message, messageKey, delayTimeMs);
+            recordPushRetry();
+        } catch (RuntimeException ex) {
+            recordPushFailure(ex.getMessage());
+            throw ex;
+        }
     }
     
     /**
@@ -65,9 +85,28 @@ public class MessageProducerAdapter {
         MessageProducerInterface producer = getProducer();
         if (producer == null) {
             log.error("消息生产者未初始化，无法发送延迟消息");
+            recordPushFailure("消息生产者未初始化");
             throw new IllegalStateException("消息生产者未初始化");
         }
-        producer.sendDelayMessage(message, messageKey);
+        try {
+            producer.sendDelayMessage(message, messageKey);
+            recordPushRetry();
+        } catch (RuntimeException ex) {
+            recordPushFailure(ex.getMessage());
+            throw ex;
+        }
+    }
+
+    private void recordPushFailure(String error) {
+        if (runtimeMetricRecorder != null) {
+            runtimeMetricRecorder.recordPushFailure(error);
+        }
+    }
+
+    private void recordPushRetry() {
+        if (runtimeMetricRecorder != null) {
+            runtimeMetricRecorder.recordPushRetry();
+        }
     }
 }
 

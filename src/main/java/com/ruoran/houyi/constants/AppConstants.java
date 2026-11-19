@@ -15,8 +15,11 @@ public class AppConstants {
      * 重试相关常量
      */
     public static class Retry {
-        public static final int MAX_TRY_COUNT = 16;
-        public static final long BIG_FILE_TIMEOUT_MS = 5 * 60 * 1000L; // 5分钟
+        /**
+         * 运行期可由 admin_config 热更新，因此不使用 final。
+         */
+        public static volatile int MAX_TRY_COUNT = 16;
+        public static volatile long BIG_FILE_TIMEOUT_MS = 5 * 60 * 1000L; // 5分钟
     }
 
     /**

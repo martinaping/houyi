@@ -39,6 +39,25 @@
 
 ---
 
+### 🖥️ 管理与运维端
+
+#### [PRODUCT_OVERVIEW.md](PRODUCT_OVERVIEW.md)
+**产品概览** - 产品定位、目标用户、核心功能与边界。
+
+#### [admin-server/README.md](admin-server/README.md)
+**管理端后端说明** - 独立 Spring Boot 服务，包含配置项、接口清单、构建与测试方式。
+
+#### [admin-web/README.md](admin-web/README.md)
+**管理后台前端说明** - React 19 + Ant Design 6 + Vite 7，包含本地开发、构建与部署说明。
+
+#### [CHANGELOG.md](CHANGELOG.md)
+**更新日志** - 按版本记录功能变更。
+
+#### [API.md](API.md)
+**接口文档（v0.4.0）** - 覆盖管理端 `admin-server` 与主服务 `houyi` 的全部 HTTP 接口：认证、企业、消息、队列、健康巡检、系统设置、告警、数据保留、审计日志、主服务运维接口及错误码总表。
+
+---
+
 ### ⚙️ 配置指南
 
 #### [SECURITY.md](SECURITY.md)

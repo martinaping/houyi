@@ -12,10 +12,12 @@ package com.ruoran.houyi;
 import com.tencent.wework.Finance;
 import com.tencent.wework.RSAEncrypt;
 import com.ruoran.houyi.model.OriginalMsg;
+import com.ruoran.houyi.config.DynamicRuntimeConfig;
 import com.ruoran.houyi.mq.MessageProducerAdapter;
 import com.ruoran.houyi.repo.Md5IndexRepo;
 import com.ruoran.houyi.repo.OriginalMsgRepo;
 import com.ruoran.houyi.service.EventBus;
+import com.ruoran.houyi.service.RuntimeMetricRecorder;
 import com.ruoran.houyi.utils.DateUtil;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -99,6 +101,15 @@ public class Message extends Thread {
 
     @Resource
     MessageProducerAdapter messageProducerAdapter;
+
+    @Resource
+    RuntimeMetricRecorder runtimeMetricRecorder;
+
+    @Resource
+    DynamicRuntimeConfig dynamicRuntimeConfig;
+
+    /** 管理端停用企业时置为 false，循环内检查后自然退出。 */
+    private volatile boolean running = true;
 
     @Value("${spring.profiles.active}")
     private String profile;
@@ -286,20 +297,33 @@ public class Message extends Thread {
             return;
         }
         long slice = 0;
+        long startAt = System.currentTimeMillis();
         try {
             long seqs = this.getLastSeq();
             slice = Finance.NewSlice();
             int ret = Finance.GetChatData(this.sdk, seqs, 500, "", "", 100, slice);
-            
+
             if (ret != 0) {
                 log.error("获取聊天数据失败, corpId:{}, ret:{}", this.corpid, ret);
+                recordPullMetric(startAt, 0, "sdkRet=" + ret);
                 return;
             }
-            
+
             String json = Finance.GetContentFromSlice(slice);
-            processMessageData(json);
+            JSONObject jo = new JSONObject(json);
+            int errCode = jo.getInt("errcode");
+            if (errCode == 0) {
+                int fetched = processSuccessResponse(jo);
+                recordPullMetric(startAt, fetched, null);
+            } else {
+                String errMsg = jo.optString("errmsg");
+                recordPullMetric(startAt, 0, "errcode=" + errCode
+                        + (StringUtils.isEmpty(errMsg) ? "" : ",errmsg=" + errMsg));
+                handleErrorCode(errCode, errMsg);
+            }
         } catch (Exception e) {
             log.error("拉取消息异常, corpId:{}", this.corpid, e);
+            recordPullMetric(startAt, 0, e.getClass().getSimpleName() + ":" + e.getMessage());
         } finally {
             if (slice != 0) {
                 Finance.FreeSlice(slice);
@@ -307,32 +331,27 @@ public class Message extends Thread {
         }
     }
 
-    /**
-     * 处理消息数据
-     */
-    private void processMessageData(String json) {
-        JSONObject jo = new JSONObject(json);
-        int errCode = jo.getInt("errcode");
-        
-        if (errCode == 0) {
-            processSuccessResponse(jo);
-        } else {
-            handleErrorCode(errCode, jo.getString("errmsg"));
+    private void recordPullMetric(long startAt, int fetched, String error) {
+        if (runtimeMetricRecorder == null) {
+            return;
         }
+        runtimeMetricRecorder.recordPull(this.corpid, startAt, System.currentTimeMillis(), fetched, error);
     }
 
     /**
      * 处理成功响应
+     *
+     * @return 本次处理的消息条数
      */
-    private void processSuccessResponse(JSONObject jo) {
+    private int processSuccessResponse(JSONObject jo) {
         eventBus.getCorpsStatus().put(this.corpid, true);
         JSONArray chatData = jo.getJSONArray("chatdata");
-        
+
         for (int i = 0; i < chatData.length(); i++) {
             eventBus.getTotalMsg().incrementAndGet();
             String item = chatData.get(i).toString();
             JSONObject data = new JSONObject(item);
-            
+
             if ("ww0aad5bd009edd8e0".equals(this.corpid)) {
                 batchExec(data);
             } else {
@@ -340,6 +359,7 @@ public class Message extends Thread {
                 setLastSeq(seq);
             }
         }
+        return chatData.length();
     }
 
     /**
@@ -519,21 +539,32 @@ public class Message extends Thread {
 
     }
 
+    /**
+     * 请求停止拉取线程。正在执行的拉取会完成当前批次后退出。
+     */
+    public void stopRunning() {
+        this.running = false;
+        this.interrupt();
+    }
+
     @Override
     public void run() {
-        do {
+        while (running) {
             getList();
             if (StringUtils.isEmpty(this.getPrikey())) {
                 log.error("私钥为空，不再空转");
                 break;
             }
-            // 控制拉取频率，避免过快
+            // 控制拉取频率，避免过快；间隔支持管理端热更新
             try {
-                Thread.sleep(200);
+                Thread.sleep(dynamicRuntimeConfig == null
+                        ? 200 : dynamicRuntimeConfig.getMessageIntervalMs());
             } catch (InterruptedException e) {
-                log.error("线程休眠被中断", e);
+                Thread.currentThread().interrupt();
+                break;
             }
-        } while (true);
+        }
+        log.info("企业消息拉取线程退出: corpId={}", this.corpid);
     }
     
     /**

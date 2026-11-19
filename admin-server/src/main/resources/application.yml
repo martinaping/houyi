@@ -1,0 +1,70 @@
+server:
+  port: ${ADMIN_SERVER_PORT:18081}
+  shutdown: graceful
+
+spring:
+  application:
+    name: houyi-admin
+  datasource:
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/houyi?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 8
+      connection-timeout: 3000
+      read-only: false
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: 3s
+  jackson:
+    default-property-inclusion: non_null
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+admin:
+  version: 0.4.0
+  security:
+    # 必须通过环境变量提供，未配置时服务拒绝启动
+    username: ${ADMIN_USERNAME:admin}
+    password: ${ADMIN_PASSWORD:}
+    jwt-secret: ${ADMIN_JWT_SECRET:}
+    access-ttl: 30m
+    refresh-ttl: 12h
+    cookie-secure: ${ADMIN_COOKIE_SECURE:false}
+  cors:
+    allowed-origins: ${ADMIN_CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+  retry:
+    enabled: ${ADMIN_RETRY_ENABLED:true}
+
+rocketmq:
+  endpoint: ${ROCKETMQ_ENDPOINT:}
+  username: ${ROCKETMQ_USERNAME:}
+  password: ${ROCKETMQ_PASSWORD:}
+  retry-topic: ${ROCKETMQ_RETRY_TOPIC:wechat-archive-retry}
+  tag: ${ROCKETMQ_TAG:default}
+
+redis:
+  mq:
+    enabled: ${REDIS_MQ_ENABLED:false}
+    topic: ${REDIS_MQ_TOPIC:mq:topic:main}
+    retry-topic: ${REDIS_MQ_RETRY_TOPIC:mq:topic:retry}
+    tag: ${REDIS_MQ_TAG:default}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.ruoran.houyi.admin: INFO

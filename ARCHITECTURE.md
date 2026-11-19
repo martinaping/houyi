@@ -1,5 +1,7 @@
 # 后羿（Houyi）系统架构文档
 
+**当前版本**: v0.4.0
+
 ## 📋 系统概述
 
 后羿（Houyi）是一个企业微信会话存档系统，用于自动拉取、处理、存储企业微信的会话数据。
@@ -535,6 +537,145 @@ logback-spring.xml (日志配置)
 
 ---
 
-**最后更新**: 2025-12-29  
+## 🖥️ 管理与运维端（admin）
+
+管理端是一个**独立部署、与主服务零代码耦合**的运维子系统，只共享 MySQL、Redis 和消息队列，不修改主程序代码、不参与主程序构建。
+
+### 目录结构
+
+```
+houyi/
+├── src/                 # 主服务（保持原状）
+├── admin-server/        # 独立 Spring Boot 管理 API（端口 18081）
+│   ├── pom.xml          # 独立 Maven 项目，不加入根 pom
+│   └── src/main/java/com/ruoran/houyi/admin/
+├── admin-web/           # React 19 + Ant Design 6 + Vite 7 前端
+└── scripts/admin_api_test.rb  # 管理端 API 冒烟测试
+```
+
+### 部署拓扑
+
+```
+浏览器 ──> Nginx ──┬─> admin-web 静态资源（SPA）
+                    └─> /api 反向代理 ──> admin-server :18081
+                                                  │
+                          ┌───────────────────────┼───────────────────────┐
+                          ↓                       ↓                       ↓
+                       MySQL                    Redis                  RocketMQ
+                  （corplist / original_msg / delay_message）
+```
+
+主服务 `houyi` 与 `admin-server` 互不调用，可分别升级、重启和回滚。
+
+### 管理端 API
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| POST | `/api/admin/auth/login` | 账号密码登录，返回 access token 并下发 refresh cookie |
+| POST | `/api/admin/auth/refresh` | 用 HttpOnly cookie 换取新的 access token |
+| POST | `/api/admin/auth/logout` | 清除 refresh cookie |
+| GET | `/api/admin/auth/me` | 当前登录用户与版本 |
+| GET | `/api/admin/overview` | 企业统计、队列概览、最近失败消息 |
+| GET | `/api/admin/corps` | 企业列表（关键词/状态筛选，附 Redis 拉取进度） |
+| POST | `/api/admin/corps` | 新增企业（CorpID 唯一，校验密钥/私钥与限流参数） |
+| GET | `/api/admin/corps/{id}` | 企业详情（消息统计、拉取指标、凭据状态、Redis 可达性） |
+| PUT | `/api/admin/corps/{id}` | 编辑企业（名称、密钥、私钥、限流、状态） |
+| PATCH | `/api/admin/corps/{id}/status` | 启用/停用企业（写 `corplist.status`） |
+| PATCH | `/api/admin/corps/batch-status` | 批量启用/停用企业，返回实际更新行数 |
+| PUT | `/api/admin/corps/{id}/secret` | 轮换企业密钥（8~512 字符，写 `corplist.secret`） |
+| POST | `/api/admin/corps/{id}/reveal` | 管理员密码二次校验后返回原始密钥 |
+| GET | `/api/admin/messages` | 归档消息分页查询（keyset 游标） |
+| GET | `/api/admin/messages/export` | 按筛选条件导出消息 CSV（最多 5000 行，写审计） |
+| GET | `/api/admin/messages/{id}` | 消息详情 |
+| POST | `/api/admin/messages/{id}/retry` | 失败消息重试（写 Redis 延迟队列或发 RocketMQ） |
+| GET | `/api/admin/queue/overview` | Stream 长度与延迟消息积压 |
+| GET | `/api/admin/settings` | 配置项列表（白名单、范围/单位/生效方式，敏感值掩码） |
+| PUT | `/api/admin/settings` | 更新配置项（类型/范围校验，写审计） |
+| POST | `/api/admin/settings/reset` | 按 key 恢复默认值（写审计 `SETTING_RESET`） |
+| GET | `/api/admin/system` | 系统信息（版本、运行时长、连接状态、运行参数，只读脱敏） |
+| GET | `/api/admin/alerts/status` | 告警开关与 Webhook 配置状态 |
+| GET | `/api/admin/alerts/logs` | 最近告警记录 |
+| POST | `/api/admin/alerts/test` | 发送测试告警消息 |
+| GET | `/api/admin/audit-logs` | 审计日志（keyset 游标，可按动作/操作人/时间筛选） |
+| GET | `/api/admin/audit-logs/export` | 按筛选条件导出审计日志 CSV（写审计） |
+| GET | `/api/admin/health` | 健康巡检：DB/Redis 探测、队列、告警、清理与运行指标 |
+| GET | `/api/admin/retention/preview` | 预览可清理数据量与最早时间 |
+| POST | `/api/admin/retention/execute` | 执行清理（需开启开关并输入 `DELETE` 确认） |
+
+### 管理端自建表
+
+| 表 | 用途 |
+| --- | --- |
+| `admin_config` | 键值配置（类型、分组、敏感标记、更新人），由 `AdminSchemaInitializer` 启动时创建并 seed 默认值 |
+| `admin_audit_log` | 审计日志（操作人、动作、对象、详情、IP、traceId） |
+| `admin_alert_log` | 告警发送记录（指标值、阈值、是否送达、错误信息） |
+| `admin_runtime_state` | 运行时状态（如企业拉取进度快照，用于停滞判断） |
+
+四张表由管理端维护；`admin_config` 的 `runtime` 组由主服务以只读方式定时轮询（见“配置热更新”），其余表主服务无需感知，管理端升级不会改变主库既有表结构。
+
+### 配置热更新
+
+```
+admin-web 设置页 ──PUT /api/admin/settings──> admin_config(group='runtime')
+                                                     │
+                                     30s 轮询（只读）
+                                                     ↓
+主服务 DynamicRuntimeConfig ──> 线程池参数 / 下载重试 / 下载超时 / 拉取间隔
+                                                     │
+                                                     ↓
+                         CorpManager ──> 按间隔扫描启用企业，动态启停 Message 线程
+```
+
+| 生效方式 | 含义 | 涉及配置 |
+| --- | --- | --- |
+| `INSTANT` | 管理端读取时立即生效 | 告警、保留、安全组 |
+| `HOT` | 主服务 30 秒内轮询生效 | `runtime.*`（企业扫描间隔、拉取间隔、下载重试/超时、下载与 OSS 线程池） |
+| `RESTART` | 保存后需人工重启 | 当前无默认项，预留给端口等启动期参数 |
+
+- 主服务轮询失败时沿用上一次成功配置，不影响拉取与推送。
+- 线程池核心/最大线程数变更后按新值重建或调整，已提交任务不受影响。
+
+### 运行指标
+
+主服务新增 `RuntimeMetricRecorder`，把拉取与推送指标写入 Redis，管理端健康巡检只读读取。
+
+| Key | 主要字段 | 写入方 |
+| --- | --- | --- |
+| `houyi:metric:pull:<corpId>` | `lastStartAt`、`lastEndAt`、`lastDurationMs`、`lastFetched`、`totalFetched`、`lastError`、`lastErrorAt` | `Message.getList()` |
+| `houyi:metric:push` | `success`、`failure`、`retry`、`lastPushAt`、`lastError`、`lastErrorAt` | `MessageProducerAdapter` |
+
+- 无新消息时按企业最多每 30 秒心跳写入一次，避免高频写 Redis。
+- 指标写入失败按 60 秒节流记录 warn，不阻断拉取与推送。
+- 管理端健康巡检每 30 秒自动刷新，展示企业维度的拉取耗时、条数与错误。
+
+### 鉴权与安全
+
+- 单管理员账号，账号密码通过 `ADMIN_USERNAME` / `ADMIN_PASSWORD` 环境变量注入，不落库、不写日志。
+- access token 为 HS256 JWT，仅存前端内存；refresh token 放 `HttpOnly` + `SameSite=Strict` cookie，有效期 12 小时。
+- 同 IP 连续登录失败默认 5 次锁定 5 分钟，次数与时长可在系统设置调整；密码比较使用常量时间算法。
+- 登录成功与失败均写审计（`LOGIN_SUCCESS` / `LOGIN_FAILED`）。
+- 会话失效时前端跳转登录页并一次性提示“登录状态已失效”。
+- 所有响应带 `X-Trace-Id` 与 `X-App-Version`；服务日志为 JSON 行格式，敏感字段不落日志。
+- 生产环境建议 Nginx 同源反代，并通过 `ADMIN_CORS_ORIGINS` 收紧来源。
+
+### 关键配置
+
+| 环境变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `ADMIN_SERVER_PORT` | `18081` | 管理 API 端口 |
+| `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | 无 | 与主服务共用的数据库 |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_DATABASE` | 无 | 与主服务共用的 Redis |
+| `ADMIN_USERNAME` | `admin` | 管理员账号 |
+| `ADMIN_PASSWORD` | 无 | 必填，未配置时拒绝启动 |
+| `ADMIN_JWT_SECRET` | 无 | 必填，至少 32 字符 |
+| `ADMIN_CORS_ORIGINS` | 本地 5173 两个来源 | 逗号分隔的前端来源 |
+| `ADMIN_RETRY_ENABLED` | `true` | 是否允许管理端触发重试 |
+| `ROCKETMQ_ENDPOINT` 等 | 空 | 配置后重试走 RocketMQ，否则走 Redis Streams |
+
+更多说明见 [admin-server/README.md](admin-server/README.md) 与 [admin-web/README.md](admin-web/README.md)。
+
+---
+
+**最后更新**: 2026-11-19  
 **维护者**: Houyi Team
 

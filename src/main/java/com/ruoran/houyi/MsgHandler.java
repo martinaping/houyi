@@ -75,10 +75,6 @@ public class MsgHandler {
     @Resource
     OssUtil ossUtil;
 
-    private final static Integer TRY_COUNT = AppConstants.Retry.MAX_TRY_COUNT;
-
-    private final static Long BIG_FILE_TIME = AppConstants.Retry.BIG_FILE_TIMEOUT_MS;
-
     static {
         DOWNLOAD_TYPE.put("image", DownloadType.image);
         DOWNLOAD_TYPE.put("voice", DownloadType.voice);
@@ -370,7 +366,7 @@ public class MsgHandler {
                  * 网络有波动，先发进 rocket,一分钟后重试
                  */
                 RetryUtil.sendRetryMessage(wholeRootObject, messageProducerAdapter, 
-                    getEventBus(), this.getSecret(), getProfile(), TRY_COUNT);
+                    getEventBus(), this.getSecret(), getProfile(), AppConstants.Retry.MAX_TRY_COUNT);
                 return false;
             }
 
@@ -378,7 +374,7 @@ public class MsgHandler {
                 log.error("获取失败下载句柄失败,corpID:{},msgId:{},sdkFileId:{},returnValue:{}", this.corpid, msgId, sdkFileId, ret);
                 object.put("down_fail_at", System.currentTimeMillis());
                 RetryUtil.sendRetryMessage(wholeRootObject, messageProducerAdapter, 
-                    getEventBus(), this.getSecret(), getProfile(), TRY_COUNT);
+                    getEventBus(), this.getSecret(), getProfile(), AppConstants.Retry.MAX_TRY_COUNT);
                 return false;
             }
             FileOutputStream outputStream = new FileOutputStream(localPath, true);
@@ -448,7 +444,7 @@ public class MsgHandler {
                     }
                     if (!object.has("ossPath")) {
                         RetryUtil.sendRetryMessage(wholeRootObject, messageProducerAdapter, 
-                            getEventBus(), this.getSecret(), getProfile(), TRY_COUNT);
+                            getEventBus(), this.getSecret(), getProfile(), AppConstants.Retry.MAX_TRY_COUNT);
                     }
                     FileUtil.safeDelete(localPath);
                 }
@@ -457,7 +453,7 @@ public class MsgHandler {
                 Finance.FreeMediaData(mediaData);
                 if (!bigFile) {
                     long DownIngTime = System.currentTimeMillis();
-                    if (DownIngTime - startDownTime > BIG_FILE_TIME) {
+                    if (DownIngTime - startDownTime > AppConstants.Retry.BIG_FILE_TIMEOUT_MS) {
                         log.error("DownOutOfTimeError,{},{},{},{}", msgId, startDownTime, DownIngTime, seq);
                         Optional<OriginalMsg> optionalOriginalMsg = originalMsgRepo.findFirstByCorpIdAndMsgIdAndSeq(corpid, msgId, seq);
                         if (optionalOriginalMsg.isPresent()) {
@@ -552,7 +548,7 @@ public class MsgHandler {
                     object.put("rocketRetry", "1");
                     if (object.has("tryCount")) {
                         int tryCount = object.getInt("tryCount");
-                        if (tryCount < TRY_COUNT) {
+                        if (tryCount < AppConstants.Retry.MAX_TRY_COUNT) {
                             object.put("tryCount", tryCount + 1);
                             messageProducerAdapter.sendDelayMessage(object.toString(), msgId);
                         }
@@ -583,7 +579,7 @@ public class MsgHandler {
                             object.put("rocketRetry", "1");
                             if (object.has("tryCount")) {
                                 int tryCount = object.getInt("tryCount");
-                                if (tryCount < TRY_COUNT) {
+                                if (tryCount < AppConstants.Retry.MAX_TRY_COUNT) {
                                     object.put("tryCount", tryCount + 1);
                                     messageProducerAdapter.sendDelayMessage(object.toString(), tag);
                                 }
@@ -679,7 +675,7 @@ public class MsgHandler {
                                 object.put("rocketRetry", "1");
                                 if (object.has("tryCount")) {
                                     int tryCount = object.getInt("tryCount");
-                                    if (tryCount < TRY_COUNT) {
+                                    if (tryCount < AppConstants.Retry.MAX_TRY_COUNT) {
                                         object.put("tryCount", tryCount + 1);
                                         messageProducerAdapter.sendDelayMessage(object.toString(), tag);
                                     }
@@ -698,7 +694,7 @@ public class MsgHandler {
                 Finance.FreeMediaData(mediaData);
                 if (!bigFile) {
                     long DownIngTime = System.currentTimeMillis();
-                    if (DownIngTime - startDownTime > BIG_FILE_TIME) {
+                    if (DownIngTime - startDownTime > AppConstants.Retry.BIG_FILE_TIMEOUT_MS) {
                         log.error("DownOutOfTimeError,{},{},{},{}", msgId, startDownTime, DownIngTime, seq);
                         Optional<OriginalMsg> optionalOriginalMsg = originalMsgRepo.findFirstByCorpIdAndMsgIdAndSeq(corpid, msgId, seq);
                         if (optionalOriginalMsg.isPresent()) {

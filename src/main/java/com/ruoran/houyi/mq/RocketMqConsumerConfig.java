@@ -9,6 +9,7 @@ import org.apache.rocketmq.client.apis.ClientServiceProvider;
 import org.apache.rocketmq.client.apis.consumer.FilterExpression;
 import org.apache.rocketmq.client.apis.consumer.FilterExpressionType;
 import org.apache.rocketmq.client.apis.consumer.SimpleConsumer;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,11 +40,14 @@ public class RocketMqConsumerConfig {
      * 用于消费延迟消息队列中的重试消息
      */
     @Bean
-    public SimpleConsumer retrySimpleConsumer(ClientServiceProvider provider, ClientConfiguration clientConfiguration) 
+    public SimpleConsumer retrySimpleConsumer(ObjectProvider<ClientServiceProvider> providerHolder,
+            ObjectProvider<ClientConfiguration> configurationHolder)
             throws ClientException {
-        // 仅在生产环境创建消费者
-        if ("dev".equalsIgnoreCase(env)) {
-            log.info("开发环境，跳过重试消费者创建");
+        ClientServiceProvider provider = providerHolder.getIfAvailable();
+        ClientConfiguration clientConfiguration = configurationHolder.getIfAvailable();
+        // 仅在生产环境且 RocketMQ 已配置时创建消费者
+        if ("dev".equalsIgnoreCase(env) || provider == null || clientConfiguration == null) {
+            log.info("开发环境或未配置 RocketMQ，跳过重试消费者创建");
             return null;
         }
         

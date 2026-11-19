@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
  */
 @Slf4j
 @Component
+@ConditionalOnRocketMqEndpoint
 public class HouyiTcpConstructionMessageProduct implements MessageProducerInterface {
     
     @Resource

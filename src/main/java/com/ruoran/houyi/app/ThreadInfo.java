@@ -2,7 +2,7 @@ package com.ruoran.houyi.app;
 
 import com.ruoran.houyi.DownloadThreadKeeper;
 import com.ruoran.houyi.OssThreadPool;
-import com.ruoran.houyi.Start;
+import com.ruoran.houyi.CorpManager;
 import com.ruoran.houyi.model.CorpInfo;
 import com.ruoran.houyi.repo.CorplistRepo;
 import com.ruoran.houyi.service.EventBus;
@@ -32,7 +32,7 @@ public class ThreadInfo implements MeterBinder {
     OssThreadPool ossThreadPool;
 
     @Resource
-    Start start;
+    CorpManager corpManager;
 
     @Resource
     EventBus eventBus;
@@ -115,7 +115,7 @@ public class ThreadInfo implements MeterBinder {
         return factory.getCounter();
     }
     public Number getMessageThread(){
-        return start.getCopySet().size();
+        return corpManager.runningCount();
     }
     public Number getRocketRetryCounter(){
         return eventBus.getRocketRetryCounter().get();

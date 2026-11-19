@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>houyi 项目图解 - 企业微信会话存档服务</title>
+<style>
+  :root{
+    --ink:#0f172a;
+    --ink-2:#334155;
+    --ink-3:#64748b;
+    --line:#e2e8f0;
+    --bg:#f6f8fb;
+    --card:#ffffff;
+    --brand:#1d4ed8;
+    --brand-soft:#eef4ff;
+    --teal:#0f766e;
+    --teal-soft:#ecfdf5;
+    --amber:#b45309;
+    --amber-soft:#fffbeb;
+    --red:#b91c1c;
+    --red-soft:#fef2f2;
+    --violet:#6d28d9;
+    --violet-soft:#f5f3ff;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(15,23,42,.05),0 8px 24px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",sans-serif;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px;}
+
+  /* ---------- header ---------- */
+  header{
+    background:linear-gradient(135deg,#0b1220 0%,#132a54 55%,#173b7a 100%);
+    color:#fff;
+    padding:64px 0 56px;
+    position:relative;
+    overflow:hidden;
+  }
+  header::after{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(600px 240px at 85% 0%,rgba(59,130,246,.35),transparent 70%);
+    pointer-events:none;
+  }
+  header .wrap{position:relative;z-index:1;}
+  .kicker{
+    display:inline-block;font-size:13px;letter-spacing:.18em;
+    color:#93c5fd;border:1px solid rgba(147,197,253,.35);
+    padding:4px 12px;border-radius:999px;margin-bottom:18px;
+  }
+  h1{font-size:38px;line-height:1.25;margin:0 0 14px;font-weight:700;letter-spacing:-.5px;}
+  .sub{font-size:16px;color:#cbd5e1;max-width:760px;margin:0;}
+  .header-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px;}
+  .header-tags span{
+    font-size:13px;color:#dbeafe;background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.12);padding:5px 12px;border-radius:8px;
+  }
+
+  /* ---------- sections ---------- */
+  section{padding:52px 0 8px;}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:8px;}
+  .sec-num{
+    font-size:13px;font-weight:700;color:var(--brand);
+    background:var(--brand-soft);border-radius:6px;padding:2px 9px;
+    letter-spacing:.08em;flex:none;
+  }
+  h2{font-size:24px;margin:0;letter-spacing:-.3px;}
+  .sec-desc{color:var(--ink-3);font-size:15px;margin:4px 0 26px;max-width:820px;}
+
+  /* ---------- cards ---------- */
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px 22px 20px;box-shadow:var(--shadow);
+  }
+  .card h3{margin:0 0 8px;font-size:16px;}
+  .card p{margin:0;font-size:14.5px;color:var(--ink-2);}
+  .card .tag{
+    display:inline-block;font-size:12px;font-weight:600;border-radius:6px;
+    padding:2px 8px;margin-bottom:12px;
+  }
+  .tag.blue{background:var(--brand-soft);color:var(--brand);}
+  .tag.teal{background:var(--teal-soft);color:var(--teal);}
+  .tag.amber{background:var(--amber-soft);color:var(--amber);}
+  .tag.violet{background:var(--violet-soft);color:var(--violet);}
+
+  .analogy{
+    margin-top:34px;border-left:4px solid var(--brand);
+    background:var(--brand-soft);border-radius:0 10px 10px 0;
+    padding:16px 20px;font-size:14.5px;color:#1e3a8a;
+  }
+  .analogy strong{color:#1e40af;}
+
+  /* ---------- architecture ---------- */
+  .arch{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:16px;align-items:stretch;margin-top:8px;}
+  .arch-col{display:flex;flex-direction:column;gap:12px;justify-content:center;}
+  .arch-col.center{justify-content:flex-start;}
+  .node{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:14px 16px;box-shadow:var(--shadow);position:relative;
+  }
+  .node .n-title{font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:8px;}
+  .node .n-desc{font-size:12.5px;color:var(--ink-3);margin-top:3px;}
+  .dot{width:8px;height:8px;border-radius:50%;flex:none;}
+  .dot.blue{background:#2563eb;}
+  .dot.teal{background:#0d9488;}
+  .dot.amber{background:#d97706;}
+  .dot.violet{background:#7c3aed;}
+  .dot.red{background:#dc2626;}
+  .node.hub{
+    background:linear-gradient(150deg,#12224a,#1e3a8a);
+    color:#fff;border:none;padding:22px;
+  }
+  .node.hub .n-title{font-size:18px;}
+  .node.hub .n-desc{color:#c7d2fe;font-size:13px;}
+  .hub-list{margin:14px 0 0;padding:0;list-style:none;font-size:13px;color:#dbeafe;}
+  .hub-list li{padding:5px 0;border-top:1px solid rgba(255,255,255,.12);display:flex;justify-content:space-between;gap:10px;}
+  .hub-list li span:last-child{color:#93c5fd;}
+  .connector{
+    text-align:center;color:#94a3b8;font-size:18px;line-height:1;
+    margin:-2px 0;
+  }
+  .caption{text-align:center;font-size:12.5px;color:var(--ink-3);margin-top:14px;}
+
+  /* ---------- flow steps ---------- */
+  .steps{position:relative;margin-top:6px;}
+  .steps::before{
+    content:"";position:absolute;left:21px;top:12px;bottom:26px;width:2px;
+    background:linear-gradient(#c7d2fe,#bfdbfe,#d1fae5);
+  }
+  .step{display:flex;gap:18px;margin-bottom:18px;position:relative;}
+  .step-num{
+    flex:none;width:44px;height:44px;border-radius:50%;
+    background:#fff;border:2px solid var(--brand);color:var(--brand);
+    font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 5px var(--bg);z-index:1;
+  }
+  .step-body{
+    flex:1;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);
+  }
+  .step-body h3{margin:0 0 6px;font-size:16.5px;}
+  .step-body p{margin:0 0 8px;font-size:14.5px;color:var(--ink-2);}
+  .step-body .tech{
+    font-size:12.5px;color:var(--ink-3);background:#f8fafc;
+    border:1px dashed var(--line);border-radius:8px;padding:8px 12px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    line-height:1.7;word-break:break-word;
+  }
+  .step-body .tech b{color:var(--ink-2);font-weight:600;}
+
+  /* ---------- media branch ---------- */
+  .branch{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:26px;box-shadow:var(--shadow);margin-top:6px;
+  }
+  .branch-row{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;}
+  .b-node{
+    flex:1 1 150px;border-radius:10px;border:1px solid var(--line);
+    background:#f8fafc;padding:13px 14px;min-width:140px;
+  }
+  .b-node .b-t{font-weight:700;font-size:13.5px;}
+  .b-node .b-d{font-size:12px;color:var(--ink-3);margin-top:2px;}
+  .b-arrow{display:flex;align-items:center;color:#94a3b8;font-size:17px;padding:0 2px;}
+  .b-node.ok{background:var(--teal-soft);border-color:#a7f3d0;}
+  .b-node.warn{background:var(--amber-soft);border-color:#fde68a;}
+  .b-node.bad{background:var(--red-soft);border-color:#fecaca;}
+  .retry-line{
+    margin-top:16px;padding:14px 16px;border-radius:10px;
+    background:var(--red-soft);border:1px dashed #fca5a5;
+    font-size:13.5px;color:#7f1d1d;display:flex;gap:10px;align-items:flex-start;
+  }
+  .retry-line .arrow{font-size:16px;line-height:1.5;}
+
+  /* ---------- table ---------- */
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);font-size:14px;}
+  th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{background:#f1f5f9;font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600;}
+  tr:last-child td{border-bottom:none;}
+  td code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:12.5px;background:#f1f5f9;border-radius:5px;padding:1px 6px;color:#0f172a;
+  }
+  .pill{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:999px;}
+  .pill.green{background:var(--teal-soft);color:var(--teal);}
+  .pill.gray{background:#f1f5f9;color:var(--ink-3);}
+
+  /* ---------- stack ---------- */
+  .stack{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+  .stack span{
+    font-size:13px;background:#fff;border:1px solid var(--line);
+    border-radius:8px;padding:5px 11px;color:var(--ink-2);box-shadow:0 1px 1px rgba(15,23,42,.04);
+  }
+
+  footer{margin-top:56px;padding:28px 0 48px;border-top:1px solid var(--line);color:var(--ink-3);font-size:13px;}
+
+  @media (max-width:860px){
+    h1{font-size:30px;}
+    .grid-3,.grid-2{grid-template-columns:1fr;}
+    .arch{grid-template-columns:1fr;}
+    .arch-col.center{order:-1;}
+    .b-arrow{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="kicker">HOUYI · 企业微信会话存档服务</div>
+    <h1>把企业微信里的聊天记录，<br>自动备份成可长期保存、可被业务使用的数据</h1>
+    <p class="sub">
+      简单说：企业微信本身只提供「会话存档」的拉取接口，houyi 就是一个 7×24 小时运行的搬运工——
+      定时把员工与客户之间的消息、图片、语音、文件拉下来，解密、去重、存到对象存储，
+      再通过消息队列交给下游系统做审计、客服质检或 CRM 分析。
+    </p>
+    <div class="header-tags">
+      <span>Spring Boot 3.2</span>
+      <span>Java 21</span>
+      <span>企业微信 Finance SDK</span>
+      <span>MySQL / H2</span>
+      <span>Redis</span>
+      <span>阿里云 OSS</span>
+      <span>RocketMQ / Redis Streams</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 1. 一句话 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><h2>它到底解决什么问题</h2></div>
+    <p class="sec-desc">企业微信的「会话存档」有合规要求：聊天内容必须留痕。但官方只给原始接口，不给存储、不给重试、不给业务推送。houyi 补的就是中间这一整段。</p>
+    <div class="grid-3">
+      <div class="card">
+        <span class="tag blue">输入</span>
+        <h3>企业微信会话存档</h3>
+        <p>按企业（corpId）拉取增量消息流，每条消息有唯一序号 seq，支持加密传输。</p>
+      </div>
+      <div class="card">
+        <span class="tag teal">处理</span>
+        <h3>解密 + 下载 + 去重</h3>
+        <p>私钥解密消息体；图片语音文件从企微下载，按 MD5 去重后上传到 OSS。</p>
+      </div>
+      <div class="card">
+        <span class="tag violet">输出</span>
+        <h3>消息队列里的标准 JSON</h3>
+        <p>文本、媒体地址、会话信息统一成一条条消息推给下游，失败自动延迟重试。</p>
+      </div>
+    </div>
+    <div class="analogy">
+      <strong>打个比方：</strong>企业微信是「发货方」，houyi 是「快递分拣中心」。
+      Redis 里记着「上次读到第几件包裹」的书签；MySQL 记着企业名单和每件包裹的处理结果；
+      OSS 是仓库；消息队列是通往各个下游业务系统的传送带。
+    </div>
+  </section>
+
+  <!-- 2. 全景架构 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>全景架构：一张图看清角色</h2></div>
+    <p class="sec-desc">左边是数据来源，中间是 houyi 本体的处理链路，右边是它依赖的存储和最终消费方。</p>
+
+    <div class="arch">
+      <div class="arch-col">
+        <div class="node">
+          <div class="n-title"><span class="dot blue"></span>企业微信服务器</div>
+          <div class="n-desc">会话存档接口 + 媒体文件接口（Finance SDK 调用）</div>
+        </div>
+        <div class="connector">↓ ↑</div>
+        <div class="node">
+          <div class="n-title"><span class="dot blue"></span>wework-corps.yml</div>
+          <div class="n-desc">企业名单：corpId、secret、私钥、是否启用</div>
+        </div>
+        <div class="connector">↓</div>
+        <div class="node">
+          <div class="n-title"><span class="dot blue"></span>拉取线程（每企业 1 个）</div>
+          <div class="n-desc">msg-thread-&lt;corpId&gt;，循环拉取，200ms 间隔</div>
+        </div>
+      </div>
+
+      <div class="arch-col center">
+        <div class="node hub">
+          <div class="n-title">houyi 服务主体</div>
+          <div class="n-desc">Spring Boot 单体应用，内置线程池与定时任务</div>
+          <ul class="hub-list">
+            <li><span>Message 拉取 + 解密</span><span>按 seq 增量</span></li>
+            <li><span>MsgHandler / MixedHandler</span><span>按消息类型分流</span></li>
+            <li><span>DownloadThreadKeeper</span><span>8 ~ 100 线程</span></li>
+            <li><span>OssUtil 上传</span><span>MD5 去重</span></li>
+            <li><span>MessageProducerAdapter</span><span>自动选 MQ</span></li>
+            <li><span>定时任务</span><span>清理 / 重推 / 同步</span></li>
+          </ul>
+        </div>
+        <div class="caption">同一份 jar，通过配置决定用 RocketMQ 还是 Redis MQ</div>
+      </div>
+
+      <div class="arch-col">
+        <div class="node">
+          <div class="n-title"><span class="dot amber"></span>Redis</div>
+          <div class="n-desc">拉取进度 last_seq_*、Stream 队列、延迟 ZSet</div>
+        </div>
+        <div class="node">
+          <div class="n-title"><span class="dot amber"></span>MySQL / H2</div>
+          <div class="n-desc">企业表、原始消息表、MD5 索引、延迟消息表</div>
+        </div>
+        <div class="node">
+          <div class="n-title"><span class="dot teal"></span>阿里云 OSS</div>
+          <div class="n-desc">图片、语音、视频、文件等媒体实体</div>
+        </div>
+        <div class="node">
+          <div class="n-title"><span class="dot violet"></span>下游业务系统</div>
+          <div class="n-desc">消费 MQ：审计、客服质检、CRM、BI</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 主流程 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>主流程：一条消息的完整旅程</h2></div>
+    <p class="sec-desc">下面按代码实际执行顺序走一遍。每一步都附了它在代码里的具体动作，方便对着源码看。</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>启动：先同步企业名单</h3>
+          <p>应用启动时读取 <code>wework-corps.yml</code>，把每个企业的 corpId、secret、私钥、启用状态写入数据库。启用的企业标记为 status=1，停用的标记为 0。私钥既可以直接写在配置里，也可以指定私钥文件路径。</p>
+          <div class="tech"><b>类：</b>CorpConfigService.syncCorpConfigToDatabase()　<b>表：</b>企业配置表</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>给每个启用的企业开一条拉取线程</h3>
+          <p>启动完成后查询所有 status=1 的企业，为每家创建一个独立线程 <code>msg-thread-&lt;corpId&gt;</code>。线程里是死循环：拉一批 → 处理 → 休眠 200ms → 再拉，避免把接口打爆。也可以在运行期通过接口手动触发某个企业。</p>
+          <div class="tech"><b>类：</b>Start.run() / Start.triggerCorpId()　<b>线程名：</b>msg-thread-{corpId}</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>从 Redis 取出「读到哪儿了」</h3>
+          <p>每家企业在 Redis 里有一个书签键 <code>last_seq_&lt;corpId&gt;</code>。服务重启后从上次的 seq 继续拉，不会重复、也不会漏。每次最多拉 500 条，接口超时 100 秒。</p>
+          <div class="tech"><b>调用：</b>Finance.GetChatData(sdk, lastSeq, 500, "", "", 100, slice)　<b>Redis Key：</b>last_seq_{corpId}</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>解密：把密文还原成 JSON</h3>
+          <p>企微返回的是加密消息。先用配置的 RSA 私钥解出随机密钥，再用它解密消息体，得到一条条 JSON。若遇到会话存档过期、IP 不在白名单、token 缺失等错误码，线程会按不同时长休眠后再试（5 / 10 / 30 分钟）。</p>
+          <div class="tech"><b>调用：</b>RSAEncrypt.decryptByPriKey() → Finance.DecryptData()　<b>错误码：</b>301052 / 301042 / 41001</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h3>分类分流：纯文本直接走，媒体进下载池</h3>
+          <p>文本、撤回、位置、红包、链接这类消息不需要下载文件，直接入库并推送 MQ。图片、语音、视频、表情、文件、混合消息（mixed / chatrecord）则提交到下载线程池，由后台线程慢慢处理，不阻塞拉取主循环。</p>
+          <div class="tech"><b>类：</b>Message.sendMsg() / DownloadThreadKeeper.execute()　<b>线程池：</b>核心 8、最大 100、队列 10000</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <h3>下载媒体文件并校验</h3>
+          <p>根据消息里的 sdkfileid 从企微把文件分片下载到本地临时目录，下载过程中做 MD5 校验，确保文件没有损坏。大文件有单独的超时控制。</p>
+          <div class="tech"><b>类：</b>MsgHandler.downMedia() / MixedHandler　<b>临时目录：</b>/tmp</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">7</div>
+        <div class="step-body">
+          <h3>MD5 去重，再上传 OSS</h3>
+          <p>上传前先查 MD5 索引表：同一个文件（比如群聊里多人转发的同一张图）只上传一次，后续直接复用已有的 OSS 地址，省流量也省存储。新文件上传成功后，把 OSS 路径写回原始消息表。</p>
+          <div class="tech"><b>类：</b>MsgHandler → OssUtil.upload()　<b>去重表：</b>md5 索引　<b>回写：</b>原始消息.ossPath</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">8</div>
+        <div class="step-body">
+          <h3>组装统一 JSON，推送消息队列</h3>
+          <p>处理完成后组装标准 JSON：原始消息字段 + seq + source=java + 文件 OSS 地址（文本消息额外带内容签名 _sign），然后通过生产者适配器发送。适配器会根据配置自动选择 RocketMQ 5.0 gRPC 还是 Redis Streams，下游对此无感。</p>
+          <div class="tech"><b>类：</b>MessageProducerAdapter / RedisMqProducer / HouyiTcpConstructionMessageProduct　<b>Key：</b>msgId</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">9</div>
+        <div class="step-body">
+          <h3>推进书签，进入下一轮</h3>
+          <p>只有整批消息处理成功，才把最新的 seq 写回 Redis。所以服务崩溃、重启都不会丢消息，最多是重复处理一次，而重复数据会被 MD5 索引和消息已存在判断挡掉。</p>
+          <div class="tech"><b>方法：</b>Message.setLastSeq()　<b>特殊逻辑：</b>corpId 为 ww0aad5bd009edd8e0 时按 10 条一批并发处理</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 媒体处理细节 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><h2>重点展开：媒体文件的处理链路</h2></div>
+    <p class="sec-desc">消息里最常见的其实是图片、语音和小文件。它们不占消息体，只有一个文件 ID，必须二次下载。这条链路也是整个系统最容易失败、最需要重试的地方。</p>
+
+    <div class="branch">
+      <div class="branch-row">
+        <div class="b-node">
+          <div class="b-t">消息里的 sdkfileid</div>
+          <div class="b-d">企微只给文件编号</div>
+        </div>
+        <div class="b-arrow">→</div>
+        <div class="b-node">
+          <div class="b-t">分片下载</div>
+          <div class="b-d">按片拉取到本地 /tmp</div>
+        </div>
+        <div class="b-arrow">→</div>
+        <div class="b-node">
+          <div class="b-t">MD5 校验</div>
+          <div class="b-d">校验不通过视为失败</div>
+        </div>
+        <div class="b-arrow">→</div>
+        <div class="b-node">
+          <div class="b-t">MD5 去重</div>
+          <div class="b-d">命中则复用已有 OSS 地址</div>
+        </div>
+        <div class="b-arrow">→</div>
+        <div class="b-node ok">
+          <div class="b-t">上传 OSS</div>
+          <div class="b-d">写入 ossPath 并推送</div>
+        </div>
+      </div>
+
+      <div class="retry-line">
+        <div class="arrow">↺</div>
+        <div>
+          <strong>失败怎么办：</strong>下载失败、MD5 不通过、OSS 上传失败时，系统会把整条消息连同「已重试次数 tryCount」封装成延迟消息，
+          投递到重试队列（Redis 用 ZSet 记录到期时间，每秒扫描；RocketMQ 用延迟消息 + 重试消费者轮询）。
+          到期后重新提交到下载线程池；如果消息此时已经成功下载过，则直接确认丢弃。超过最大重试次数才真正放弃并记录错误。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 定时任务 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><h2>后台定时任务：保证长期稳定运行</h2></div>
+    <p class="sec-desc">除了实时拉取，还有一批清扫和补偿任务，避免数据越积越多或漏推。</p>
+    <table>
+      <thead>
+        <tr><th style="width:170px;">触发时间</th><th style="width:210px;">任务</th><th>作用</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>每 1 秒</td><td>延迟消息扫描</td><td>扫描 Redis 延迟队列，把到期的重试消息投递到重试 Stream。</td></tr>
+        <tr><td>每天 02:00</td><td>延迟队列清理</td><td>清理已完成、过期的延迟消息，防止 ZSet 无限膨胀。</td></tr>
+        <tr><td>每天 03:00</td><td>Redis 备份清理</td><td>清理消息备份数据。</td></tr>
+        <tr><td>每天 04:00–08:59 每分钟</td><td>历史消息删除</td><td>删除已处理完成的历史消息记录，控制数据库体积。</td></tr>
+        <tr><td>每 10 分钟</td><td>未推送消息重推</td><td>扫描「处理成功但没推送成功」的消息，重新推送一次，保证下游不漏数据。</td></tr>
+        <tr><td>每 24 小时</td><td>企业配置同步</td><td>重新读取企业名单并同步到数据库，新增/停用企业无需重启。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 6. 接口 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">06</span><h2>对外暴露的接口</h2></div>
+    <p class="sec-desc">这个服务没有页面，只有几个运维接口。根路径 / 没有映射，访问会 404，属于正常现象。</p>
+    <table>
+      <thead>
+        <tr><th style="width:270px;">接口</th><th style="width:120px;">用途</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>GET /status</code></td><td>健康检查</td><td>返回 200 即代表服务存活。</td></tr>
+        <tr><td><code>GET /api/open/status</code></td><td>拉取状态</td><td>按企业返回拉取成功 / 失败列表，例如 <code>{"succ":[],"fail":[]}</code>。</td></tr>
+        <tr><td><code>GET /api/open/pull/corp?corpId=</code></td><td>补充企业</td><td>从上游接口拉取企业的名称、密钥并入库（新部署时用）。</td></tr>
+        <tr><td><code>GET /api/open/trigger/corp?corpId=</code></td><td>手动触发</td><td>为某个企业立即启动拉取线程，不必等重启。</td></tr>
+        <tr><td><code>GET /api/open/single/msg?corpId=&amp;msgId=&amp;seq=</code></td><td>单条补拉</td><td>对某条历史消息重新执行下载与推送。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 7. 技术栈与本地运行 -->
+  <section>
+    <div class="sec-head"><span class="sec-num">07</span><h2>技术栈与运行方式</h2></div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>技术上它是什么</h3>
+        <p>一个 Spring Boot 3.2 单体应用，单 jar 部署，用 Supervisor 守护。核心是「线程 + 线程池 + 定时任务」，不依赖微服务框架。</p>
+        <div class="stack">
+          <span>Java 21</span><span>Spring Boot 3.2.11</span><span>Spring Data JPA</span>
+          <span>企业微信 Finance SDK</span><span>Jedis / Spring Data Redis</span>
+          <span>RocketMQ 5 gRPC</span><span>阿里云 OSS SDK</span><span>Micrometer</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>本地为什么只能“空跑”</h3>
+        <p>本地用 H2 文件库替代 MySQL、Redis 用独立 db，企业配置置为停用。因为企业微信 SDK 只提供 Linux/Windows 的动态库，macOS 无法真正拉取消息，所以本地只验证服务启动与接口，不会产生真实数据。</p>
+        <div class="stack">
+          <span>H2 文件库</span><span>本机 Redis db5</span><span>企业全部停用</span><span>端口 18080</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div>一句话总结：houyi 把企业微信「会话存档」的原始接口，变成了一条可靠的、可重试的、可被下游消费的数据管道。</div>
+    <div style="margin-top:6px;">技术说明基于当前仓库源码整理，文件路径：src/main/java/com/ruoran/houyi。</div>
+  </footer>
+
+</div>
+</body>
+</html>
