@@ -12,7 +12,8 @@
     "retention": "Retention",
     "audit": "Audit logs",
     "settings": "Settings",
-    "system": "System info"
+    "system": "System info",
+    "apiDocs": "API docs"
   },
   "common": {
     "refresh": "Refresh",
@@ -87,6 +88,9 @@
     "retryStream": "Retry stream backlog",
     "delayPending": "Pending delayed messages",
     "rocketMq": "RocketMQ",
+    "rocketMqUp": "Available",
+    "rocketMqDown": "Unavailable",
+    "rocketMqUnknown": "Not configured",
     "alertsEnabled": "Alerts enabled",
     "alertsDisabled": "Alerts disabled",
     "webhookConfigured": "Webhook configured",
@@ -235,6 +239,11 @@
     "rocketConfigured": "Configured",
     "notConfigured": "Not configured",
     "retryTopic": "Retry topic",
+    "rocketState": {
+      "notConfigured": "Not configured",
+      "up": "Available",
+      "down": "Unavailable"
+    },
     "unavailable": "Unavailable"
   },
   "settings": {
@@ -242,6 +251,7 @@
     "save": "Save changes",
     "saveSuccess": "{{count}} setting(s) saved",
     "sensitivePlaceholder": "Keep the mask to leave unchanged",
+    "readOnly": "Read-only",
     "searchPlaceholder": "Search settings",
     "unsaved": "{{count}} unsaved change(s)",
     "changed": "Changed",
@@ -259,6 +269,7 @@
     },
     "group": {
       "alert": "Alerts",
+      "rocketmq": "RocketMQ",
       "retention": "Retention",
       "security": "Security",
       "runtime": "Runtime"
@@ -275,6 +286,12 @@
         "queue-enabled": "Alert on queue backlog",
         "download-enabled": "Alert on download failures",
         "corp-stall-enabled": "Alert on stalled corporations"
+      },
+      "rocketmq": {
+        "endpoint": "Endpoint",
+        "username": "Username",
+        "password": "Password",
+        "retry-topic": "Retry topic"
       },
       "retention": {
         "cleanup-enabled": "Enable cleanup",
@@ -315,6 +332,16 @@
       "titleColumn": "Title",
       "content": "Content",
       "delivered": "Delivered"
+    },
+    "rocketMq": {
+      "title": "RocketMQ connection",
+      "test": "Test connection",
+      "testSuccess": "Connection is healthy",
+      "testFailed": "Connection failed",
+      "notConfigured": "RocketMQ is not configured yet. Fill in the endpoint and credentials first.",
+      "latency": "Latency {{ms}} ms",
+      "checkedAt": "Checked at",
+      "endpoint": "Endpoint"
     }
   },
   "system": {
@@ -350,6 +377,15 @@
     "actionPlaceholder": "e.g. CORP_SECRET_ROTATE",
     "operatorPlaceholder": "Operator",
     "empty": "No audit logs"
+  },
+  "apiDocs": {
+    "title": "API documentation",
+    "versionTag": "v0.4.0",
+    "description": "All HTTP endpoints of admin-server and houyi, rendered directly from API.md at the repository root.",
+    "toc": "Contents",
+    "searchPlaceholder": "Search endpoints, fields or error codes",
+    "searchResult": "{{count}} sections found",
+    "searchEmpty": "No matching content"
   },
   "retention": {
     "title": "Retention",

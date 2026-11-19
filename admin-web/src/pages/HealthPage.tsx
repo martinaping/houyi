@@ -52,6 +52,39 @@ export function HealthPage() {
     ),
   });
 
+  const rocketMqStatus = (queue: HealthReport['queue']) => {
+    if (queue.rocketMqState === 'UP') {
+      return (
+        <Space size="small" wrap>
+          <Tag color="green">{t('health.rocketMqUp')}</Tag>
+          <Typography.Text type="secondary">
+            {t('health.latency', { ms: queue.rocketMqLatencyMs ?? '-' })}
+          </Typography.Text>
+          <Typography.Text type="secondary">
+            {t('health.checkedAt')}: {formatTime(queue.rocketMqCheckedAt)}
+          </Typography.Text>
+        </Space>
+      );
+    }
+    if (queue.rocketMqState === 'DOWN') {
+      return (
+        <Space size="small" wrap>
+          <Tag color="red">{t('health.rocketMqDown')}</Tag>
+          <Typography.Text type="secondary">
+            {t('health.latency', { ms: queue.rocketMqLatencyMs ?? '-' })}
+          </Typography.Text>
+          <Typography.Text type="secondary">
+            {t('health.checkedAt')}: {formatTime(queue.rocketMqCheckedAt)}
+          </Typography.Text>
+          {queue.rocketMqError ? (
+            <Typography.Text type="danger">{queue.rocketMqError}</Typography.Text>
+          ) : null}
+        </Space>
+      );
+    }
+    return <Tag>{t('health.rocketMqUnknown')}</Tag>;
+  };
+
   const items: DescriptionsProps['items'] = [
     checkItem(t('health.database'), data?.database),
     checkItem(t('health.redis'), data?.redis),
@@ -84,13 +117,7 @@ export function HealthPage() {
     {
       key: 'rocketMq',
       label: t('health.rocketMq'),
-      children: data ? (
-        <Tag color={data.queue.rocketMqConfigured ? 'green' : 'default'}>
-          {data.queue.rocketMqConfigured ? t('health.configured') : t('health.notConfigured')}
-        </Tag>
-      ) : (
-        '-'
-      ),
+      children: data ? rocketMqStatus(data.queue) : '-',
     },
     {
       key: 'alert',

@@ -11,7 +11,12 @@ public record QueueOverview(
         StreamStats retryStream,
         List<DelayStatusCount> delayMessages,
         boolean rocketMqConfigured,
-        String rocketMqRetryTopic
+        String rocketMqRetryTopic,
+        String rocketMqState,
+        String rocketMqEndpoint,
+        Long rocketMqLatencyMs,
+        Long rocketMqCheckedAt,
+        String rocketMqError
 ) {
     public record StreamStats(String topic, Long length) {
     }

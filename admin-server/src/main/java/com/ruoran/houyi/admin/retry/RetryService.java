@@ -5,8 +5,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ruoran.houyi.admin.config.AdminRetryProperties;
 import com.ruoran.houyi.admin.config.RedisMqProperties;
 import com.ruoran.houyi.admin.config.RocketMqProperties;
+import com.ruoran.houyi.admin.config.RocketMqSettingsService;
 import com.ruoran.houyi.admin.error.ApiException;
 import org.apache.rocketmq.client.apis.ClientConfiguration;
+import org.apache.rocketmq.client.apis.ClientConfigurationBuilder;
 import org.apache.rocketmq.client.apis.ClientServiceProvider;
 import org.apache.rocketmq.client.apis.StaticSessionCredentialsProvider;
 import org.apache.rocketmq.client.apis.message.Message;
@@ -39,15 +41,18 @@ public class RetryService {
     private final AdminRetryProperties retryProperties;
     private final RedisMqProperties redisMqProperties;
     private final RocketMqProperties rocketMqProperties;
+    private final RocketMqSettingsService rocketMqSettingsService;
 
     public RetryService(JdbcTemplate jdbcTemplate, ObjectMapper objectMapper,
                         AdminRetryProperties retryProperties, RedisMqProperties redisMqProperties,
-                        RocketMqProperties rocketMqProperties) {
+                        RocketMqProperties rocketMqProperties,
+                        RocketMqSettingsService rocketMqSettingsService) {
         this.jdbcTemplate = jdbcTemplate;
         this.objectMapper = objectMapper;
         this.retryProperties = retryProperties;
         this.redisMqProperties = redisMqProperties;
         this.rocketMqProperties = rocketMqProperties;
+        this.rocketMqSettingsService = rocketMqSettingsService;
     }
 
     public RetryResult retry(long messageId, String operator) {
@@ -65,7 +70,7 @@ public class RetryService {
         RetryResult result;
         if (redisMqProperties.enabled()) {
             result = enqueueRedis(messageKey, source.corpId(), body);
-        } else if (rocketMqProperties.configured()) {
+        } else if (rocketMqSettingsService.configured()) {
             result = sendRocketMq(messageKey, body);
         } else {
             throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "RETRY_UNAVAILABLE",
@@ -124,7 +129,7 @@ public class RetryService {
      * RocketMQ 模式：直接发送到重试 Topic。生产者按需创建，发送完立即关闭。
      */
     private RetryResult sendRocketMq(String messageKey, String body) {
-        String topic = rocketMqProperties.retryTopic();
+        String topic = rocketMqSettingsService.retryTopic();
         if (topic == null || topic.isBlank()) {
             throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "RETRY_UNAVAILABLE",
                     "RocketMQ 重试 Topic 未配置");
@@ -132,13 +137,15 @@ public class RetryService {
         Producer producer = null;
         try {
             ClientServiceProvider provider = ClientServiceProvider.loadService();
-            ClientConfiguration configuration = ClientConfiguration.newBuilder()
-                    .setEndpoints(rocketMqProperties.endpoint())
-                    .setCredentialProvider(new StaticSessionCredentialsProvider(
-                            rocketMqProperties.username(), rocketMqProperties.password()))
-                    .build();
+            ClientConfigurationBuilder configuration =
+                    ClientConfiguration.newBuilder().setEndpoints(rocketMqSettingsService.endpoint());
+            String username = rocketMqSettingsService.username();
+            String password = rocketMqSettingsService.password();
+            if (!RocketMqSettingsService.isBlank(username) && !RocketMqSettingsService.isBlank(password)) {
+                configuration.setCredentialProvider(new StaticSessionCredentialsProvider(username, password));
+            }
             producer = provider.newProducerBuilder()
-                    .setClientConfiguration(configuration)
+                    .setClientConfiguration(configuration.build())
                     .setTopics(topic)
                     .build();
             Message message = provider.newMessageBuilder()

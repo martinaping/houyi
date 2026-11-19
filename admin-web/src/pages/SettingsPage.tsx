@@ -1,4 +1,4 @@
-import { ReloadOutlined, SendOutlined, UndoOutlined } from '@ant-design/icons';
+import { ApiOutlined, ReloadOutlined, SendOutlined, UndoOutlined } from '@ant-design/icons';
 import {
   Alert,
   App,
@@ -20,10 +20,22 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { request } from '../api/client';
 import { errorMessage } from '../api/errors';
-import type { AlertLogView, AlertStatus, AlertTestResult, SettingView } from '../api/types';
+import type {
+  AlertLogView,
+  AlertStatus,
+  AlertTestResult,
+  RocketMqTestResult,
+  SettingView,
+} from '../api/types';
 import { formatTime } from '../utils/format';
 
-const GROUP_ORDER = ['alert', 'security', 'runtime', 'retention'];
+const GROUP_ORDER = ['alert', 'rocketmq', 'security', 'runtime', 'retention'];
+
+type RocketMqTestPayload = {
+  endpoint?: string;
+  username?: string;
+  password?: string;
+};
 
 const APPLY_MODE_COLOR: Record<string, string> = {
   INSTANT: 'green',
@@ -126,6 +138,8 @@ export function SettingsPage() {
       void queryClient.invalidateQueries({ queryKey: ['settings'] });
       void queryClient.invalidateQueries({ queryKey: ['alertStatus'] });
       void queryClient.invalidateQueries({ queryKey: ['retentionPreview'] });
+      void queryClient.invalidateQueries({ queryKey: ['queue'] });
+      void queryClient.invalidateQueries({ queryKey: ['health'] });
       void queryClient.invalidateQueries({ queryKey: ['systemInfo'] });
     },
     onError: (error) => message.error(errorMessage(t, error)),
@@ -153,6 +167,15 @@ export function SettingsPage() {
       }
       void queryClient.invalidateQueries({ queryKey: ['alertLogs'] });
     },
+    onError: (error) => message.error(errorMessage(t, error)),
+  });
+
+  const rocketMqTestMutation = useMutation({
+    mutationFn: (payload: RocketMqTestPayload) =>
+      request<RocketMqTestResult>('/api/admin/settings/rocketmq/test', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
     onError: (error) => message.error(errorMessage(t, error)),
   });
 
@@ -203,11 +226,24 @@ export function SettingsPage() {
     setValues((previous) => ({ ...previous, [key]: value }));
   };
 
+  const handleRocketMqTest = () => {
+    const password = values['rocketmq.password'] ?? '';
+    const originalPassword = originals['rocketmq.password'] ?? '';
+    const unchanged = password === originalPassword || password.startsWith('****');
+    rocketMqTestMutation.mutate({
+      endpoint: values['rocketmq.endpoint'] ?? '',
+      username: values['rocketmq.username'] ?? '',
+      password: unchanged ? '' : password,
+    });
+  };
+
   const control = (item: SettingView) => {
     const value = values[item.key] ?? '';
+    const readonlyMode = item.editable === false;
     if (item.type === 'BOOLEAN') {
       return (
         <Switch
+          disabled={readonlyMode}
           checked={value === 'true'}
           onChange={(checked) => setValue(item.key, checked ? 'true' : 'false')}
         />
@@ -218,6 +254,7 @@ export function SettingsPage() {
         <Space size="middle" wrap>
           <InputNumber
             style={{ width: 220 }}
+            disabled={readonlyMode}
             min={item.min}
             max={item.max}
             value={value === '' ? null : Number(value)}
@@ -234,6 +271,7 @@ export function SettingsPage() {
       return (
         <Input.Password
           style={{ maxWidth: 420 }}
+          disabled={readonlyMode}
           value={value}
           placeholder={t('settings.sensitivePlaceholder')}
           onChange={(event) => setValue(item.key, event.target.value)}
@@ -244,6 +282,7 @@ export function SettingsPage() {
     return (
       <Input
         style={{ maxWidth: 420 }}
+        disabled={readonlyMode}
         value={value}
         placeholder={item.defaultValue || undefined}
         onChange={(event) => setValue(item.key, event.target.value)}
@@ -293,6 +332,7 @@ export function SettingsPage() {
   ];
 
   const status = alertStatusQuery.data;
+  const rocketMqTestResult = rocketMqTestMutation.data;
 
   return (
     <Space orientation="vertical" size="large" style={{ width: '100%' }}>
@@ -379,6 +419,61 @@ export function SettingsPage() {
                     </Card>
                   ) : null}
 
+                  {group === 'rocketmq' ? (
+                    <Card
+                      title={t('settings.rocketMq.title')}
+                      extra={
+                        <Button
+                          icon={<ApiOutlined />}
+                          loading={rocketMqTestMutation.isPending}
+                          onClick={handleRocketMqTest}
+                        >
+                          {t('settings.rocketMq.test')}
+                        </Button>
+                      }
+                    >
+                      {rocketMqTestResult ? (
+                        rocketMqTestResult.state === 'UP' ? (
+                          <Alert
+                            type="success"
+                            showIcon
+                            title={t('settings.rocketMq.testSuccess')}
+                            description={
+                              <Space size="large" wrap>
+                                <Typography.Text>
+                                  {t('settings.rocketMq.endpoint')}:{' '}
+                                  {rocketMqTestResult.endpoint || '-'}
+                                </Typography.Text>
+                                <Typography.Text>
+                                  {t('settings.rocketMq.latency', {
+                                    ms: rocketMqTestResult.latencyMs ?? '-',
+                                  })}
+                                </Typography.Text>
+                                <Typography.Text>
+                                  {t('settings.rocketMq.checkedAt')}:{' '}
+                                  {formatTime(rocketMqTestResult.checkedAt)}
+                                </Typography.Text>
+                              </Space>
+                            }
+                          />
+                        ) : rocketMqTestResult.state === 'DOWN' ? (
+                          <Alert
+                            type="error"
+                            showIcon
+                            title={t('settings.rocketMq.testFailed')}
+                            description={rocketMqTestResult.message ?? '-'}
+                          />
+                        ) : (
+                          <Alert
+                            type="warning"
+                            showIcon
+                            title={t('settings.rocketMq.notConfigured')}
+                          />
+                        )
+                      ) : null}
+                    </Card>
+                  ) : null}
+
                   <Card
                     extra={
                       <Button
@@ -413,6 +508,9 @@ export function SettingsPage() {
                                     defaultValue: item.applyMode,
                                   })}
                                 </Tag>
+                                {item.editable === false ? (
+                                  <Tag>{t('settings.readOnly')}</Tag>
+                                ) : null}
                                 {changed ? (
                                   <Tag color="orange">{t('settings.changed')}</Tag>
                                 ) : null}
@@ -436,16 +534,18 @@ export function SettingsPage() {
                               ) : null}
                             </div>
                             <div style={{ flex: 1 }}>{control(item)}</div>
-                            <Button
-                              size="small"
-                              icon={<UndoOutlined />}
-                              loading={
-                                resetMutation.isPending && resetMutation.variables === item.key
-                              }
-                              onClick={() => confirmReset(item)}
-                            >
-                              {t('settings.reset')}
-                            </Button>
+                            {item.editable === false ? null : (
+                              <Button
+                                size="small"
+                                icon={<UndoOutlined />}
+                                loading={
+                                  resetMutation.isPending && resetMutation.variables === item.key
+                                }
+                                onClick={() => confirmReset(item)}
+                              >
+                                {t('settings.reset')}
+                              </Button>
+                            )}
                           </div>
                         );
                       })}

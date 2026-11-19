@@ -133,4 +133,23 @@ class SettingsServiceTest {
 
         assertEquals("SETTING_NOT_FOUND", ex.getCode());
     }
+
+    @Test
+    void rejectsReadOnlySetting() {
+        ApiException ex = assertThrows(ApiException.class,
+                () -> settingsService.update("rocketmq.retry-topic", "other-topic", "admin"));
+
+        assertEquals("SETTING_READONLY", ex.getCode());
+    }
+
+    @Test
+    void rocketMqRetryTopicIsReadOnly() {
+        SettingView view = settingsService.list().stream()
+                .filter(item -> "rocketmq.retry-topic".equals(item.key()))
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals(false, view.editable());
+        assertEquals(SettingsCatalog.APPLY_RESTART, view.applyMode());
+    }
 }

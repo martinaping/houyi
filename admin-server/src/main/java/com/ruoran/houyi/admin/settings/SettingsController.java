@@ -1,6 +1,7 @@
 package com.ruoran.houyi.admin.settings;
 
 import com.ruoran.houyi.admin.audit.AuditLogService;
+import com.ruoran.houyi.admin.queue.RocketMqProbeService;
 import com.ruoran.houyi.admin.security.AuthFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -23,10 +24,13 @@ public class SettingsController {
 
     private final SettingsService settingsService;
     private final AuditLogService auditLogService;
+    private final RocketMqProbeService rocketMqProbeService;
 
-    public SettingsController(SettingsService settingsService, AuditLogService auditLogService) {
+    public SettingsController(SettingsService settingsService, AuditLogService auditLogService,
+                              RocketMqProbeService rocketMqProbeService) {
         this.settingsService = settingsService;
         this.auditLogService = auditLogService;
+        this.rocketMqProbeService = rocketMqProbeService;
     }
 
     @GetMapping
@@ -52,6 +56,18 @@ public class SettingsController {
         return view;
     }
 
+    @PostMapping("/rocketmq/test")
+    public RocketMqProbeService.ProbeResult testRocketMq(
+            @RequestBody(required = false) RocketMqTestRequest request, HttpServletRequest servletRequest) {
+        RocketMqTestRequest params = request == null ? new RocketMqTestRequest(null, null, null) : request;
+        RocketMqProbeService.ProbeResult result = rocketMqProbeService.test(
+                params.endpoint(), params.username(), params.password());
+        String operator = String.valueOf(servletRequest.getAttribute(AuthFilter.ATTR_USERNAME));
+        auditLogService.record(operator, "ROCKETMQ_TEST", result.endpoint(),
+                "state=" + result.state() + ", message=" + abbreviate(result.message()), servletRequest);
+        return result;
+    }
+
     private String abbreviate(String value) {
         return value != null && value.length() > 200 ? value.substring(0, 200) + "..." : value;
     }
@@ -60,5 +76,8 @@ public class SettingsController {
     }
 
     public record ResetRequest(@NotBlank String key) {
+    }
+
+    public record RocketMqTestRequest(String endpoint, String username, String password) {
     }
 }

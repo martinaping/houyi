@@ -16,6 +16,7 @@ public record SettingView(
         long min,
         long max,
         String unit,
-        String applyMode
+        String applyMode,
+        boolean editable
 ) {
 }

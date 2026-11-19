@@ -5,8 +5,20 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { request } from '../api/client';
 import { errorMessage } from '../api/errors';
-import type { DelayStatusCount, QueueOverview } from '../api/types';
-import { formatNumber } from '../utils/format';
+import type { DelayStatusCount, QueueOverview, RocketMqState } from '../api/types';
+import { formatNumber, formatTime } from '../utils/format';
+
+const ROCKET_STATE_COLOR: Record<RocketMqState, string> = {
+  NOT_CONFIGURED: 'rgba(0, 0, 0, 0.45)',
+  UP: '#3f8600',
+  DOWN: '#cf1322',
+};
+
+const ROCKET_STATE_KEY: Record<RocketMqState, string> = {
+  NOT_CONFIGURED: 'queue.rocketState.notConfigured',
+  UP: 'queue.rocketState.up',
+  DOWN: 'queue.rocketState.down',
+};
 
 export function QueuePage() {
   const { t } = useTranslation();
@@ -82,11 +94,30 @@ export function QueuePage() {
           <Card loading={queueQuery.isLoading}>
             <Statistic
               title={t('queue.rocketMq')}
-              value={data?.rocketMqConfigured ? t('queue.rocketConfigured') : t('queue.notConfigured')}
+              value={t(ROCKET_STATE_KEY[data?.rocketMqState ?? 'NOT_CONFIGURED'])}
+              styles={{
+                content: {
+                  color: ROCKET_STATE_COLOR[data?.rocketMqState ?? 'NOT_CONFIGURED'],
+                },
+              }}
             />
-            <Typography.Text type="secondary">
+            <Typography.Text type="secondary" style={{ display: 'block' }}>
+              {data?.rocketMqEndpoint || '-'}
+            </Typography.Text>
+            <Typography.Text type="secondary" style={{ display: 'block' }}>
               {t('queue.retryTopic')}: {data?.rocketMqRetryTopic || '-'}
             </Typography.Text>
+            {data?.rocketMqState === 'UP' ? (
+              <Typography.Text type="secondary" style={{ display: 'block' }}>
+                {t('health.latency', { ms: data.rocketMqLatencyMs ?? '-' })} ·{' '}
+                {formatTime(data.rocketMqCheckedAt)}
+              </Typography.Text>
+            ) : null}
+            {data?.rocketMqState === 'DOWN' ? (
+              <Typography.Text type="danger" style={{ display: 'block' }}>
+                {data.rocketMqError || t('queue.rocketState.down')}
+              </Typography.Text>
+            ) : null}
           </Card>
         </Col>
       </Row>

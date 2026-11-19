@@ -78,6 +78,10 @@ public class SettingsService {
         SettingsCatalog.Definition definition = SettingsCatalog.find(key)
                 .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "SETTING_NOT_FOUND",
                         "未知配置项：" + key));
+        if (!definition.editable()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "SETTING_READONLY",
+                    "配置项 " + key + " 为只读，不支持后台修改");
+        }
         String normalized = normalize(definition, rawValue);
         long now = System.currentTimeMillis();
         int updated = jdbcTemplate.update("""
@@ -200,7 +204,8 @@ public class SettingsService {
                 definition.min(),
                 definition.max(),
                 definition.unit(),
-                definition.applyMode());
+                definition.applyMode(),
+                definition.editable());
     }
 
     static String mask(String value) {

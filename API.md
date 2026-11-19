@@ -446,8 +446,13 @@
   "mainStream": { "topic": "houyi:stream:msg", "length": 12 },
   "retryStream": { "topic": "houyi:stream:retry", "length": 0 },
   "delayMessages": [ { "status": 0, "count": 3 }, { "status": 1, "count": 10 } ],
-  "rocketMqConfigured": false,
-  "rocketMqRetryTopic": null
+  "rocketMqConfigured": true,
+  "rocketMqRetryTopic": "wechat-archive-retry",
+  "rocketMqState": "UP",
+  "rocketMqEndpoint": "http://127.0.0.1:8081",
+  "rocketMqLatencyMs": 5,
+  "rocketMqCheckedAt": 1763000000000,
+  "rocketMqError": "Endpoint 可达，客户端创建成功"
 }
 ```
 
@@ -457,8 +462,13 @@
 | `mainStream.topic/length` | string / long | 主 Stream 名称与长度，Redis 不可用时 `length` 为 `null` |
 | `retryStream.topic/length` | string / long | 重试 Stream 名称与长度 |
 | `delayMessages[]` | array | 延迟消息按状态分组计数（`status`：0 待投递，1 已投递） |
-| `rocketMqConfigured` | boolean | 是否配置了 RocketMQ |
+| `rocketMqConfigured` | boolean | 是否配置了 RocketMQ（后台设置优先，留空回退环境变量） |
 | `rocketMqRetryTopic` | string \| null | RocketMQ 重试 Topic |
+| `rocketMqState` | string | 探测状态：`NOT_CONFIGURED` / `UP` / `DOWN` |
+| `rocketMqEndpoint` | string | 当前生效的 RocketMQ Endpoint |
+| `rocketMqLatencyMs` | long \| null | TCP 连通性探测耗时（毫秒），未配置时为 `null` |
+| `rocketMqCheckedAt` | long \| null | 最近一次探测时间 |
+| `rocketMqError` | string \| null | 探测返回的说明信息，`DOWN` 时为错误原因 |
 
 ---
 
@@ -475,7 +485,10 @@
   "corps": { "total": 12, "enabled": 10 },
   "queue": { "redisMqEnabled": true, "mainStream": { "topic": "houyi:stream:msg", "length": 12 },
              "retryStream": { "topic": "houyi:stream:retry", "length": 0 },
-             "delayMessages": [], "rocketMqConfigured": false, "rocketMqRetryTopic": null },
+             "delayMessages": [], "rocketMqConfigured": true,
+             "rocketMqRetryTopic": "wechat-archive-retry", "rocketMqState": "UP",
+             "rocketMqEndpoint": "http://127.0.0.1:8081", "rocketMqLatencyMs": 5,
+             "rocketMqCheckedAt": 1763000000000, "rocketMqError": "Endpoint 可达，客户端创建成功" },
   "recentFailures": [],
   "version": "0.4.0",
   "serverTime": 1763000000000
@@ -511,7 +524,9 @@
   "database": { "ok": true, "latencyMs": 1, "message": "ok" },
   "redis": { "ok": true, "latencyMs": 1, "message": "ok" },
   "queue": { "redisMqEnabled": true, "mainStreamLength": 12, "retryStreamLength": 0,
-             "delayPending": 3, "rocketMqConfigured": false },
+             "delayPending": 3, "rocketMqConfigured": true, "rocketMqState": "UP",
+             "rocketMqLatencyMs": 5, "rocketMqCheckedAt": 1763000000000,
+             "rocketMqError": "Endpoint 可达，客户端创建成功" },
   "alert": { "enabled": true, "webhookConfigured": true, "lastAlertAt": 1762990000000 },
   "retention": { "cleanupEnabled": true, "lastCleanupAt": 1762900000000 },
   "corps": [
@@ -527,7 +542,7 @@
 | 字段 | 说明 |
 | --- | --- |
 | `database` / `redis` | `Check(ok, latencyMs, message)` |
-| `queue` | Stream 长度、待投递延迟消息数；Redis 异常时长度类字段为 `null` |
+| `queue` | Stream 长度、待投递延迟消息数；Redis 异常时长度类字段为 `null`；`rocketMqState/LatencyMs/CheckedAt/Error` 为 RocketMQ 探测结果，不可用不影响整体 `status` |
 | `alert.lastAlertAt` | 最近一次告警记录时间 |
 | `retention.lastCleanupAt` | 最近一次执行清理的时间（取审计 `RETENTION_EXECUTE`） |
 | `corps[]` | 主服务写入 Redis 的企业拉取指标：`lastEndAt`、`durationMs`、`lastFetched`、`totalFetched`、`lastError`、`lastErrorAt` |
@@ -557,10 +572,10 @@
   "redisDatabase": 5,
   "redisReachable": true,
   "redisMqEnabled": true,
-  "rocketMqConfigured": false,
+  "rocketMqConfigured": true,
   "corpTotal": 12,
   "corpEnabled": 10,
-  "settingCount": 27,
+  "settingCount": 31,
   "runtimeSettings": [
     { "key": "runtime.message-interval-ms", "value": "2000", "unit": "毫秒", "applyMode": "HOT" }
   ]
@@ -581,7 +596,7 @@
 
 `GET /api/admin/settings`
 
-响应 `200`：`SettingView[]`（27 项，按分组顺序返回）
+响应 `200`：`SettingView[]`（31 项，按分组顺序返回）
 
 ```json
 [
@@ -598,27 +613,29 @@
     "min": 0,
     "max": 0,
     "unit": "",
-    "applyMode": "INSTANT"
+    "applyMode": "INSTANT",
+    "editable": true
   }
 ]
 ```
 
 | 字段 | 说明 |
 | --- | --- |
-| `group` | `alert` / `retention` / `security` / `runtime` |
+| `group` | `alert` / `retention` / `security` / `runtime` / `rocketmq` |
 | `type` | `BOOLEAN` / `NUMBER` / `STRING` |
 | `sensitive` | 为 `true` 时 `value` 仅返回掩码（如 `****a1b2`） |
 | `min` / `max` | `NUMBER` 类型的取值范围，其它类型为 `0` |
 | `unit` | 数值单位（分钟/秒/毫秒/条/天/次/个/行/字符） |
 | `applyMode` | 生效方式，见 9.2 |
+| `editable` | 是否允许在后台修改；`false` 时仅展示，不可更新或恢复默认 |
 
 ### 9.2 生效方式
 
 | applyMode | 含义 |
 | --- | --- |
-| `INSTANT` | 管理端保存后立即生效（告警、保留、安全） |
+| `INSTANT` | 管理端保存后立即生效（告警、保留、安全、RocketMQ） |
 | `HOT` | 主服务每 30 秒轮询 `admin_config` 生效，保存后通常半分钟内生效 |
-| `RESTART` | 保存后需人工重启主服务（当前白名单未使用） |
+| `RESTART` | 保存后需人工重启主服务（当前用于 `rocketmq.retry-topic`，且该键只读） |
 
 ### 9.3 修改设置项
 
@@ -639,6 +656,7 @@
 - `alert.webhook-url`：不为空时必须以 `http://` 或 `https://` 开头。
 - 敏感项（如 `alert.webhook-url`）不接受以 `****` 开头的值，避免把掩码当成真实值写入。
 - 敏感项写入后，再次读取仅返回掩码 `****` + 后 4 位（原文长度 ≤ 4 时为 `****`）。
+- 只读项（`editable = false`，如 `rocketmq.retry-topic`）不接受更新或恢复默认。
 
 错误：
 
@@ -646,6 +664,7 @@
 | --- | --- | --- |
 | 400 | `SETTING_NOT_FOUND` | Key 不在白名单 |
 | 400 | `SETTING_INVALID` | 取值不符合类型、范围或格式 |
+| 400 | `SETTING_READONLY` | 配置项为只读，不支持后台修改 |
 
 ### 9.4 恢复默认值
 
@@ -657,9 +676,9 @@
 
 响应 `200`：恢复后的 `SettingView`。审计动作 `SETTING_RESET`。
 
-错误：`400 SETTING_NOT_FOUND`。
+错误：`400 SETTING_NOT_FOUND` / `400 SETTING_READONLY`。
 
-### 9.5 配置项清单（27 项）
+### 9.5 配置项清单（31 项）
 
 **告警（alert）**
 
@@ -707,6 +726,51 @@
 | `runtime.download-max-size` | 下载线程最大数 | NUMBER | `100` | 1~500 个 |
 | `runtime.oss-core-size` | OSS 上传核心线程数 | NUMBER | `4` | 1~200 个 |
 | `runtime.oss-max-size` | OSS 上传最大线程数 | NUMBER | `60` | 1~500 个 |
+
+**RocketMQ（rocketmq，管理端重试投递）**
+
+后台配置仅影响管理端手动重试投递；留空时回退到环境变量 `ROCKETMQ_ENDPOINT` / `ROCKETMQ_USERNAME` / `ROCKETMQ_PASSWORD`。主应用重试通道仍优先 Redis，不受此处配置影响。
+
+| Key | 名称 | 类型 | 默认值 | 范围/单位 |
+| --- | --- | --- | --- | --- |
+| `rocketmq.endpoint` | gRPC Proxy 地址 | STRING | 空 | 如 `http://127.0.0.1:8081`，即时生效 |
+| `rocketmq.username` | 访问用户名 | STRING | 空 | 留空回退环境变量，即时生效 |
+| `rocketmq.password` | 访问密码（敏感） | STRING | 空 | 留空回退环境变量，即时生效 |
+| `rocketmq.retry-topic` | 重试 Topic（只读） | STRING | 空 | 须与主应用 `ROCKETMQ_RETRY_TOPIC` 一致，重启生效 |
+
+### 9.6 RocketMQ 连接测试
+
+`POST /api/admin/settings/rocketmq/test`
+
+请求体可选；字段为空或密码为掩码回传（`****` 开头）时回退到当前生效配置：
+
+```json
+{ "endpoint": "http://127.0.0.1:8081", "username": "rocketmq", "password": "****abcd" }
+```
+
+响应 `200`：`ProbeResult`。审计动作 `ROCKETMQ_TEST`，`target` 为实际测试的 endpoint，`detail` 包含 `state` 与 `message`。
+
+```json
+{
+  "state": "UP",
+  "configured": true,
+  "endpoint": "http://127.0.0.1:8081",
+  "latencyMs": 5,
+  "checkedAt": 1763000000000,
+  "message": "Endpoint 可达，客户端创建成功"
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `state` | string | `NOT_CONFIGURED` / `UP` / `DOWN` |
+| `configured` | boolean | 实际测试的 endpoint 是否非空 |
+| `endpoint` | string | 实际测试的 endpoint |
+| `latencyMs` | long \| null | TCP 连通性探测耗时，未配置时为 `null` |
+| `checkedAt` | long | 本次测试时间 |
+| `message` | string | 成功说明或错误原因（最多 300 字符） |
+
+说明：测试只做 TCP 连通性探测并创建/关闭一次生产者，不会向业务 Topic 发送消息。
 
 ---
 

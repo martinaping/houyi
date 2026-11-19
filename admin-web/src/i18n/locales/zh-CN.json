@@ -12,7 +12,8 @@
     "retention": "数据清理",
     "audit": "审计日志",
     "settings": "系统设置",
-    "system": "系统信息"
+    "system": "系统信息",
+    "apiDocs": "API 文档"
   },
   "common": {
     "refresh": "刷新",
@@ -87,6 +88,9 @@
     "retryStream": "重试队列积压",
     "delayPending": "待投递延迟消息",
     "rocketMq": "RocketMQ",
+    "rocketMqUp": "可用",
+    "rocketMqDown": "不可用",
+    "rocketMqUnknown": "未配置",
     "alertsEnabled": "告警已开启",
     "alertsDisabled": "告警未开启",
     "webhookConfigured": "Webhook 已配置",
@@ -235,6 +239,11 @@
     "rocketConfigured": "已配置",
     "notConfigured": "未配置",
     "retryTopic": "重试 Topic",
+    "rocketState": {
+      "notConfigured": "未配置",
+      "up": "可用",
+      "down": "不可用"
+    },
     "unavailable": "读取失败"
   },
   "settings": {
@@ -242,6 +251,7 @@
     "save": "保存修改",
     "saveSuccess": "已保存 {{count}} 项配置",
     "sensitivePlaceholder": "保持掩码表示不修改",
+    "readOnly": "只读",
     "searchPlaceholder": "搜索配置项",
     "unsaved": "{{count}} 项未保存",
     "changed": "已修改",
@@ -259,6 +269,7 @@
     },
     "group": {
       "alert": "告警",
+      "rocketmq": "RocketMQ",
       "retention": "数据保留",
       "security": "安全",
       "runtime": "运行参数"
@@ -275,6 +286,12 @@
         "queue-enabled": "启用队列积压告警",
         "download-enabled": "启用下载失败告警",
         "corp-stall-enabled": "启用企业停滞告警"
+      },
+      "rocketmq": {
+        "endpoint": "Endpoint 地址",
+        "username": "用户名",
+        "password": "密码",
+        "retry-topic": "重试 Topic"
       },
       "retention": {
         "cleanup-enabled": "启用数据清理",
@@ -315,6 +332,16 @@
       "titleColumn": "标题",
       "content": "内容",
       "delivered": "已送达"
+    },
+    "rocketMq": {
+      "title": "RocketMQ 连接",
+      "test": "测试连接",
+      "testSuccess": "连接正常",
+      "testFailed": "连接失败",
+      "notConfigured": "尚未配置 RocketMQ，请先填写 Endpoint 与账号信息。",
+      "latency": "耗时 {{ms}} ms",
+      "checkedAt": "检测时间",
+      "endpoint": "Endpoint"
     }
   },
   "system": {
@@ -350,6 +377,15 @@
     "actionPlaceholder": "如 CORP_SECRET_ROTATE",
     "operatorPlaceholder": "操作人",
     "empty": "暂无审计日志"
+  },
+  "apiDocs": {
+    "title": "API 文档",
+    "versionTag": "v0.4.0",
+    "description": "管理端与主服务的全部 HTTP 接口说明，内容直接渲染仓库根目录的 API.md。",
+    "toc": "目录",
+    "searchPlaceholder": "搜索接口、字段或错误码",
+    "searchResult": "找到 {{count}} 个章节",
+    "searchEmpty": "没有匹配的内容"
   },
   "retention": {
     "title": "数据清理",

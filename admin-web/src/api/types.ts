@@ -81,6 +81,8 @@ export type DelayStatusCount = {
   count: number;
 };
 
+export type RocketMqState = 'NOT_CONFIGURED' | 'UP' | 'DOWN';
+
 export type QueueOverview = {
   redisMqEnabled: boolean;
   mainStream: StreamStats;
@@ -88,6 +90,11 @@ export type QueueOverview = {
   delayMessages: DelayStatusCount[];
   rocketMqConfigured: boolean;
   rocketMqRetryTopic: string;
+  rocketMqState: RocketMqState;
+  rocketMqEndpoint: string;
+  rocketMqLatencyMs: number | null;
+  rocketMqCheckedAt: number | null;
+  rocketMqError: string | null;
 };
 
 export type OverviewView = {
@@ -116,6 +123,16 @@ export type SettingView = {
   max: number;
   unit: string;
   applyMode: SettingApplyMode;
+  editable: boolean;
+};
+
+export type RocketMqTestResult = {
+  state: RocketMqState;
+  configured: boolean;
+  endpoint: string;
+  latencyMs: number | null;
+  checkedAt: number | null;
+  message: string | null;
 };
 
 export type CorpDetailView = {
@@ -252,6 +269,10 @@ export type HealthQueueStats = {
   retryStreamLength: number | null;
   delayPending: number | null;
   rocketMqConfigured: boolean;
+  rocketMqState: RocketMqState;
+  rocketMqLatencyMs: number | null;
+  rocketMqCheckedAt: number | null;
+  rocketMqError: string | null;
 };
 
 export type HealthAlertStats = {

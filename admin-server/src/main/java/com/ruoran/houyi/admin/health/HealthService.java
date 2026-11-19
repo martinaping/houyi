@@ -2,9 +2,10 @@ package com.ruoran.houyi.admin.health;
 
 import com.ruoran.houyi.admin.alert.AlertService;
 import com.ruoran.houyi.admin.config.RedisMqProperties;
-import com.ruoran.houyi.admin.config.RocketMqProperties;
+import com.ruoran.houyi.admin.config.RocketMqSettingsService;
 import com.ruoran.houyi.admin.queue.QueueOverview;
 import com.ruoran.houyi.admin.queue.QueueService;
+import com.ruoran.houyi.admin.queue.RocketMqProbeService;
 import com.ruoran.houyi.admin.settings.SettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,8 @@ public class HealthService {
     private final AlertService alertService;
     private final SettingsService settingsService;
     private final RedisMqProperties redisMqProperties;
-    private final RocketMqProperties rocketMqProperties;
+    private final RocketMqSettingsService rocketMqSettingsService;
+    private final RocketMqProbeService rocketMqProbeService;
 
     @Value("${admin.version}")
     private String version;
@@ -43,14 +45,16 @@ public class HealthService {
     public HealthService(JdbcTemplate jdbcTemplate, StringRedisTemplate redisTemplate,
                          QueueService queueService, AlertService alertService,
                          SettingsService settingsService, RedisMqProperties redisMqProperties,
-                         RocketMqProperties rocketMqProperties) {
+                         RocketMqSettingsService rocketMqSettingsService,
+                         RocketMqProbeService rocketMqProbeService) {
         this.jdbcTemplate = jdbcTemplate;
         this.redisTemplate = redisTemplate;
         this.queueService = queueService;
         this.alertService = alertService;
         this.settingsService = settingsService;
         this.redisMqProperties = redisMqProperties;
-        this.rocketMqProperties = rocketMqProperties;
+        this.rocketMqSettingsService = rocketMqSettingsService;
+        this.rocketMqProbeService = rocketMqProbeService;
     }
 
     public HealthReport check() {
@@ -108,11 +112,17 @@ public class HealthService {
                     overview.mainStream().length(),
                     overview.retryStream().length(),
                     delayPending,
-                    rocketMqProperties.configured());
+                    overview.rocketMqConfigured(),
+                    overview.rocketMqState(),
+                    overview.rocketMqLatencyMs(),
+                    overview.rocketMqCheckedAt(),
+                    overview.rocketMqError());
         } catch (RuntimeException ex) {
             log.warn("队列健康检查失败: {}", ex.getMessage());
+            RocketMqProbeService.ProbeResult probe = rocketMqProbeService.status();
             return new HealthReport.QueueStats(redisMqProperties.enabled(), null, null, null,
-                    rocketMqProperties.configured());
+                    rocketMqSettingsService.configured(), probe.state(), probe.latencyMs(),
+                    probe.checkedAt(), probe.message());
         }
     }
 

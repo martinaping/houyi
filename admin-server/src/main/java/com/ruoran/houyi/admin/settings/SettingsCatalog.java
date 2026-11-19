@@ -18,6 +18,7 @@ public final class SettingsCatalog {
     public static final String GROUP_RETENTION = "retention";
     public static final String GROUP_SECURITY = "security";
     public static final String GROUP_RUNTIME = "runtime";
+    public static final String GROUP_ROCKETMQ = "rocketmq";
 
     /** 管理端读取后立即生效 */
     public static final String APPLY_INSTANT = "INSTANT";
@@ -28,7 +29,16 @@ public final class SettingsCatalog {
 
     public record Definition(String key, String group, String type, String defaultValue,
                              String description, boolean sensitive, long min, long max,
-                             String unit, String applyMode) {
+                             String unit, String applyMode, boolean editable) {
+
+        /**
+         * 兼容旧定义：未显式声明时可在线修改。
+         */
+        public Definition(String key, String group, String type, String defaultValue,
+                          String description, boolean sensitive, long min, long max,
+                          String unit, String applyMode) {
+            this(key, group, type, defaultValue, description, sensitive, min, max, unit, applyMode, true);
+        }
     }
 
     private static final List<Definition> DEFINITIONS = List.of(
@@ -119,7 +129,21 @@ public final class SettingsCatalog {
                     "个", APPLY_HOT),
             new Definition("runtime.oss-max-size", GROUP_RUNTIME, TYPE_NUMBER, "60",
                     "OSS 上传线程池最大线程数", false, 1, 500,
-                    "个", APPLY_HOT)
+                    "个", APPLY_HOT),
+
+            // ---------- RocketMQ（管理端重试投递） ----------
+            new Definition("rocketmq.endpoint", GROUP_ROCKETMQ, TYPE_STRING, "",
+                    "RocketMQ 5.x gRPC Proxy 地址，例如 http://127.0.0.1:8081；留空时回退到环境变量 ROCKETMQ_ENDPOINT", false, 0, 0,
+                    "", APPLY_INSTANT),
+            new Definition("rocketmq.username", GROUP_ROCKETMQ, TYPE_STRING, "",
+                    "RocketMQ 访问用户名，留空时回退到环境变量 ROCKETMQ_USERNAME", false, 0, 0,
+                    "", APPLY_INSTANT),
+            new Definition("rocketmq.password", GROUP_ROCKETMQ, TYPE_STRING, "",
+                    "RocketMQ 访问密码，留空时回退到环境变量 ROCKETMQ_PASSWORD", true, 0, 0,
+                    "", APPLY_INSTANT),
+            new Definition("rocketmq.retry-topic", GROUP_ROCKETMQ, TYPE_STRING, "",
+                    "由主应用消费，必须与主应用环境变量 ROCKETMQ_RETRY_TOPIC 一致；仅展示，不支持后台修改", false, 0, 0,
+                    "", APPLY_RESTART, false)
     );
 
     private SettingsCatalog() {

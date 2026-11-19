@@ -7,6 +7,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { RequireAuth } from './auth/RequireAuth';
 import { AdminLayout } from './components/AdminLayout';
+import { ApiDocsPage } from './pages/ApiDocsPage';
 import { AuditLogsPage } from './pages/AuditLogsPage';
 import { CorpsPage } from './pages/CorpsPage';
 import { HealthPage } from './pages/HealthPage';
@@ -59,6 +60,7 @@ export function App() {
                   <Route path="audit" element={<AuditLogsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="system" element={<SystemPage />} />
+                  <Route path="api-docs" element={<ApiDocsPage />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

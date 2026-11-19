@@ -22,7 +22,8 @@ public record HealthReport(
     }
 
     public record QueueStats(boolean redisMqEnabled, Long mainStreamLength, Long retryStreamLength,
-                             Long delayPending, boolean rocketMqConfigured) {
+                             Long delayPending, boolean rocketMqConfigured, String rocketMqState,
+                             Long rocketMqLatencyMs, Long rocketMqCheckedAt, String rocketMqError) {
     }
 
     public record AlertStats(boolean enabled, boolean webhookConfigured, Long lastAlertAt) {
