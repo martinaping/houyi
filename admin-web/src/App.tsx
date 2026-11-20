@@ -7,7 +7,7 @@ import 'dayjs/locale/zh-cn';
 import { Component, useEffect } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { RequireAuth } from './auth/RequireAuth';
 import { AdminLayout } from './components/AdminLayout';
@@ -35,6 +35,34 @@ const queryClient = new QueryClient({
   },
 });
 
+// 使用数据路由，页面才能通过 useBlocker 拦截站内跳转（如设置页的未保存修改）。
+const router = createBrowserRouter([
+  { path: '/login', element: <LoginPage /> },
+  {
+    path: '/',
+    element: (
+      <RequireAuth>
+        <AdminLayout />
+      </RequireAuth>
+    ),
+    children: [
+      { index: true, element: <OverviewPage /> },
+      { path: 'health', element: <HealthPage /> },
+      { path: 'monitor', element: <MonitorPage /> },
+      { path: 'corps', element: <CorpsPage /> },
+      { path: 'messages', element: <MessagesPage /> },
+      { path: 'queue', element: <QueuePage /> },
+      { path: 'retention', element: <RetentionPage /> },
+      { path: 'audit', element: <AuditLogsPage /> },
+      { path: 'logs', element: <LogsPage /> },
+      { path: 'settings', element: <SettingsPage /> },
+      { path: 'system', element: <SystemPage /> },
+      { path: 'api-docs', element: <ApiDocsPage /> },
+      { path: '*', element: <NotFoundPage /> },
+    ],
+  },
+]);
+
 export function App() {
   const { t, i18n } = useTranslation();
   const antdLocale = i18n.language === 'en-US' ? enUS : zhCN;
@@ -52,38 +80,13 @@ export function App() {
       <AntdApp>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <BrowserRouter>
-              <ErrorBoundary
-                title={t('common.renderErrorTitle')}
-                description={t('common.renderErrorHint')}
-                reloadText={t('common.reload')}
-              >
-                <Routes>
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route
-                    element={
-                      <RequireAuth>
-                        <AdminLayout />
-                      </RequireAuth>
-                    }
-                  >
-                    <Route index element={<OverviewPage />} />
-                    <Route path="health" element={<HealthPage />} />
-                    <Route path="monitor" element={<MonitorPage />} />
-                    <Route path="corps" element={<CorpsPage />} />
-                    <Route path="messages" element={<MessagesPage />} />
-                    <Route path="queue" element={<QueuePage />} />
-                    <Route path="retention" element={<RetentionPage />} />
-                    <Route path="audit" element={<AuditLogsPage />} />
-                    <Route path="logs" element={<LogsPage />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                    <Route path="system" element={<SystemPage />} />
-                    <Route path="api-docs" element={<ApiDocsPage />} />
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Route>
-                </Routes>
-              </ErrorBoundary>
-            </BrowserRouter>
+            <ErrorBoundary
+              title={t('common.renderErrorTitle')}
+              description={t('common.renderErrorHint')}
+              reloadText={t('common.reload')}
+            >
+              <RouterProvider router={router} />
+            </ErrorBoundary>
           </AuthProvider>
         </QueryClientProvider>
       </AntdApp>

@@ -314,6 +314,10 @@
     "rangeHint": "范围 {{min}} ~ {{max}}",
     "invalidRange": "数值超出允许范围（{{min}} ~ {{max}}）",
     "noMatch": "没有匹配的配置项",
+    "unsavedConfirmTitle": "有未保存的修改",
+    "unsavedConfirmContent": "离开当前页面后，这些修改将丢失。确定要离开吗？",
+    "unsavedConfirmOk": "放弃修改并离开",
+    "unsavedConfirmCancel": "留在此页",
     "applyMode": {
       "INSTANT": "即时生效",
       "HOT": "热更新",
@@ -353,6 +357,7 @@
         "original-msg-days": "消息保留天数",
         "md5-index-days": "MD5 索引保留天数",
         "audit-retention-days": "审计日志保留天数",
+        "alert-log-days": "告警记录保留天数",
         "batch-size": "单次清理上限"
       },
       "security": {
@@ -462,7 +467,27 @@
     "timeRange": "时间范围",
     "actionPlaceholder": "如 CORP_SECRET_ROTATE",
     "operatorPlaceholder": "操作人",
-    "empty": "暂无审计日志"
+    "empty": "暂无审计日志",
+    "actions": {
+      "LOGIN_SUCCESS": "登录成功",
+      "LOGIN_FAILED": "登录失败",
+      "CORP_CREATE": "新增企业",
+      "CORP_UPDATE": "编辑企业",
+      "CORP_STATUS": "启用/停用企业",
+      "CORP_BATCH_STATUS": "批量启用/停用企业",
+      "CORP_SECRET_ROTATE": "轮换企业密钥",
+      "CORP_SECRET_REVEAL": "查看企业密钥",
+      "CORP_SECRET_REVEAL_FAILED": "查看企业密钥失败",
+      "MESSAGE_EXPORT": "导出消息",
+      "MESSAGE_RETRY": "重试消息",
+      "SETTING_UPDATE": "修改配置",
+      "SETTING_RESET": "恢复默认配置",
+      "ALERT_TEST": "发送测试告警",
+      "RETENTION_EXECUTE": "执行数据清理",
+      "AUDIT_EXPORT": "导出审计日志",
+      "LOG_DOWNLOAD": "下载服务日志",
+      "ROCKETMQ_TEST": "测试 RocketMQ 连接"
+    }
   },
   "logs": {
     "title": "日志中心",
@@ -496,7 +521,7 @@
   },
   "apiDocs": {
     "title": "API 文档",
-    "versionTag": "v0.6.0",
+    "versionTag": "v0.7.0",
     "description": "管理端与主服务的全部 HTTP 接口说明，内容直接渲染仓库根目录的 API.md。",
     "toc": "目录",
     "searchPlaceholder": "搜索接口、字段或错误码",
@@ -514,6 +539,7 @@
     "originalMsgDays": "已推送消息",
     "md5IndexDays": "MD5 索引",
     "auditLogDays": "审计日志",
+    "alertLogDays": "告警记录",
     "days": "{{days}} 天",
     "category": "数据类别",
     "candidates": "待清理条数",
@@ -521,7 +547,13 @@
     "execute": "执行清理",
     "executeTitle": "确认清理 {{category}}",
     "executeHint": "请输入 DELETE 以确认执行本次清理，操作不可恢复。",
-    "executeSuccess": "{{category}} 已清理 {{deleted}} 条"
+    "executeSuccess": "{{category}} 已清理 {{deleted}} 条",
+    "categories": {
+      "ORIGINAL_MSG": "已推送消息",
+      "MD5_INDEX": "MD5 索引",
+      "AUDIT_LOG": "审计日志",
+      "ALERT_LOG": "告警记录"
+    }
   },
   "errors": {
     "UNKNOWN": "请求失败，请稍后重试",

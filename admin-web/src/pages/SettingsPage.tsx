@@ -18,6 +18,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useBlocker } from 'react-router-dom';
 import { request } from '../api/client';
 import { errorMessage } from '../api/errors';
 import type {
@@ -144,6 +145,22 @@ export function SettingsPage() {
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [dirtyKeys.length]);
+
+  // 站内跳转（左侧菜单、返回首页等）同样需要确认，避免未保存的修改被静默丢弃。
+  const blocker = useBlocker(dirtyKeys.length > 0);
+  useEffect(() => {
+    if (blocker.state !== 'blocked') {
+      return;
+    }
+    modal.confirm({
+      title: t('settings.unsavedConfirmTitle'),
+      content: t('settings.unsavedConfirmContent'),
+      okText: t('settings.unsavedConfirmOk'),
+      cancelText: t('settings.unsavedConfirmCancel'),
+      onOk: () => blocker.proceed(),
+      onCancel: () => blocker.reset(),
+    });
+  }, [blocker, modal, t]);
 
   const saveMutation = useMutation({
     mutationFn: async (group: string) => {

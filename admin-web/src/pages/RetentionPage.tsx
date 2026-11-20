@@ -15,11 +15,17 @@ import {
 import type { TableColumnsType } from 'antd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { request } from '../api/client';
 import { errorMessage } from '../api/errors';
 import type { CleanupResult, RetentionCategoryPreview, RetentionPreview } from '../api/types';
 import { formatTime } from '../utils/format';
+
+/** 后端返回英文类别码，展示时映射为当前语言。 */
+function categoryLabel(t: TFunction, category: string): string {
+  return t(`retention.categories.${category}`, { defaultValue: category });
+}
 
 export function RetentionPage() {
   const { t } = useTranslation();
@@ -41,7 +47,10 @@ export function RetentionPage() {
       }),
     onSuccess: (result) => {
       message.success(
-        t('retention.executeSuccess', { category: result.category, deleted: result.deleted }),
+        t('retention.executeSuccess', {
+          category: categoryLabel(t, result.category),
+          deleted: result.deleted,
+        }),
       );
       setTarget(null);
       setConfirmText('');
@@ -64,7 +73,11 @@ export function RetentionPage() {
     {
       title: t('retention.category'),
       dataIndex: 'category',
-      render: (value: string) => <Tag color="blue">{value}</Tag>,
+      render: (value: string) => (
+        <Tag color="blue" title={value}>
+          {categoryLabel(t, value)}
+        </Tag>
+      ),
     },
     {
       title: t('retention.candidates'),
@@ -127,6 +140,11 @@ export function RetentionPage() {
           label: t('retention.auditLogDays'),
           children: t('retention.days', { days: preview.auditLogDays }),
         },
+        {
+          key: 'alert',
+          label: t('retention.alertLogDays'),
+          children: t('retention.days', { days: preview.alertLogDays }),
+        },
       ]
     : [];
 
@@ -172,7 +190,9 @@ export function RetentionPage() {
       </Card>
 
       <Modal
-        title={t('retention.executeTitle', { category: target ?? '' })}
+        title={t('retention.executeTitle', {
+          category: target ? categoryLabel(t, target) : '',
+        })}
         open={target !== null}
         okText={t('retention.execute')}
         okButtonProps={{

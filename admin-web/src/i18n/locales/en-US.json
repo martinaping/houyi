@@ -314,6 +314,10 @@
     "rangeHint": "Range {{min}} to {{max}}",
     "invalidRange": "Value must be between {{min}} and {{max}}",
     "noMatch": "No matching settings",
+    "unsavedConfirmTitle": "Unsaved changes",
+    "unsavedConfirmContent": "Your changes will be lost if you leave this page. Leave anyway?",
+    "unsavedConfirmOk": "Discard and leave",
+    "unsavedConfirmCancel": "Stay on this page",
     "applyMode": {
       "INSTANT": "Instant",
       "HOT": "Hot reload",
@@ -353,6 +357,7 @@
         "original-msg-days": "Message retention (days)",
         "md5-index-days": "MD5 index retention (days)",
         "audit-retention-days": "Audit log retention (days)",
+        "alert-log-days": "Alert log retention (days)",
         "batch-size": "Cleanup batch size"
       },
       "security": {
@@ -462,7 +467,27 @@
     "timeRange": "Time range",
     "actionPlaceholder": "e.g. CORP_SECRET_ROTATE",
     "operatorPlaceholder": "Operator",
-    "empty": "No audit logs"
+    "empty": "No audit logs",
+    "actions": {
+      "LOGIN_SUCCESS": "Signed in",
+      "LOGIN_FAILED": "Sign-in failed",
+      "CORP_CREATE": "Create corp",
+      "CORP_UPDATE": "Edit corp",
+      "CORP_STATUS": "Enable/disable corp",
+      "CORP_BATCH_STATUS": "Batch enable/disable corps",
+      "CORP_SECRET_ROTATE": "Rotate corp secret",
+      "CORP_SECRET_REVEAL": "Reveal corp secret",
+      "CORP_SECRET_REVEAL_FAILED": "Reveal corp secret failed",
+      "MESSAGE_EXPORT": "Export messages",
+      "MESSAGE_RETRY": "Retry message",
+      "SETTING_UPDATE": "Update settings",
+      "SETTING_RESET": "Reset setting",
+      "ALERT_TEST": "Send test alert",
+      "RETENTION_EXECUTE": "Run cleanup",
+      "AUDIT_EXPORT": "Export audit logs",
+      "LOG_DOWNLOAD": "Download service log",
+      "ROCKETMQ_TEST": "Test RocketMQ connection"
+    }
   },
   "logs": {
     "title": "Log center",
@@ -496,7 +521,7 @@
   },
   "apiDocs": {
     "title": "API documentation",
-    "versionTag": "v0.6.0",
+    "versionTag": "v0.7.0",
     "description": "All HTTP endpoints of admin-server and houyi, rendered directly from API.md at the repository root.",
     "toc": "Contents",
     "searchPlaceholder": "Search endpoints, fields or error codes",
@@ -514,6 +539,7 @@
     "originalMsgDays": "Pushed messages",
     "md5IndexDays": "MD5 index",
     "auditLogDays": "Audit logs",
+    "alertLogDays": "Alert logs",
     "days": "{{days}} days",
     "category": "Category",
     "candidates": "Candidates",
@@ -521,7 +547,13 @@
     "execute": "Clean up",
     "executeTitle": "Clean up {{category}}",
     "executeHint": "Type DELETE to confirm. This action cannot be undone.",
-    "executeSuccess": "{{category}}: {{deleted}} rows deleted"
+    "executeSuccess": "{{category}}: {{deleted}} rows deleted",
+    "categories": {
+      "ORIGINAL_MSG": "Pushed messages",
+      "MD5_INDEX": "MD5 index",
+      "AUDIT_LOG": "Audit logs",
+      "ALERT_LOG": "Alert logs"
+    }
   },
   "errors": {
     "UNKNOWN": "Request failed, please retry later",

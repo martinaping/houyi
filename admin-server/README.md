@@ -4,7 +4,7 @@
 
 - 技术栈：Java 21、Spring Boot 3.2.11、JdbcTemplate、Spring Data Redis、RocketMQ Client 5.0.7
 - 端口：`18081`
-- 版本：`0.6.0`
+- 版本：`0.7.0`
 
 ## 构建与启动
 
@@ -112,12 +112,12 @@ H2 开启 `AUTO_SERVER=TRUE` 后可与主服务同时连接；仅用于本地验
 ## 运维开关
 
 - 告警：系统设置页开启 `alert.enabled` 并填写 `alert.webhook-url`（企业微信机器人地址）。
-- 清理：默认关闭，需开启 `retention.cleanup-enabled`，执行时输入 `DELETE` 确认；单次删除条数受 `retention.batch-size` 限制。
+- 清理：默认关闭，需开启 `retention.cleanup-enabled`，执行时输入 `DELETE` 确认；单次删除条数受 `retention.batch-size` 限制。可清理已推送消息、MD5 索引、审计日志与告警记录。
 - 密钥查看：需再次输入管理员密码，失败会记录审计。
 
 ## 配置分组与生效方式
 
-`SettingsCatalog` 为白名单（27 项），分为四组：
+`SettingsCatalog` 为白名单（28 项），分为四组：
 
 | 分组 | 内容 | 生效方式 |
 | --- | --- | --- |

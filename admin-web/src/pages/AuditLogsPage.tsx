@@ -15,6 +15,7 @@ import {
 import type { TableColumnsType } from 'antd';
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
 import type { Dayjs } from 'dayjs';
+import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { download, request } from '../api/client';
@@ -36,6 +37,11 @@ type FilterForm = {
   operator?: string;
   range?: [Dayjs, Dayjs];
 };
+
+/** 动作码落库为英文常量，展示时映射为当前语言；未知动作码原样显示。 */
+function actionLabel(t: TFunction, action: string): string {
+  return t(`audit.actions.${action}`, { defaultValue: action });
+}
 
 const EMPTY_FILTERS: Filters = {
   action: '',
@@ -120,7 +126,11 @@ export function AuditLogsPage() {
       title: t('audit.action'),
       dataIndex: 'action',
       width: 180,
-      render: (value: string) => <Tag color="blue">{value}</Tag>,
+      render: (value: string) => (
+        <Tag color="blue" title={value}>
+          {actionLabel(t, value)}
+        </Tag>
+      ),
     },
     {
       title: t('audit.target'),

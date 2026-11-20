@@ -1,6 +1,6 @@
 # 后羿（houyi）API 文档
 
-> 版本：0.6.0
+> 版本：0.7.0
 > 适用服务：`admin-server`（管理端，默认 18081）、`houyi`（主服务，默认 18080）
 > 最后更新：2026-11-20
 
@@ -30,7 +30,7 @@
 | 响应头 | 说明 |
 | --- | --- |
 | `X-Trace-Id` | 本次请求的链路 ID。客户端可主动传入（`^[A-Za-z0-9_-]{8,64}$`），否则由服务端生成 |
-| `X-App-Version` | 服务端版本号，当前为 `0.6.0` |
+| `X-App-Version` | 服务端版本号，当前为 `0.7.0` |
 
 **错误响应**（非 2xx）
 
@@ -89,7 +89,7 @@
   "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
   "tokenType": "Bearer",
   "expiresIn": 7200,
-  "user": { "username": "admin", "version": "0.6.0" }
+  "user": { "username": "admin", "version": "0.7.0" }
 }
 ```
 
@@ -130,7 +130,7 @@
 响应 `200`：
 
 ```json
-{ "username": "admin", "version": "0.6.0" }
+{ "username": "admin", "version": "0.7.0" }
 ```
 
 ---
@@ -490,7 +490,7 @@
              "rocketMqEndpoint": "http://127.0.0.1:8081", "rocketMqLatencyMs": 5,
              "rocketMqCheckedAt": 1763000000000, "rocketMqError": "Endpoint 可达，客户端创建成功" },
   "recentFailures": [],
-  "version": "0.6.0",
+  "version": "0.7.0",
   "serverTime": 1763000000000
 }
 ```
@@ -518,7 +518,7 @@
 ```json
 {
   "status": "UP",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "uptimeSeconds": 3600,
   "checkedAt": 1763000000000,
   "database": { "ok": true, "latencyMs": 1, "message": "ok" },
@@ -562,7 +562,7 @@
 
 ```json
 {
-  "version": "0.6.0",
+  "version": "0.7.0",
   "uptimeSeconds": 3600,
   "javaVersion": "21.0.2",
   "jdbcUrl": "jdbc:h2:file:/Users/jc/.houyi-local/db/houyi",
@@ -709,6 +709,7 @@
 | `retention.original-msg-days` | 消息保留天数 | NUMBER | `365` | 30~3650 天 |
 | `retention.md5-index-days` | MD5 索引保留天数 | NUMBER | `365` | 30~3650 天 |
 | `retention.audit-retention-days` | 审计日志保留天数 | NUMBER | `180` | 30~3650 天 |
+| `retention.alert-log-days` | 告警记录保留天数 | NUMBER | `90` | 7~3650 天 |
 | `retention.batch-size` | 单次清理上限 | NUMBER | `1000` | 10~10000 行 |
 
 **安全（security）**
@@ -936,10 +937,12 @@
   "originalMsgDays": 365,
   "md5IndexDays": 365,
   "auditLogDays": 180,
+  "alertLogDays": 90,
   "categories": [
     { "category": "ORIGINAL_MSG", "candidates": 1200, "earliest": 1700000000000 },
     { "category": "MD5_INDEX", "candidates": 0, "earliest": null },
-    { "category": "AUDIT_LOG", "candidates": 30, "earliest": 1710000000000 }
+    { "category": "AUDIT_LOG", "candidates": 30, "earliest": 1710000000000 },
+    { "category": "ALERT_LOG", "candidates": 12, "earliest": 1715000000000 }
   ]
 }
 ```
@@ -948,8 +951,8 @@
 | --- | --- |
 | `cleanupEnabled` | 对应 `retention.cleanup-enabled`，为 `false` 时不允许执行 |
 | `batchSize` | 单次清理上限（`retention.batch-size`） |
-| `originalMsgDays` / `md5IndexDays` / `auditLogDays` | 各类数据的保留天数 |
-| `categories[].category` | `ORIGINAL_MSG` / `MD5_INDEX` / `AUDIT_LOG` |
+| `originalMsgDays` / `md5IndexDays` / `auditLogDays` / `alertLogDays` | 各类数据的保留天数 |
+| `categories[].category` | `ORIGINAL_MSG` / `MD5_INDEX` / `AUDIT_LOG` / `ALERT_LOG` |
 | `categories[].candidates` | 超过保留期、可被清理的行数 |
 | `categories[].earliest` | 候选行中最早的时间戳，无候选时为 `null` |
 
@@ -963,7 +966,7 @@
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| `category` | string | 是 | `ORIGINAL_MSG` / `MD5_INDEX` / `AUDIT_LOG` |
+| `category` | string | 是 | `ORIGINAL_MSG` / `MD5_INDEX` / `AUDIT_LOG` / `ALERT_LOG` |
 | `confirm` | string | 是 | 必须为 `DELETE`（大小写不敏感） |
 
 响应 `200`：

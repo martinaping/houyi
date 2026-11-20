@@ -16,8 +16,8 @@ import java.util.Set;
 /**
  * 数据保留与清理。
  *
- * <p>只删除管理端明确允许的三类数据：已推送的 original_msg、已上传 OSS 的 md5index、
- * 过期审计日志。默认关闭，执行前必须预览并显式确认。</p>
+ * <p>只删除管理端明确允许的四类数据：已推送的 original_msg、已上传 OSS 的 md5index、
+ * 过期审计日志与告警记录。默认关闭，执行前必须预览并显式确认。</p>
  */
 @Service
 public class RetentionService {
@@ -25,7 +25,8 @@ public class RetentionService {
     private static final Logger log = LoggerFactory.getLogger(RetentionService.class);
     private static final long DAY_MILLIS = 86_400_000L;
     private static final int DELETE_CHUNK = 500;
-    private static final Set<String> CATEGORIES = Set.of("ORIGINAL_MSG", "MD5_INDEX", "AUDIT_LOG");
+    private static final Set<String> CATEGORIES =
+            Set.of("ORIGINAL_MSG", "MD5_INDEX", "AUDIT_LOG", "ALERT_LOG");
 
     private final JdbcTemplate jdbcTemplate;
     private final SettingsService settingsService;
@@ -39,6 +40,7 @@ public class RetentionService {
         int originalMsgDays = (int) settingsService.longValue("retention.original-msg-days", 365);
         int md5IndexDays = (int) settingsService.longValue("retention.md5-index-days", 365);
         int auditLogDays = (int) settingsService.longValue("retention.audit-retention-days", 180);
+        int alertLogDays = (int) settingsService.longValue("retention.alert-log-days", 90);
         int batchSize = (int) settingsService.longValue("retention.batch-size", 1000);
         long now = System.currentTimeMillis();
 
@@ -52,10 +54,13 @@ public class RetentionService {
         categories.add(categoryPreview("AUDIT_LOG",
                 "SELECT COUNT(1), MIN(created_at) FROM admin_audit_log WHERE created_at < ?",
                 now - auditLogDays * DAY_MILLIS));
+        categories.add(categoryPreview("ALERT_LOG",
+                "SELECT COUNT(1), MIN(created_at) FROM admin_alert_log WHERE created_at < ?",
+                now - alertLogDays * DAY_MILLIS));
 
         return new RetentionPreview(
                 settingsService.booleanValue("retention.cleanup-enabled"),
-                batchSize, originalMsgDays, md5IndexDays, auditLogDays, categories);
+                batchSize, originalMsgDays, md5IndexDays, auditLogDays, alertLogDays, categories);
     }
 
     @Transactional
@@ -87,10 +92,15 @@ public class RetentionService {
                     "DELETE FROM md5index WHERE oss_at > 0 AND oss_at < ? AND id IN (%s)",
                     now - settingsService.longValue("retention.md5-index-days", 365) * DAY_MILLIS,
                     batchSize);
-            default -> deleteBatch(
+            case "AUDIT_LOG" -> deleteBatch(
                     "SELECT id FROM admin_audit_log WHERE created_at < ? ORDER BY id ASC LIMIT ?",
                     "DELETE FROM admin_audit_log WHERE created_at < ? AND id IN (%s)",
                     now - settingsService.longValue("retention.audit-retention-days", 180) * DAY_MILLIS,
+                    batchSize);
+            default -> deleteBatch(
+                    "SELECT id FROM admin_alert_log WHERE created_at < ? ORDER BY id ASC LIMIT ?",
+                    "DELETE FROM admin_alert_log WHERE created_at < ? AND id IN (%s)",
+                    now - settingsService.longValue("retention.alert-log-days", 90) * DAY_MILLIS,
                     batchSize);
         };
 

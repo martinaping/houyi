@@ -11,6 +11,7 @@ public record RetentionPreview(
         int originalMsgDays,
         int md5IndexDays,
         int auditLogDays,
+        int alertLogDays,
         List<CategoryPreview> categories
 ) {
     public record CategoryPreview(String category, long candidates, Long earliest) {

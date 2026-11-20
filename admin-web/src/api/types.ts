@@ -238,6 +238,7 @@ export type RetentionPreview = {
   originalMsgDays: number;
   md5IndexDays: number;
   auditLogDays: number;
+  alertLogDays: number;
   categories: RetentionCategoryPreview[];
 };
 
