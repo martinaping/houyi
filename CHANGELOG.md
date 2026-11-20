@@ -1,5 +1,22 @@
 # 更新日志
 
+## v0.5.0（2026-11-20）
+
+### 新增
+
+- 日志中心：新增 `/api/admin/logs/sources`、`/api/admin/logs/tail`、`/api/admin/logs/download`，集中查看 admin-server、主服务应用/启动、消息拉取/下载、RocketMQ、一键脚本与前端开发日志；支持来源、文件、级别、关键字过滤，单次读取上限 8 MB / 2000 行，下载仅允许白名单文件并写审计 `LOG_DOWNLOAD`。
+- 前端新增「日志中心」页：来源与文件切换、级别/关键字过滤、自动刷新、行号与等宽展示、下载入口。
+- admin-server 日志落盘：新增 `FILE` appender，输出 `${LOG_PATH}/admin-server.log`，按大小与时间滚动（50 MB / 14 天 / 500 MB 上限）。
+- 可观测性：admin-server 引入 `micrometer-registry-prometheus` 并暴露 `/actuator/prometheus`；新增 `/api/admin/monitor/overview` 抓取主应用 `/houyi-eye/prometheus`，汇总 JVM（堆/非堆、线程、GC、CPU、运行时长、类加载）、HTTP 请求（总数/4xx/5xx/平均/最大、按 method+URI Top12）、HikariCP 连接池、线程池与 `dayu_*` 业务指标；抓取失败返回 `available=false` 并附错误信息。
+- 前端新增「监控指标」页：4 张统计卡、HTTP 明细表、连接池/线程池卡与业务指标表，15 秒自动刷新。
+- 新增一键启动脚本 `scripts/start-all.sh`，按顺序拉起 MySQL、Redis、RocketMQ、主服务、admin-server 与 admin-web。
+
+### 修复
+
+- 修复 `.gitignore` 的 `logs/` 规则误忽略 `admin-server/src/main/java/.../admin/logs` Java 包的问题，改为仅忽略根目录 `/logs/`。
+- 修复敏感配置值含反引号时的解析问题。
+- 修复未知路径 404 未统一走标准错误响应的问题。
+
 ## v0.4.0（2026-11-19）
 
 ### 新增

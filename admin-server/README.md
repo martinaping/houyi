@@ -4,7 +4,7 @@
 
 - 技术栈：Java 21、Spring Boot 3.2.11、JdbcTemplate、Spring Data Redis、RocketMQ Client 5.0.7
 - 端口：`18081`
-- 版本：`0.4.0`
+- 版本：`0.5.0`
 
 ## 构建与启动
 

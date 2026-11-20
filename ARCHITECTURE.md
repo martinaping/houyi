@@ -1,6 +1,6 @@
 # 后羿（Houyi）系统架构文档
 
-**当前版本**: v0.4.0
+**当前版本**: v0.5.0
 
 ## 📋 系统概述
 
@@ -388,6 +388,8 @@ CREATE TABLE md5_index (
 - `/houyi-eye/prometheus` - Prometheus 格式指标
 - `/houyi-eye/info` - 应用信息
 
+管理端 `admin-server` 同样引入 `micrometer-registry-prometheus`，自带 `/actuator/prometheus`（受 Spring Security/Actuator 自身策略保护，不经过登录过滤器），并作为抓取方汇总主应用指标供后台页面展示。
+
 ---
 
 ## 🚀 部署架构
@@ -598,6 +600,10 @@ houyi/
 | GET | `/api/admin/audit-logs` | 审计日志（keyset 游标，可按动作/操作人/时间筛选） |
 | GET | `/api/admin/audit-logs/export` | 按筛选条件导出审计日志 CSV（写审计） |
 | GET | `/api/admin/health` | 健康巡检：DB/Redis 探测、队列、告警、清理与运行指标 |
+| GET | `/api/admin/logs/sources` | 日志来源与文件清单（按来源分组，附大小/修改时间） |
+| GET | `/api/admin/logs/tail` | 读取日志尾部（来源/文件/级别/关键字过滤，8 MB、2000 行上限） |
+| GET | `/api/admin/logs/download` | 下载日志文件（路径白名单校验，写审计） |
+| GET | `/api/admin/monitor/overview` | 抓取主应用 Prometheus 指标并汇总 JVM/HTTP/连接池/线程池/业务指标 |
 | GET | `/api/admin/retention/preview` | 预览可清理数据量与最早时间 |
 | POST | `/api/admin/retention/execute` | 执行清理（需开启开关并输入 `DELETE` 确认） |
 
@@ -647,6 +653,14 @@ admin-web 设置页 ──PUT /api/admin/settings──> admin_config(group='run
 - 指标写入失败按 60 秒节流记录 warn，不阻断拉取与推送。
 - 管理端健康巡检每 30 秒自动刷新，展示企业维度的拉取耗时、条数与错误。
 
+### 日志中心与可观测性
+
+- **日志来源**：按来源扫描固定路径（admin-server 自身日志、主服务应用日志、消息拉取/下载、RocketMQ、一键脚本、前端开发日志），每个来源配置多个候选文件，按修改时间倒序。
+- **读取与下载**：`tail` 读取尾部（单次最多 8 MB / 2000 行），支持来源、文件、级别、关键字过滤；下载仅允许扫描白名单内的文件，并写审计。
+- **日志落盘**：admin-server 通过 `logback-spring.xml` 的 `FILE` appender 输出到 `${LOG_PATH}/admin-server.log`，按大小与时间滚动（50 MB / 14 天 / 500 MB 上限）。
+- **指标链路**：后台请求 `/api/admin/monitor/overview` → `MonitorService` 抓取主应用 `/houyi-eye/prometheus`（连接 2 秒、请求 5 秒超时）→ 解析 Prometheus 文本 → 聚合 JVM、HTTP（按 method+uri，Top12）、HikariCP、线程池与 `dayu_*` 业务指标；抓取失败返回 `available=false` 并附带错误与目标端点。
+- **外部采集**：Prometheus 可分别抓取主应用 `/houyi-eye/prometheus` 与 admin-server `/actuator/prometheus`，后台页面只做只读展示。
+
 ### 鉴权与安全
 
 - 单管理员账号，账号密码通过 `ADMIN_USERNAME` / `ADMIN_PASSWORD` 环境变量注入，不落库、不写日志。
@@ -675,6 +689,6 @@ admin-web 设置页 ──PUT /api/admin/settings──> admin_config(group='run
 
 ---
 
-**最后更新**: 2026-11-19  
+**最后更新**: 2026-11-20  
 **维护者**: Houyi Team
 

@@ -1,8 +1,8 @@
 # 后羿（houyi）API 文档
 
-> 版本：0.4.0
+> 版本：0.5.0
 > 适用服务：`admin-server`（管理端，默认 18081）、`houyi`（主服务，默认 18080）
-> 最后更新：2026-11-19
+> 最后更新：2026-11-20
 
 本文档覆盖系统对外提供的全部 HTTP 接口，包括管理端后台接口与主服务运维接口。
 
@@ -30,7 +30,7 @@
 | 响应头 | 说明 |
 | --- | --- |
 | `X-Trace-Id` | 本次请求的链路 ID。客户端可主动传入（`^[A-Za-z0-9_-]{8,64}$`），否则由服务端生成 |
-| `X-App-Version` | 服务端版本号，当前为 `0.4.0` |
+| `X-App-Version` | 服务端版本号，当前为 `0.5.0` |
 
 **错误响应**（非 2xx）
 
@@ -89,7 +89,7 @@
   "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
   "tokenType": "Bearer",
   "expiresIn": 7200,
-  "user": { "username": "admin", "version": "0.4.0" }
+  "user": { "username": "admin", "version": "0.5.0" }
 }
 ```
 
@@ -130,7 +130,7 @@
 响应 `200`：
 
 ```json
-{ "username": "admin", "version": "0.4.0" }
+{ "username": "admin", "version": "0.5.0" }
 ```
 
 ---
@@ -490,7 +490,7 @@
              "rocketMqEndpoint": "http://127.0.0.1:8081", "rocketMqLatencyMs": 5,
              "rocketMqCheckedAt": 1763000000000, "rocketMqError": "Endpoint 可达，客户端创建成功" },
   "recentFailures": [],
-  "version": "0.4.0",
+  "version": "0.5.0",
   "serverTime": 1763000000000
 }
 ```
@@ -518,7 +518,7 @@
 ```json
 {
   "status": "UP",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "uptimeSeconds": 3600,
   "checkedAt": 1763000000000,
   "database": { "ok": true, "latencyMs": 1, "message": "ok" },
@@ -562,7 +562,7 @@
 
 ```json
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "uptimeSeconds": 3600,
   "javaVersion": "21.0.2",
   "jdbcUrl": "jdbc:h2:file:/Users/jc/.houyi-local/db/houyi",
@@ -1135,7 +1135,134 @@
 
 ---
 
-## 14. 错误码总表
+## 14. 日志中心（`/api/admin/logs`）
+
+只读接口，用于在线查看与下载服务日志。来源与文件均按服务端扫描白名单解析，不接受任意路径。
+
+### 14.1 日志来源与文件清单
+
+```
+GET /api/admin/logs/sources
+```
+
+响应：
+
+```json
+{
+  "sources": [
+    {
+      "key": "admin-server",
+      "name": "管理端服务",
+      "description": "admin-server 运行日志",
+      "available": true,
+      "files": [
+        { "name": "admin-server.log", "path": "/tmp/admin-server.log", "size": 128394, "modifiedAt": 1795074108094 }
+      ]
+    }
+  ]
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `key` | string | 来源标识，用于 `tail` / `download` 的 `source` 参数 |
+| `available` | boolean | 该来源当前是否存在可读文件 |
+| `files[].path` | string | 服务端绝对路径，作为文件唯一标识 |
+| `files[].size` / `modifiedAt` | long | 字节数与最后修改时间（毫秒时间戳） |
+
+### 14.2 读取日志尾部
+
+```
+GET /api/admin/logs/tail?source=admin-server&file=/tmp/admin-server.log&lines=200&level=ERROR&keyword=timeout
+```
+
+| 参数 | 必填 | 说明 |
+| --- | --- | --- |
+| `source` | 否 | 来源 key，缺省取第一个可用来源 |
+| `file` | 否 | 文件绝对路径（须属于该来源），缺省取最新文件 |
+| `lines` | 否 | 返回行数，默认 200，最大 2000 |
+| `level` | 否 | 级别过滤：`ERROR` / `WARN` / `INFO` / `DEBUG` |
+| `keyword` | 否 | 关键字过滤（大小写不敏感） |
+
+响应为 `LogTailView`，单次读取上限 8 MB：
+
+```json
+{
+  "sourceKey": "admin-server",
+  "sourceName": "管理端服务",
+  "file": "admin-server.log",
+  "path": "/tmp/admin-server.log",
+  "size": 128394,
+  "modifiedAt": 1795074108094,
+  "truncated": false,
+  "matched": 12,
+  "lines": ["{\"ts\":\"2026-11-20T10:14:12.642+08:00\",\"level\":\"INFO\",...}"]
+}
+```
+
+### 14.3 下载日志文件
+
+```
+GET /api/admin/logs/download?source=admin-server&file=/tmp/admin-server.log
+```
+
+以 `text/plain; charset=UTF-8` 附件返回完整文件，文件名见 `Content-Disposition`。仅允许下载扫描白名单内的文件，每次下载写审计动作 `LOG_DOWNLOAD`。
+
+---
+
+## 15. 可观测性指标（`/api/admin/monitor`）
+
+### 15.1 指标汇总
+
+```
+GET /api/admin/monitor/overview
+```
+
+管理端抓取主应用 `MAIN_APP_BASE_URL` + `MAIN_APP_METRICS_PATH`（默认 `http://127.0.0.1:8080/houyi-eye/prometheus`，连接超时 2 秒、请求超时 5 秒），解析并汇总后返回：
+
+```json
+{
+  "available": true,
+  "error": null,
+  "source": "http://127.0.0.1:8080/houyi-eye/prometheus",
+  "scrapedAt": 1795074108094,
+  "jvm": {
+    "heapUsedBytes": 71489536, "heapMaxBytes": 4294967296, "nonHeapUsedBytes": 175456256,
+    "threadsLive": 71, "threadsPeak": 71, "classesLoaded": 23168,
+    "uptimeSeconds": 1279, "processCpuUsage": 0.001, "systemCpuUsage": 0.302,
+    "systemCpuCount": 12, "gcPauseCount": 2, "gcPauseSeconds": 0.425
+  },
+  "http": {
+    "total": 10, "serverErrors": 0, "clientErrors": 0,
+    "totalSeconds": 1.22, "maxSeconds": 0.246,
+    "byUri": [
+      { "method": "GET", "uri": "/houyi-eye/prometheus", "count": 6, "errors": 0, "avgSeconds": 0.075, "maxSeconds": 0.09 }
+    ]
+  },
+  "pool": { "active": 0, "idle": 10, "max": 10, "pending": 0, "timeoutTotal": 0 },
+  "executors": [
+    { "name": "downloadExecutor", "active": 0, "poolSize": 8, "queued": 0, "completed": 120 }
+  ],
+  "customMetrics": [
+    { "name": "dayu_timediff_ms", "description": "处理耗时", "labels": "type=push", "value": 12.0 }
+  ]
+}
+```
+
+| 字段 | 说明 |
+| --- | --- |
+| `available` | 是否成功抓取；失败时 `false`，`error` 为原因，其余指标字段为 `null` / 空数组 |
+| `jvm.processCpuUsage` / `systemCpuUsage` | CPU 使用率，0~1 小数，前端换算为百分比 |
+| `http.byUri` | 按 `method + uri` 聚合，按请求数倒序取前 12 条 |
+| `customMetrics` | `dayu_` 前缀的业务指标，最多 200 条，`labels` 为 `k=v, k=v` 形式 |
+| `pool` | HikariCP 连接池：活跃 / 空闲 / 上限 / 等待 / 超时累计 |
+| `executors` | 线程池执行器：活跃线程、池大小、排队任务、已完成任务 |
+
+> admin-server 自身也暴露 `/actuator/prometheus`（不在 `/api/admin` 鉴权范围内），外部 Prometheus 可分别抓取主应用 `/houyi-eye/prometheus` 与本服务 `/actuator/prometheus`。
+
+---
+
+## 16. 错误码总表
 
 | HTTP | code | 说明 | 出现位置 |
 | --- | --- | --- | --- |
