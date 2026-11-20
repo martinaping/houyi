@@ -30,7 +30,7 @@ log:
   path: ${LOG_PATH:/tmp/}
 
 admin:
-  version: 0.5.0
+  version: 0.5.1
   security:
     # 必须通过环境变量提供，未配置时服务拒绝启动
     username: ${ADMIN_USERNAME:admin}

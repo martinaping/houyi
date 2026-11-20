@@ -133,32 +133,32 @@ export function MonitorPage() {
   ];
 
   const executorColumns = [
-    { title: t('monitor.executor'), dataIndex: 'name', ellipsis: true },
+    { title: t('monitor.executor'), dataIndex: 'name', width: 160, ellipsis: true },
     {
       title: t('monitor.active'),
       dataIndex: 'active',
-      width: 90,
+      width: 72,
       align: 'right' as const,
       render: (value: number | null) => value ?? '-',
     },
     {
       title: t('monitor.poolSize'),
       dataIndex: 'poolSize',
-      width: 90,
+      width: 80,
       align: 'right' as const,
       render: (value: number | null) => value ?? '-',
     },
     {
       title: t('monitor.queued'),
       dataIndex: 'queued',
-      width: 90,
+      width: 80,
       align: 'right' as const,
       render: (value: number | null) => value ?? '-',
     },
     {
       title: t('monitor.completed'),
       dataIndex: 'completed',
-      width: 110,
+      width: 96,
       align: 'right' as const,
       render: (value: number | null) => (value == null ? '-' : numberFormat.format(value)),
     },
@@ -286,7 +286,7 @@ export function MonitorPage() {
           </Row>
 
           <Row gutter={[16, 16]}>
-            <Col xs={24} xl={14}>
+            <Col xs={24}>
               <Card title={t('monitor.httpTitle')} styles={{ body: { paddingTop: 16 } }}>
                 <Row gutter={[16, 16]}>
                   <Col span={6}>
@@ -322,7 +322,7 @@ export function MonitorPage() {
                 />
               </Card>
             </Col>
-            <Col xs={24} xl={10}>
+            <Col xs={24}>
               <Card title={t('monitor.poolTitle')}>
                 <Row gutter={[16, 16]}>
                   <Col span={8}>
@@ -353,6 +353,7 @@ export function MonitorPage() {
                     columns={executorColumns}
                     dataSource={data.executors}
                     pagination={false}
+                    scroll={{ x: 488 }}
                   />
                 ) : null}
               </Card>
