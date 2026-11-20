@@ -40,6 +40,9 @@ logs/
 # Git backup
 .git.backup.*
 
+# Trae 临时产物
+.trae-html-share-packages/
+
 # Application specific
 /tmp/
 *.amr
