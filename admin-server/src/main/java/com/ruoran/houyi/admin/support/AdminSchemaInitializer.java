@@ -31,7 +31,7 @@ public class AdminSchemaInitializer {
                     value_type VARCHAR(16) NOT NULL,
                     config_group VARCHAR(32) NOT NULL,
                     description VARCHAR(255),
-                    sensitive BIGINT NOT NULL DEFAULT 0,
+                    `sensitive` BIGINT NOT NULL DEFAULT 0,
                     updated_by VARCHAR(64),
                     updated_at BIGINT NOT NULL
                 )

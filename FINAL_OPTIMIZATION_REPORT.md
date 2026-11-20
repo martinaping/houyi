@@ -91,11 +91,6 @@ public class ThreadPoolConfig {
     public ThreadPoolTaskExecutor ossExecutor() {
         // OSS线程池：4-60线程
     }
-    
-    @Bean("mnsExecutor")
-    public ThreadPoolTaskExecutor mnsExecutor() {
-        // MNS线程池：16-64线程
-    }
 }
 ```
 
@@ -117,7 +112,6 @@ public class ThreadPoolConfig {
 public class HouyiProperties {
     private AliyunConfig aliyun;
     private RocketMqConfig rocketmq;
-    private MnsConfig mns;
     private DownloadConfig download;
 }
 ```
@@ -292,7 +286,6 @@ houyi:
 ### 并发能力
 - **下载并发**: 8-100 线程（可配置）
 - **OSS并发**: 4-60 线程（可配置）
-- **MNS并发**: 16-64 线程（可配置）
 - **队列容量**: 10,000+（可配置）
 
 ### 稳定性

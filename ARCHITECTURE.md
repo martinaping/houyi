@@ -12,7 +12,7 @@
 2. **媒体文件下载**: 下载图片、视频、文件等媒体内容
 3. **数据持久化**: 存储到 MySQL 数据库
 4. **文件存储**: 上传到阿里云 OSS
-5. **消息分发**: 通过 RocketMQ 和 MNS 分发给下游系统
+5. **消息分发**: 通过 RocketMQ 分发给下游系统，并异步备份到阿里云 MNS
 6. **失败重试**: 自动重试下载失败的文件
 
 ---
@@ -86,10 +86,8 @@
 │             │                  │ DownloadThreadKeeper │        │
 │             │                  │ (重新下载)            │        │
 │             │                  └──────────────────────┘        │
-│  ┌──────────┴───────────┐                                      │
-│  │  阿里云 MNS           │                                      │
-│  │  Queue: houyi-msgs   │                                      │
-│  └──────────┬───────────┘                                      │
+│             │                                                  │
+│             └── 发送成功后异步备份 ──> 阿里云 MNS (houyi-msgs)    │
 └─────────────┼────────────────────────────────────────────────────┘
               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -133,7 +131,7 @@
    │  └─ OriginalMsg 表
    └─ 发送到消息队列
       ├─ RocketMQ (TCP) → 下游系统
-      └─ MNS → 备份队列
+      └─ 异步备份 → 阿里云 MNS
 ```
 
 ### 2. 失败重试流程
@@ -237,12 +235,12 @@ CREATE TABLE md5_index (
 - **Queue Capacity**: 10000
 - **用途**: 并发上传文件到 OSS
 
-### 3. MNS Thread Pool (MNS 推送线程池)
+### 3. MNS Thread Pool (MNS 备份线程池)
 
 - **Core Size**: 16
 - **Max Size**: 64
 - **Queue Capacity**: 1280
-- **用途**: 并发推送消息到 MNS
+- **用途**: 异步把已发送成功的消息备份到阿里云 MNS，失败不影响主链路
 
 ---
 
@@ -263,7 +261,14 @@ CREATE TABLE md5_index (
   - 内网: `oss-cn-shanghai-internal.aliyuncs.com`
 - **Bucket**: `wechat-monitoring`
 
-### 3. 阿里云 RocketMQ
+### 3. 阿里云 MNS（备份消息队列）
+
+- **用途**: 主消息队列发送成功后异步备份一份，主队列不可用时可用于补发
+- **Endpoint**: 形如 `http://1234567890.mns.cn-shanghai.aliyuncs.com/`
+- **Queue**: `houyi-msgs`（默认）
+- **降级**: 未配置 endpoint/AccessKey 时自动跳过，不影响主链路
+
+### 4. 阿里云 RocketMQ
 
 #### TCP 实例（主消息队列）
 - **Instance ID**: `MQ_INST_1689796288110055_BXrMWl6w`
@@ -276,11 +281,6 @@ CREATE TABLE md5_index (
 - **Topic**: `msg_center`
 - **Tag**: `prod` / `dev`
 - **消息类型**: 延迟消息（30 秒）
-
-### 4. 阿里云 MNS
-
-- **Queue Name**: `houyi-msgs`
-- **用途**: 备份消息队列
 
 ### 5. MySQL
 
@@ -377,10 +377,9 @@ CREATE TABLE md5_index (
 
 | 指标名称 | 类型 | 说明 |
 |---------|------|------|
-| `houyi_pushed_msg_total` | Counter | 推送消息总数 |
-| `houyi_push_cost_seconds` | Summary | 推送耗时 |
+| `houyi_pushed_msg_total` | Counter | 推送消息总数（`service="mns"` 时为 MNS 备份结果，`result="success"/"failure"`） |
+| `houyi_push_cost_seconds` | Summary | 推送耗时（`type="mns"` 为 MNS 备份耗时） |
 | `houyi_shard_key_total` | Counter | ShardingKey 使用统计 |
-| `houyi_mns_real_pushed` | Counter | MNS 实际推送数 |
 
 ### Actuator 端点
 

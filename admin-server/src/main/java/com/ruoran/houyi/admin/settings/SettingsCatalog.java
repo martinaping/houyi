@@ -20,7 +20,6 @@ public final class SettingsCatalog {
     public static final String GROUP_SECURITY = "security";
     public static final String GROUP_RUNTIME = "runtime";
     public static final String GROUP_ROCKETMQ = "rocketmq";
-    public static final String GROUP_ALIYUN = "aliyun";
     public static final String GROUP_OSS = "oss";
     public static final String GROUP_MNS = "mns";
     public static final String GROUP_REDISMQ = "redismq";
@@ -159,14 +158,6 @@ public final class SettingsCatalog {
                     "由主应用消费，必须与主应用重试 Topic 一致；仅展示，不支持后台修改",
                     false, 0, 0, "", APPLY_RESTART, "ROCKETMQ_RETRY_TOPIC", false),
 
-            // ---------- 阿里云通用 AK/SK（主服务重启生效） ----------
-            new Definition("aliyun.access-key", GROUP_ALIYUN, TYPE_STRING, "",
-                    "阿里云通用 AccessKey ID，用于 MNS 等通用调用；环境变量 ALIYUN_ACCESS_KEY 有值时以其为准",
-                    true, 0, 0, "", APPLY_RESTART, "ALIYUN_ACCESS_KEY", true),
-            new Definition("aliyun.access-secret", GROUP_ALIYUN, TYPE_STRING, "",
-                    "阿里云通用 AccessKey Secret；环境变量 ALIYUN_ACCESS_SECRET 有值时以其为准",
-                    true, 0, 0, "", APPLY_RESTART, "ALIYUN_ACCESS_SECRET", true),
-
             // ---------- 阿里云 OSS（主服务重启生效） ----------
             new Definition("oss.bucket", GROUP_OSS, TYPE_STRING, "wechat-monitoring",
                     "会话存档媒体文件存放的 OSS Bucket；环境变量 ALIYUN_OSS_BUCKET 有值时以其为准",
@@ -181,13 +172,19 @@ public final class SettingsCatalog {
                     "OSS AccessKey Secret，加密存储；环境变量 ALIYUN_OSS_ACCESS_SECRET 有值时以其为准",
                     true, 0, 0, "", APPLY_RESTART, "ALIYUN_OSS_ACCESS_SECRET", true),
 
-            // ---------- 阿里云 MNS（主服务重启生效） ----------
+            // ---------- 阿里云 MNS 备份队列（主服务重启生效） ----------
             new Definition("mns.endpoint", GROUP_MNS, TYPE_STRING, "",
-                    "MNS 服务地址；环境变量 ALIYUN_MNS_ENDPOINT 有值时以其为准",
+                    "MNS 服务地址，如 http://1234567890.mns.cn-shanghai.aliyuncs.com/；环境变量 ALIYUN_MNS_ENDPOINT 有值时以其为准",
                     false, 0, 0, "", APPLY_RESTART, "ALIYUN_MNS_ENDPOINT", true),
-            new Definition("mns.queue-name", GROUP_MNS, TYPE_STRING, "",
+            new Definition("mns.queue-name", GROUP_MNS, TYPE_STRING, "houyi-msgs",
                     "MNS 队列名称；环境变量 ALIYUN_MNS_QUEUE_NAME 有值时以其为准",
                     false, 0, 0, "", APPLY_RESTART, "ALIYUN_MNS_QUEUE_NAME", true),
+            new Definition("mns.access-key", GROUP_MNS, TYPE_STRING, "",
+                    "MNS AccessKey ID，加密存储；环境变量 ALIYUN_MNS_ACCESS_KEY 有值时以其为准",
+                    true, 0, 0, "", APPLY_RESTART, "ALIYUN_MNS_ACCESS_KEY", true),
+            new Definition("mns.access-secret", GROUP_MNS, TYPE_STRING, "",
+                    "MNS AccessKey Secret，加密存储；环境变量 ALIYUN_MNS_ACCESS_SECRET 有值时以其为准",
+                    true, 0, 0, "", APPLY_RESTART, "ALIYUN_MNS_ACCESS_SECRET", true),
 
             // ---------- Redis MQ（主服务重启生效） ----------
             new Definition("redismq.enabled", GROUP_REDISMQ, TYPE_BOOLEAN, "true",

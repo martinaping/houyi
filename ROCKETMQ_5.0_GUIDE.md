@@ -168,10 +168,6 @@ ROCKETMQ_RETRY_GROUP_ID=GID_wechat_archive_retry
 
 # 消息 Tag（必需）
 ROCKETMQ_TAG=ChatDataJava
-
-# 阿里云访问凭证（必需）
-ALIYUN_ACCESS_KEY=your_access_key
-ALIYUN_ACCESS_SECRET=your_access_secret
 ```
 
 ### 可选的环境变量
@@ -215,7 +211,6 @@ public void sendDelayMessage(String message, String messageKey)  // 使用默认
 - ✅ 支持顺序消息（通过 `ShardingKey`）
 - ✅ 支持延迟消息（用于重试）
 - ✅ 自动从消息的 `from` 字段提取 `ShardingKey`
-- ✅ 同时发送到 RocketMQ 和 MNS（双写）
 - ✅ 完整的监控指标
 
 ### Consumer（消费者）
@@ -313,6 +308,8 @@ tail -f /var/log/houyi/houyi.log | grep "HouyiTcpRetryConsumer"
 - `houyi_pushed_msg_total{service="rocketmq",type="normal"}`: 主消息发送数
 - `houyi_pushed_msg_total{service="rocketmq",type="retry"}`: 重试消息发送数
 - `houyi_push_cost_seconds{type="rocketmq"}`: RocketMQ 发送耗时
+- `houyi_pushed_msg_total{service="mns",result="success|failure"}`: 发送成功后异步备份到阿里云 MNS 的结果
+- `houyi_push_cost_seconds{type="mns"}`: MNS 备份耗时
 - `houyi_shard_key_total{source="from"}`: 使用 from 字段的 ShardingKey 数量
 - `houyi_shard_key_total{source="random"}`: 使用随机 ShardingKey 数量
 - `houyi_retry_msg_total{result="resubmit"}`: 重试消息重新提交数

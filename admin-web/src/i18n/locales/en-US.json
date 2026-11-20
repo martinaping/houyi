@@ -6,11 +6,13 @@
   "nav": {
     "overview": "Overview",
     "health": "Health check",
+    "monitor": "Metrics",
     "corps": "Corporations",
     "messages": "Messages",
     "queue": "Queues",
     "retention": "Retention",
     "audit": "Audit logs",
+    "logs": "Log center",
     "settings": "Settings",
     "system": "System info",
     "apiDocs": "API docs"
@@ -246,6 +248,51 @@
     },
     "unavailable": "Unavailable"
   },
+  "monitor": {
+    "title": "Metrics",
+    "hint": "JVM, HTTP, connection pool, and business metrics collected from the main app's Prometheus endpoint.",
+    "scrapedAt": "Scraped at",
+    "unavailable": "Main app metrics unavailable",
+    "unavailableHint": "Make sure the main app is running and the metrics endpoint is reachable:",
+    "heap": "Heap",
+    "nonHeap": "Non-heap",
+    "threads": "Live threads",
+    "threadsPeak": "Peak threads",
+    "times": "times",
+    "processCpu": "Process CPU",
+    "systemCpu": "System CPU",
+    "cores": "cores",
+    "uptime": "Uptime",
+    "classesLoaded": "Classes loaded",
+    "httpTitle": "HTTP requests (cumulative)",
+    "totalRequests": "Total",
+    "serverErrors": "5xx",
+    "clientErrors": "4xx",
+    "avgLatency": "Avg latency",
+    "maxLatency": "Max latency",
+    "method": "Method",
+    "uri": "URI",
+    "count": "Requests",
+    "errors": "Errors",
+    "poolTitle": "DB pool & executors",
+    "active": "Active",
+    "idle": "Idle",
+    "max": "Max",
+    "pending": "Pending",
+    "timeout": "Timeouts",
+    "executor": "Executor",
+    "poolSize": "Threads",
+    "queued": "Queued",
+    "completed": "Completed",
+    "businessTitle": "Business metrics (dayu_*)",
+    "metric": "Metric",
+    "description": "Description",
+    "labels": "Labels",
+    "value": "Value",
+    "noData": "No data",
+    "noBusiness": "No business metrics",
+    "rawEndpoint": "Raw endpoint"
+  },
   "settings": {
     "title": "Settings",
     "save": "Save changes",
@@ -274,8 +321,7 @@
       "security": "Security",
       "runtime": "Runtime",
       "oss": "Aliyun OSS",
-      "mns": "Aliyun MNS",
-      "aliyun": "Aliyun AK/SK",
+      "mns": "Aliyun MNS (backup)",
       "redismq": "Redis Queue"
     },
     "keys": {
@@ -320,10 +366,6 @@
         "oss-core-size": "OSS core threads",
         "oss-max-size": "OSS max threads"
       },
-      "aliyun": {
-        "access-key": "AccessKey ID",
-        "access-secret": "AccessKey Secret"
-      },
       "oss": {
         "bucket": "Bucket",
         "endpoint": "Endpoint",
@@ -332,7 +374,9 @@
       },
       "mns": {
         "endpoint": "Endpoint",
-        "queue-name": "Queue name"
+        "queue-name": "Queue name",
+        "access-key": "AccessKey ID",
+        "access-secret": "AccessKey Secret"
       },
       "redismq": {
         "enabled": "Enable Redis queue",
@@ -413,6 +457,36 @@
     "actionPlaceholder": "e.g. CORP_SECRET_ROTATE",
     "operatorPlaceholder": "Operator",
     "empty": "No audit logs"
+  },
+  "logs": {
+    "title": "Log center",
+    "hint": "Browse startup, runtime, message processing, and middleware logs in one place for troubleshooting.",
+    "source": "Source",
+    "file": "File",
+    "level": "Level",
+    "lines": "Lines",
+    "keywordPlaceholder": "Filter by keyword, e.g. corpId / traceId",
+    "autoRefresh": "Auto refresh",
+    "download": "Download",
+    "emptySource": "No log files",
+    "empty": "No matching log lines",
+    "matched": "{{count}} matched lines",
+    "truncated": "Showing the latest {{count}} lines (file or match set was truncated).",
+    "notAvailable": "No log file generated for this source yet",
+    "viewerHint": "Reads up to the last 8MB, shows at most 2000 lines; auto refresh every 5 seconds.",
+    "path": "View full path",
+    "sources": {
+      "admin": "Admin server logs",
+      "app": "Main app startup & runtime logs",
+      "app-error": "Main app error logs",
+      "app-warn": "Main app warning logs",
+      "app-msg": "Main app message logs",
+      "app-download": "Main app download logs",
+      "app-mix": "Main app mixed message logs",
+      "rocketmq": "RocketMQ logs",
+      "startup": "Startup script logs",
+      "admin-web": "Frontend dev server logs"
+    }
   },
   "apiDocs": {
     "title": "API documentation",

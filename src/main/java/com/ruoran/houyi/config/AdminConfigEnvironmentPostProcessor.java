@@ -36,16 +36,16 @@ public class AdminConfigEnvironmentPostProcessor implements EnvironmentPostProce
      * 管理端配置 Key → 主应用属性名（同一值可能被 @Value 与 @ConfigurationProperties 分别读取）。
      */
     private static final List<Binding> BINDINGS = List.of(
-            new Binding("aliyun.access-key", "ALIYUN_ACCESS_KEY", "aliyun.key", "houyi.aliyun.key"),
-            new Binding("aliyun.access-secret", "ALIYUN_ACCESS_SECRET", "aliyun.secret", "houyi.aliyun.secret"),
             new Binding("oss.bucket", "ALIYUN_OSS_BUCKET", "aliyun.bucket", "houyi.aliyun.bucket"),
             new Binding("oss.endpoint", "ALIYUN_OSS_ENDPOINT", "aliyun.oss_end_point", "houyi.aliyun.oss-endpoint"),
             new Binding("oss.access-key", "ALIYUN_OSS_ACCESS_KEY",
                     "aliyun.oss_access_key", "houyi.aliyun.oss-access-key"),
             new Binding("oss.access-secret", "ALIYUN_OSS_ACCESS_SECRET",
                     "aliyun.oss_access_secret", "houyi.aliyun.oss-access-secret"),
-            new Binding("mns.endpoint", "ALIYUN_MNS_ENDPOINT", "aliyun.address"),
-            new Binding("mns.queue-name", "ALIYUN_MNS_QUEUE_NAME", "aliyun.queue-name"),
+            new Binding("mns.endpoint", "ALIYUN_MNS_ENDPOINT", "mns.endpoint"),
+            new Binding("mns.queue-name", "ALIYUN_MNS_QUEUE_NAME", "mns.queue-name"),
+            new Binding("mns.access-key", "ALIYUN_MNS_ACCESS_KEY", "mns.access-key"),
+            new Binding("mns.access-secret", "ALIYUN_MNS_ACCESS_SECRET", "mns.access-secret"),
             new Binding("rocketmq.endpoint", "ROCKETMQ_ENDPOINT", "rocketmq.endpoint"),
             new Binding("rocketmq.username", "ROCKETMQ_USERNAME", "rocketmq.username"),
             new Binding("rocketmq.password", "ROCKETMQ_PASSWORD", "rocketmq.password"),

@@ -335,3 +335,102 @@ export type AlertLogView = {
   error: string | null;
   createdAt: number;
 };
+
+export type LogFileView = {
+  name: string;
+  path: string;
+  size: number;
+  modifiedAt: number;
+};
+
+export type LogSourceView = {
+  key: string;
+  name: string;
+  description: string;
+  available: boolean;
+  files: LogFileView[];
+};
+
+export type LogSourcesView = {
+  sources: LogSourceView[];
+};
+
+export type LogTailView = {
+  sourceKey: string;
+  sourceName: string;
+  file: string;
+  path: string;
+  size: number;
+  modifiedAt: number;
+  truncated: boolean;
+  matched: number;
+  lines: string[];
+};
+
+export type MonitorJvm = {
+  heapUsedBytes: number | null;
+  heapMaxBytes: number | null;
+  nonHeapUsedBytes: number | null;
+  threadsLive: number | null;
+  threadsPeak: number | null;
+  classesLoaded: number | null;
+  uptimeSeconds: number | null;
+  processCpuUsage: number | null;
+  systemCpuUsage: number | null;
+  systemCpuCount: number | null;
+  gcPauseCount: number | null;
+  gcPauseSeconds: number | null;
+};
+
+export type MonitorHttpUri = {
+  method: string;
+  uri: string;
+  count: number;
+  errors: number;
+  avgSeconds: number;
+  maxSeconds: number;
+};
+
+export type MonitorHttp = {
+  total: number;
+  serverErrors: number;
+  clientErrors: number;
+  totalSeconds: number;
+  maxSeconds: number;
+  byUri: MonitorHttpUri[];
+};
+
+export type MonitorPool = {
+  active: number | null;
+  idle: number | null;
+  max: number | null;
+  pending: number | null;
+  timeoutTotal: number | null;
+};
+
+export type MonitorExecutor = {
+  name: string;
+  active: number | null;
+  poolSize: number | null;
+  queued: number | null;
+  completed: number | null;
+};
+
+export type MonitorCustomMetric = {
+  name: string;
+  description: string | null;
+  labels: string;
+  value: number;
+};
+
+export type MonitorOverview = {
+  available: boolean;
+  error: string | null;
+  source: string;
+  scrapedAt: number;
+  jvm: MonitorJvm | null;
+  http: MonitorHttp | null;
+  pool: MonitorPool | null;
+  executors: MonitorExecutor[];
+  customMetrics: MonitorCustomMetric[];
+};

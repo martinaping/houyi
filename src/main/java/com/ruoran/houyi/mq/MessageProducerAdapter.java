@@ -20,6 +20,9 @@ public class MessageProducerAdapter {
 
     @Autowired(required = false)
     private RuntimeMetricRecorder runtimeMetricRecorder;
+
+    @Autowired(required = false)
+    private MnsService mnsService;
     
     /**
      * 获取当前使用的消息生产者
@@ -45,6 +48,9 @@ public class MessageProducerAdapter {
             producer.send(message, messageKey);
             if (runtimeMetricRecorder != null) {
                 runtimeMetricRecorder.recordPushSuccess();
+            }
+            if (mnsService != null) {
+                mnsService.push(message);
             }
         } catch (RuntimeException ex) {
             recordPushFailure(ex.getMessage());

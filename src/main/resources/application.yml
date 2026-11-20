@@ -47,6 +47,10 @@ thread-pool:
     core-size: 4
     max-size: 60
     queue-capacity: 10000
+  mns:
+    core-size: 16
+    max-size: 64
+    queue-capacity: 1280
 
 # 后羿配置
 houyi:
@@ -55,12 +59,18 @@ houyi:
     oss-endpoint: ${ALIYUN_OSS_ENDPOINT:oss-cn-shanghai.aliyuncs.com}
     oss-access-key: ${ALIYUN_OSS_ACCESS_KEY:}
     oss-access-secret: ${ALIYUN_OSS_ACCESS_SECRET:}
-    key: ${ALIYUN_ACCESS_KEY:}
-    secret: ${ALIYUN_ACCESS_SECRET:}
   download:
     temp-path: /tmp/
     max-retry-count: 16
     big-file-timeout-ms: 300000
+
+# 阿里云 MNS 备份消息队列（主消息发送成功后异步备份一份）
+mns:
+  enabled: ${ALIYUN_MNS_ENABLED:true}
+  endpoint: ${ALIYUN_MNS_ENDPOINT:}
+  access-key: ${ALIYUN_MNS_ACCESS_KEY:}
+  access-secret: ${ALIYUN_MNS_ACCESS_SECRET:}
+  queue-name: ${ALIYUN_MNS_QUEUE_NAME:houyi-msgs}
 
 # RocketMQ 5.0 gRPC SDK 配置
 rocketmq:
@@ -96,5 +106,3 @@ aliyun:
   oss_end_point: ${ALIYUN_OSS_ENDPOINT:oss-cn-shanghai.aliyuncs.com}
   oss_access_key: ${ALIYUN_OSS_ACCESS_KEY:}
   oss_access_secret: ${ALIYUN_OSS_ACCESS_SECRET:}
-  key: ${ALIYUN_ACCESS_KEY:}
-  secret: ${ALIYUN_ACCESS_SECRET:}

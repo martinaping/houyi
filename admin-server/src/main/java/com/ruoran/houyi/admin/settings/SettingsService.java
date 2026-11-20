@@ -47,7 +47,7 @@ public class SettingsService {
             }
             jdbcTemplate.update("""
                             INSERT INTO admin_config (config_key, config_value, value_type, config_group,
-                                                      description, sensitive, updated_by, updated_at)
+                                                      description, `sensitive`, updated_by, updated_at)
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                             """,
                     definition.key(), definition.defaultValue(), definition.type(), definition.group(),
@@ -59,7 +59,7 @@ public class SettingsService {
         Map<String, StoredSetting> stored = new LinkedHashMap<>();
         jdbcTemplate.query("""
                         SELECT config_key, config_value, value_type, config_group, description,
-                               sensitive, updated_by, updated_at
+                               `sensitive`, updated_by, updated_at
                         FROM admin_config
                         """,
                 rs -> {
@@ -101,7 +101,7 @@ public class SettingsService {
         if (updated == 0) {
             jdbcTemplate.update("""
                             INSERT INTO admin_config (config_key, config_value, value_type, config_group,
-                                                      description, sensitive, updated_by, updated_at)
+                                                      description, `sensitive`, updated_by, updated_at)
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                             """,
                     definition.key(), storedValue, definition.type(), definition.group(),

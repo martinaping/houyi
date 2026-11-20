@@ -150,10 +150,6 @@ ROCKETMQ_TAG=wechat_msg
 ROCKETMQ_NAMESPACE=
 ROCKETMQ_PUBLIC_ENDPOINT=ep-uf6ia8cc038842986ac2.epsrv-uf6lsm3b2e4jyv0gnsrc.cn-shanghai.privatelink.aliyuncs.com:8080
 ROCKETMQ_RETRY_DELAY_MS=30000
-
-# 阿里云 AccessKey（RocketMQ 需要）
-ALIYUN_ACCESS_KEY=your_access_key_here
-ALIYUN_ACCESS_SECRET=your_access_secret_here
 ```
 
 ## 相关文件
@@ -162,7 +158,6 @@ ALIYUN_ACCESS_SECRET=your_access_secret_here
 - `src/main/java/com/ruoran/houyi/mq/HouyiTcpProductBean.java` - 生产者配置
 - `src/main/java/com/ruoran/houyi/mq/HouyiTcpRetryConsumer.java` - 重试消费者
 - `src/main/java/com/ruoran/houyi/mq/MqConfig.java` - RocketMQ 配置类
-- `src/main/java/com/ruoran/houyi/mq/AliyunConfig.java` - 阿里云配置类
 
 ## 注意事项
 

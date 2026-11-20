@@ -25,6 +25,10 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 20s
 
+log:
+  # 日志落盘目录，同时作为日志中心「主应用分类日志」的扫描目录
+  path: ${LOG_PATH:/tmp/}
+
 admin:
   version: 0.4.0
   security:
@@ -39,6 +43,10 @@ admin:
     allowed-origins: ${ADMIN_CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
   retry:
     enabled: ${ADMIN_RETRY_ENABLED:true}
+  monitor:
+    # 后台「监控指标」页抓取的主应用 Prometheus 端点
+    main-base-url: ${MAIN_APP_BASE_URL:http://127.0.0.1:8080}
+    main-metrics-path: ${MAIN_APP_METRICS_PATH:/houyi-eye/prometheus}
 
 rocketmq:
   endpoint: ${ROCKETMQ_ENDPOINT:}
@@ -58,7 +66,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,prometheus
   endpoint:
     health:
       probes:

@@ -12,6 +12,8 @@ import { AuditLogsPage } from './pages/AuditLogsPage';
 import { CorpsPage } from './pages/CorpsPage';
 import { HealthPage } from './pages/HealthPage';
 import { LoginPage } from './pages/LoginPage';
+import { LogsPage } from './pages/LogsPage';
+import { MonitorPage } from './pages/MonitorPage';
 import { MessagesPage } from './pages/MessagesPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { QueuePage } from './pages/QueuePage';
@@ -53,11 +55,13 @@ export function App() {
                 >
                   <Route index element={<OverviewPage />} />
                   <Route path="health" element={<HealthPage />} />
+                  <Route path="monitor" element={<MonitorPage />} />
                   <Route path="corps" element={<CorpsPage />} />
                   <Route path="messages" element={<MessagesPage />} />
                   <Route path="queue" element={<QueuePage />} />
                   <Route path="retention" element={<RetentionPage />} />
                   <Route path="audit" element={<AuditLogsPage />} />
+                  <Route path="logs" element={<LogsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="system" element={<SystemPage />} />
                   <Route path="api-docs" element={<ApiDocsPage />} />

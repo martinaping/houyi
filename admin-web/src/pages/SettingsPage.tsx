@@ -33,7 +33,6 @@ const GROUP_ORDER = [
   'alert',
   'oss',
   'mns',
-  'aliyun',
   'redismq',
   'rocketmq',
   'security',

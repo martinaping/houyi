@@ -622,7 +622,7 @@
 
 | 字段 | 说明 |
 | --- | --- |
-| `group` | `alert` / `oss` / `mns` / `aliyun` / `redismq` / `rocketmq` / `security` / `runtime` / `retention` |
+| `group` | `alert` / `oss` / `mns` / `redismq` / `rocketmq` / `security` / `runtime` / `retention` |
 | `type` | `BOOLEAN` / `NUMBER` / `STRING` |
 | `sensitive` | 为 `true` 时 `value` 仅返回掩码（如 `****a1b2`），数据库中以密文存储 |
 | `min` / `max` | `NUMBER` 类型的取值范围，其它类型为 `0` |
@@ -637,7 +637,7 @@
 | --- | --- |
 | `INSTANT` | 管理端保存后立即生效（告警、保留、安全、RocketMQ） |
 | `HOT` | 主服务每 30 秒轮询 `admin_config` 生效，保存后通常半分钟内生效 |
-| `RESTART` | 保存后需人工重启主服务（OSS/MNS/AK-SK/Redis 队列，以及只读的 `rocketmq.retry-topic`） |
+| `RESTART` | 保存后需人工重启主服务（OSS/MNS/Redis 队列，以及只读的 `rocketmq.retry-topic`） |
 
 ### 9.3 修改设置项
 
@@ -744,15 +744,6 @@
 | `rocketmq.password` | 访问密码（敏感） | STRING | 空 | 留空回退环境变量，即时生效 |
 | `rocketmq.retry-topic` | 重试 Topic（只读） | STRING | 空 | 须与主应用 `ROCKETMQ_RETRY_TOPIC` 一致，重启生效 |
 
-**阿里云通用 AK/SK（aliyun，重启生效）**
-
-主应用启动时读取，用于 MNS 等通用调用；对应环境变量 `ALIYUN_ACCESS_KEY` / `ALIYUN_ACCESS_SECRET`。
-
-| Key | 名称 | 类型 | 默认值 | 范围/单位 |
-| --- | --- | --- | --- | --- |
-| `aliyun.access-key` | AccessKey ID（敏感） | STRING | 空 | 密文存储 |
-| `aliyun.access-secret` | AccessKey Secret（敏感） | STRING | 空 | 密文存储 |
-
 **阿里云 OSS（oss，重启生效）**
 
 对应环境变量 `ALIYUN_OSS_BUCKET` / `ALIYUN_OSS_ENDPOINT` / `ALIYUN_OSS_ACCESS_KEY` / `ALIYUN_OSS_ACCESS_SECRET`。
@@ -764,14 +755,18 @@
 | `oss.access-key` | AccessKey ID（敏感） | STRING | 空 | 密文存储 |
 | `oss.access-secret` | AccessKey Secret（敏感） | STRING | 空 | 密文存储 |
 
-**阿里云 MNS（mns，重启生效）**
+**阿里云 MNS 备份队列（mns，重启生效）**
 
-对应环境变量 `ALIYUN_MNS_ENDPOINT` / `ALIYUN_MNS_QUEUE_NAME`。
+主消息发送成功后异步备份一份到 MNS；未配置时自动跳过，不影响主链路。
+
+对应环境变量 `ALIYUN_MNS_ENDPOINT` / `ALIYUN_MNS_QUEUE_NAME` / `ALIYUN_MNS_ACCESS_KEY` / `ALIYUN_MNS_ACCESS_SECRET`（开关为 `ALIYUN_MNS_ENABLED`，仅环境变量）。
 
 | Key | 名称 | 类型 | 默认值 | 范围/单位 |
 | --- | --- | --- | --- | --- |
-| `mns.endpoint` | Endpoint | STRING | 空 | - |
-| `mns.queue-name` | 队列名称 | STRING | 空 | - |
+| `mns.endpoint` | Endpoint | STRING | 空 | 如 `http://1234567890.mns.cn-shanghai.aliyuncs.com/` |
+| `mns.queue-name` | 队列名称 | STRING | `houyi-msgs` | - |
+| `mns.access-key` | AccessKey ID（敏感） | STRING | 空 | 密文存储 |
+| `mns.access-secret` | AccessKey Secret（敏感） | STRING | 空 | 密文存储 |
 
 **Redis 消息队列（redismq，重启生效）**
 
@@ -839,7 +834,7 @@
 主应用启动时由 `AdminConfigEnvironmentPostProcessor` 读取 `admin_config`，把非环境变量来源的值注入 Spring Environment（优先级低于系统环境变量、高于 `application.yml`），因此：
 
 - 生产环境可继续只使用环境变量，管理端仅作只读展示；
-- 测试或轻量部署可直接在后台填写 OSS/MNS/Redis 队列参数，重启主应用后生效；
+- 测试或轻量部署可直接在后台填写 OSS/Redis 队列参数，重启主应用后生效；
 - 已有敏感配置需要轮换主密钥时，修改 `HOUYI_CONFIG_KEY` 后原密文将无法解密，须在后台重新填写，因此变更前应先备份旧密钥。
 
 > `HOUYI_CONFIG_KEY` 至少 16 个字符，建议使用随机生成的 32 字节 Base64 字符串；该密钥不得与数据库备份存放在同一位置。

@@ -183,10 +183,6 @@ ROCKETMQ_ENDPOINT=http://1689796288110055.mqrest.cn-shanghai.aliyuncs.com
 
 # 实例 ID
 ROCKETMQ_INSTANCE_ID=MQ_INST_1689796288110055_BXkckLjP
-
-# === 阿里云访问凭证（共用）===
-ALIYUN_ACCESS_KEY=LTAI5txxxxxxxxxxxxx
-ALIYUN_ACCESS_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 ### 配置示例 (`.env`)
@@ -201,10 +197,6 @@ ROCKETMQ_TAG=ChatDataJava
 # RocketMQ HTTP 配置
 ROCKETMQ_ENDPOINT=http://1689796288110055.mqrest.cn-shanghai-internal.aliyuncs.com
 ROCKETMQ_INSTANCE_ID=MQ_INST_1689796288110055_BXkckLjP
-
-# 阿里云凭证
-ALIYUN_ACCESS_KEY=your_access_key
-ALIYUN_ACCESS_SECRET=your_access_secret
 ```
 
 ---
@@ -223,7 +215,6 @@ ALIYUN_ACCESS_SECRET=your_access_secret
 - 使用 TCP 协议（更高性能）
 - 支持分区顺序消息（通过 `ShardingKey`）
 - 自动从消息的 `from` 字段提取 `ShardingKey`
-- 同时发送到 RocketMQ 和 MNS（双写）
 
 **使用的配置**:
 - Topic: `${rocketmq.topic2}` (wechat-archive-msg-common)
@@ -444,9 +435,9 @@ tail -f /var/log/houyi/houyi.log | grep "MqHttp"
 系统暴露了以下 Prometheus 指标:
 
 - `houyi_pushed_msg_total{service="common"}`: 发送到 RocketMQ 的消息数
-- `houyi_pushed_msg_total{service="mns"}`: 发送到 MNS 的消息数
 - `houyi_push_cost_seconds{type="rocket"}`: RocketMQ 发送耗时
-- `houyi_push_cost_seconds{type="mns"}`: MNS 发送耗时
+- `houyi_pushed_msg_total{service="mns",result="success|failure"}`: 发送成功后异步备份到阿里云 MNS 的结果
+- `houyi_push_cost_seconds{type="mns"}`: MNS 备份耗时
 - `houyi_shard_key_total`: ShardingKey 使用统计
 
 访问: `http://localhost:8080/houyi-eye/prometheus`
@@ -518,10 +509,6 @@ ROCKETMQ_TAG=ChatDataJava
 # HTTP 重试队列
 ROCKETMQ_ENDPOINT=http://xxx.mqrest.cn-shanghai-internal.aliyuncs.com
 ROCKETMQ_INSTANCE_ID=MQ_INST_xxx
-
-# 凭证
-ALIYUN_ACCESS_KEY=your_key
-ALIYUN_ACCESS_SECRET=your_secret
 ```
 
 ---

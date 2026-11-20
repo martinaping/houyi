@@ -45,5 +45,3 @@ aliyun:
   oss_end_point: ${ALIYUN_OSS_ENDPOINT_INTERNAL:oss-cn-shanghai-internal.aliyuncs.com}
   oss_access_key: ${ALIYUN_OSS_ACCESS_KEY:}
   oss_access_secret: ${ALIYUN_OSS_ACCESS_SECRET:}
-  key: ${ALIYUN_ACCESS_KEY:}
-  secret: ${ALIYUN_ACCESS_SECRET:}

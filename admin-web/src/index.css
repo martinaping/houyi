@@ -10,3 +10,36 @@ body {
     'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   background: #f5f5f5;
 }
+
+.log-viewer {
+  max-height: 62vh;
+  overflow: auto;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: #0b1021;
+  color: #d6deeb;
+  font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.log-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.log-line.log-error {
+  color: #ff7875;
+}
+
+.log-line.log-warn {
+  color: #ffc069;
+}
+
+.log-line.log-info {
+  color: #b7c4d8;
+}
+
+.log-line.log-debug {
+  color: #6b7f9e;
+}

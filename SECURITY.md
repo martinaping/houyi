@@ -39,32 +39,28 @@ ALIYUN_OSS_ACCESS_KEY=你的OSS_AccessKey
 ALIYUN_OSS_ACCESS_SECRET=你的OSS_AccessSecret
 ```
 
-#### 2. 阿里云 MNS
+#### 2. 阿里云 MNS（备份队列）
 ```bash
+ALIYUN_MNS_ENDPOINT=你的MNS_Endpoint
+ALIYUN_MNS_QUEUE_NAME=houyi-msgs
 ALIYUN_MNS_ACCESS_KEY=你的MNS_AccessKey
 ALIYUN_MNS_ACCESS_SECRET=你的MNS_AccessSecret
 ```
 
-#### 3. 阿里云通用 AK/SK
-```bash
-ALIYUN_ACCESS_KEY=你的阿里云AccessKey
-ALIYUN_ACCESS_SECRET=你的阿里云AccessSecret
-```
-
-#### 4. MySQL 数据库
+#### 3. MySQL 数据库
 ```bash
 MYSQL_HOST=你的MySQL主机地址
 MYSQL_USERNAME=你的MySQL用户名
 MYSQL_PASSWORD=你的MySQL密码
 ```
 
-#### 5. Redis
+#### 4. Redis
 ```bash
 REDIS_HOST=你的Redis主机地址
 REDIS_PASSWORD=你的Redis密码
 ```
 
-#### 6. RocketMQ
+#### 5. RocketMQ
 ```bash
 ROCKETMQ_NAME_SRV_ADDR=你的RocketMQ地址
 ROCKETMQ_GROUP_ID=你的GroupID
