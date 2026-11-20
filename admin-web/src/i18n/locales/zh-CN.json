@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "houyi 管理后台",
+    "title": "后羿 管理后台",
     "version": "版本 {{version}}"
   },
   "nav": {
@@ -490,7 +490,7 @@
   },
   "apiDocs": {
     "title": "API 文档",
-    "versionTag": "v0.5.1",
+    "versionTag": "v0.5.2",
     "description": "管理端与主服务的全部 HTTP 接口说明，内容直接渲染仓库根目录的 API.md。",
     "toc": "目录",
     "searchPlaceholder": "搜索接口、字段或错误码",

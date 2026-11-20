@@ -12,15 +12,24 @@ function resolveInitialLanguage(): AppLanguage {
   return stored === 'en-US' ? 'en-US' : 'zh-CN';
 }
 
-void i18n.use(initReactI18next).init({
-  resources: {
-    'zh-CN': { translation: zhCN },
-    'en-US': { translation: enUS },
-  },
-  lng: resolveInitialLanguage(),
-  fallbackLng: 'zh-CN',
-  interpolation: { escapeValue: false },
-});
+function applyDocumentTitle(): void {
+  document.title = i18n.t('app.title');
+}
+
+void i18n
+  .use(initReactI18next)
+  .init({
+    resources: {
+      'zh-CN': { translation: zhCN },
+      'en-US': { translation: enUS },
+    },
+    lng: resolveInitialLanguage(),
+    fallbackLng: 'zh-CN',
+    interpolation: { escapeValue: false },
+  })
+  .then(applyDocumentTitle);
+
+i18n.on('languageChanged', applyDocumentTitle);
 
 export function changeLanguage(language: AppLanguage): void {
   localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
