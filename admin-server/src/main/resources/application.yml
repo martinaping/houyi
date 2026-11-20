@@ -30,7 +30,7 @@ log:
   path: ${LOG_PATH:/tmp/}
 
 admin:
-  version: 0.5.2
+  version: 0.6.0
   security:
     # 必须通过环境变量提供，未配置时服务拒绝启动
     username: ${ADMIN_USERNAME:admin}
@@ -39,6 +39,8 @@ admin:
     access-ttl: 30m
     refresh-ttl: 12h
     cookie-secure: ${ADMIN_COOKIE_SECURE:false}
+    # 仅在可信反向代理之后部署时才开启，否则客户端可伪造 X-Forwarded-For 绕过登录锁定
+    trust-forwarded-for: ${ADMIN_TRUST_FORWARDED_FOR:false}
   cors:
     allowed-origins: ${ADMIN_CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
   retry:

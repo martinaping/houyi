@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import apiMarkdown from '../../../API.md?raw';
+import { useAuth } from '../auth/AuthContext';
 
 type Block =
   | { kind: 'heading'; level: number; text: string; id: string }
@@ -269,6 +270,7 @@ function renderInline(text: string, keyPrefix: string, keyword = ''): ReactNode[
 
 export function ApiDocsPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { token } = theme.useToken();
 
   const blocks = useMemo(() => parseMarkdown(apiMarkdown), []);
@@ -425,7 +427,8 @@ export function ApiDocsPage() {
   return (
     <div>
       <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 4 }}>
-        <ApiOutlined /> {t('apiDocs.title')} <Tag color="blue">{t('apiDocs.versionTag')}</Tag>
+        <ApiOutlined /> {t('apiDocs.title')}{' '}
+        <Tag color="blue">{user?.version ? `v${user.version}` : t('apiDocs.versionTag')}</Tag>
       </Typography.Title>
       <Typography.Paragraph type="secondary" style={{ marginBottom: 12 }}>
         {t('apiDocs.description')}

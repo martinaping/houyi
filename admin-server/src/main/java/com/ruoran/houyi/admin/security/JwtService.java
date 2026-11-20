@@ -78,7 +78,12 @@ public class JwtService {
             throw new TokenInvalidException("令牌格式不正确");
         }
         String signingInput = parts[0] + "." + parts[1];
-        byte[] actual = DECODER.decode(parts[2]);
+        byte[] actual;
+        try {
+            actual = DECODER.decode(parts[2]);
+        } catch (IllegalArgumentException ex) {
+            throw new TokenInvalidException("令牌签名格式不正确");
+        }
         byte[] expected = sign(signingInput);
         if (!MessageDigest.isEqual(actual, expected)) {
             throw new TokenInvalidException("令牌签名不正确");

@@ -41,7 +41,12 @@
     "edit": "Edit",
     "save": "Save",
     "export": "Export CSV",
-    "exportSuccess": "Export download started"
+    "exportSuccess": "Export download started",
+    "notFoundHint": "This page does not exist or has been removed",
+    "backHome": "Back to overview",
+    "renderErrorTitle": "Page render error",
+    "renderErrorHint": "Reload to retry. If it keeps happening, check the server logs in Log Center.",
+    "reload": "Reload page"
   },
   "auth": {
     "subtitle": "WeCom message archive operations console",
@@ -402,6 +407,7 @@
       "webhook": "Webhook",
       "configured": "Configured",
       "notConfigured": "Not configured",
+      "statusLoadFailed": "Failed to load alert status; the display may be inaccurate",
       "recentLogs": "Recent alerts",
       "time": "Time",
       "severity": "Severity",
@@ -490,7 +496,7 @@
   },
   "apiDocs": {
     "title": "API documentation",
-    "versionTag": "v0.5.2",
+    "versionTag": "v0.6.0",
     "description": "All HTTP endpoints of admin-server and houyi, rendered directly from API.md at the repository root.",
     "toc": "Contents",
     "searchPlaceholder": "Search endpoints, fields or error codes",
@@ -545,6 +551,21 @@
     "CORP_PRIKEY_INVALID": "Invalid private key",
     "CORP_PARAM_INVALID": "Corporation parameter out of range",
     "CORP_IDS_EMPTY": "Select at least one corporation",
-    "CORP_STATUS_INVALID": "Enabled status is required"
+    "CORP_STATUS_INVALID": "Enabled status is required",
+    "LOG_SOURCE_REQUIRED": "Select a log source",
+    "LOG_SOURCE_NOT_FOUND": "Log source not found",
+    "LOG_FILE_INVALID": "Invalid log file name",
+    "LOG_FILE_NOT_FOUND": "Log file does not exist yet",
+    "LOG_FILE_DENIED": "Access to this log file is denied",
+    "LOG_READ_FAILED": "Failed to read logs",
+    "LOGIN_LOCKED": "Too many failed attempts, please try again later",
+    "SETTING_READONLY": "This setting is read-only",
+    "SETTING_ENV_OVERRIDDEN": "This setting is overridden by an environment variable",
+    "SETTING_KEY_MISSING": "Setting key is required",
+    "PARAM_INVALID": "Invalid request parameter",
+    "PARAM_MISSING": "Missing required parameter",
+    "BODY_INVALID": "Request body is missing or malformed",
+    "METHOD_NOT_ALLOWED": "HTTP method not allowed",
+    "NOT_FOUND": "Requested resource not found"
   }
 }

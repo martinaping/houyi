@@ -208,6 +208,7 @@ export function AuditLogsPage() {
           dataSource={items}
           loading={logsQuery.isLoading}
           pagination={false}
+          scroll={{ x: 1200 }}
           locale={{ emptyText: t('audit.empty') }}
         />
 

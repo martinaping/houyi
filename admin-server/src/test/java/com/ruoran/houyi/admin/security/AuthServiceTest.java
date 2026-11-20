@@ -24,7 +24,7 @@ class AuthServiceTest {
     void setUp() {
         AdminSecurityProperties properties = new AdminSecurityProperties(
                 "admin", "s3cret", "0123456789abcdef0123456789abcdef",
-                Duration.ofMinutes(30), Duration.ofHours(12), false);
+                Duration.ofMinutes(30), Duration.ofHours(12), false, false);
         authService = new AuthService(properties, newGuard());
         authService.validateConfiguration();
     }
@@ -76,7 +76,7 @@ class AuthServiceTest {
     void refusesToStartWithoutPassword() {
         AdminSecurityProperties blank = new AdminSecurityProperties(
                 "admin", " ", "0123456789abcdef0123456789abcdef",
-                Duration.ofMinutes(30), Duration.ofHours(12), false);
+                Duration.ofMinutes(30), Duration.ofHours(12), false, false);
         AuthService service = new AuthService(blank, newGuard());
 
         assertThrows(IllegalStateException.class, service::validateConfiguration);

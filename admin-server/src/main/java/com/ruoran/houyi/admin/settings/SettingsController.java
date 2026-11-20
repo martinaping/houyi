@@ -41,9 +41,17 @@ public class SettingsController {
     @PutMapping
     public SettingView update(@Valid @RequestBody UpdateRequest request, HttpServletRequest servletRequest) {
         String operator = String.valueOf(servletRequest.getAttribute(AuthFilter.ATTR_USERNAME));
+        boolean auditSwitch = "security.audit-enabled".equals(request.key());
+        if (auditSwitch) {
+            // 关闭审计的操作必须先落库，否则开关生效后本条与后续记录都会丢失。
+            auditLogService.recordForced(operator, "SETTING_UPDATE", request.key(),
+                    "value=" + abbreviate(request.value()), servletRequest);
+        }
         SettingView view = settingsService.update(request.key(), request.value(), operator);
-        String detail = "value=" + (view.sensitive() ? "****" : abbreviate(view.value()));
-        auditLogService.record(operator, "SETTING_UPDATE", request.key(), detail, servletRequest);
+        if (!auditSwitch) {
+            String detail = "value=" + (view.sensitive() ? "****" : abbreviate(view.value()));
+            auditLogService.record(operator, "SETTING_UPDATE", request.key(), detail, servletRequest);
+        }
         return view;
     }
 

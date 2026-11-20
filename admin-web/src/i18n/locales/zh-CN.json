@@ -41,7 +41,12 @@
     "edit": "编辑",
     "save": "保存",
     "export": "导出 CSV",
-    "exportSuccess": "导出文件已开始下载"
+    "exportSuccess": "导出文件已开始下载",
+    "notFoundHint": "页面不存在或已被移除",
+    "backHome": "返回概览",
+    "renderErrorTitle": "页面渲染出错",
+    "renderErrorHint": "请刷新重试；若持续出现，请查看日志中心的服务端日志。",
+    "reload": "刷新页面"
   },
   "auth": {
     "subtitle": "企业微信会话存档运维台",
@@ -402,6 +407,7 @@
       "webhook": "Webhook",
       "configured": "已配置",
       "notConfigured": "未配置",
+      "statusLoadFailed": "告警状态读取失败，当前展示可能不准确",
       "recentLogs": "最近告警记录",
       "time": "时间",
       "severity": "级别",
@@ -490,7 +496,7 @@
   },
   "apiDocs": {
     "title": "API 文档",
-    "versionTag": "v0.5.2",
+    "versionTag": "v0.6.0",
     "description": "管理端与主服务的全部 HTTP 接口说明，内容直接渲染仓库根目录的 API.md。",
     "toc": "目录",
     "searchPlaceholder": "搜索接口、字段或错误码",
@@ -545,6 +551,21 @@
     "CORP_PRIKEY_INVALID": "企业私钥不合法",
     "CORP_PARAM_INVALID": "企业参数超出允许范围",
     "CORP_IDS_EMPTY": "请至少选择一个企业",
-    "CORP_STATUS_INVALID": "启用状态不能为空"
+    "CORP_STATUS_INVALID": "启用状态不能为空",
+    "LOG_SOURCE_REQUIRED": "请选择日志来源",
+    "LOG_SOURCE_NOT_FOUND": "日志来源不存在",
+    "LOG_FILE_INVALID": "日志文件名不合法",
+    "LOG_FILE_NOT_FOUND": "日志文件不存在或尚未生成",
+    "LOG_FILE_DENIED": "该日志文件不允许访问",
+    "LOG_READ_FAILED": "读取日志失败",
+    "LOGIN_LOCKED": "登录失败次数过多，请稍后再试",
+    "SETTING_READONLY": "该配置项为只读",
+    "SETTING_ENV_OVERRIDDEN": "该配置项由环境变量覆盖，无法在线修改",
+    "SETTING_KEY_MISSING": "缺少配置项",
+    "PARAM_INVALID": "请求参数不合法",
+    "PARAM_MISSING": "缺少必需参数",
+    "BODY_INVALID": "请求体缺失或格式不正确",
+    "METHOD_NOT_ALLOWED": "不支持的请求方法",
+    "NOT_FOUND": "请求的资源不存在"
   }
 }

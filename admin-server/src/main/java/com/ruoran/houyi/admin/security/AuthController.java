@@ -126,12 +126,22 @@ public class AuthController {
                 .build();
     }
 
+    /**
+     * 真实客户端 IP。默认只信任 TCP 连接的 remoteAddr；
+     * 仅当显式开启 admin.security.trust-forwarded-for 且部署在可信反向代理之后时才读取 X-Forwarded-For，
+     * 避免客户端伪造该头绕过登录失败锁定。
+     */
     private String clientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+        String remoteAddr = request.getRemoteAddr();
+        if (!properties.trustForwardedFor()) {
+            return remoteAddr;
         }
-        return request.getRemoteAddr();
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded == null || forwarded.isBlank()) {
+            return remoteAddr;
+        }
+        String candidate = forwarded.split(",")[0].trim();
+        return candidate.matches("[0-9a-fA-F:.]{3,45}") ? candidate : remoteAddr;
     }
 
     public record LoginRequest(@NotBlank String username, @NotBlank String password) {

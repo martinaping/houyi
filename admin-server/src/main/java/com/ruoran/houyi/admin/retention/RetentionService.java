@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +58,7 @@ public class RetentionService {
                 batchSize, originalMsgDays, md5IndexDays, auditLogDays, categories);
     }
 
+    @Transactional
     public CleanupResult execute(String category, String confirm) {
         if (!settingsService.booleanValue("retention.cleanup-enabled")) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "RETENTION_DISABLED",
@@ -77,17 +79,17 @@ public class RetentionService {
         int deleted = switch (normalized) {
             case "ORIGINAL_MSG" -> deleteBatch(
                     "SELECT id FROM original_msg WHERE push_at > 0 AND create_at < ? ORDER BY id ASC LIMIT ?",
-                    "DELETE FROM original_msg WHERE id IN (%s)",
+                    "DELETE FROM original_msg WHERE push_at > 0 AND create_at < ? AND id IN (%s)",
                     now - settingsService.longValue("retention.original-msg-days", 365) * DAY_MILLIS,
                     batchSize);
             case "MD5_INDEX" -> deleteBatch(
                     "SELECT id FROM md5index WHERE oss_at > 0 AND oss_at < ? ORDER BY id ASC LIMIT ?",
-                    "DELETE FROM md5index WHERE id IN (%s)",
+                    "DELETE FROM md5index WHERE oss_at > 0 AND oss_at < ? AND id IN (%s)",
                     now - settingsService.longValue("retention.md5-index-days", 365) * DAY_MILLIS,
                     batchSize);
             default -> deleteBatch(
                     "SELECT id FROM admin_audit_log WHERE created_at < ? ORDER BY id ASC LIMIT ?",
-                    "DELETE FROM admin_audit_log WHERE id IN (%s)",
+                    "DELETE FROM admin_audit_log WHERE created_at < ? AND id IN (%s)",
                     now - settingsService.longValue("retention.audit-retention-days", 180) * DAY_MILLIS,
                     batchSize);
         };
@@ -117,7 +119,11 @@ public class RetentionService {
         for (int start = 0; start < ids.size(); start += DELETE_CHUNK) {
             List<Long> chunk = ids.subList(start, Math.min(start + DELETE_CHUNK, ids.size()));
             String placeholders = String.join(",", java.util.Collections.nCopies(chunk.size(), "?"));
-            deleted += jdbcTemplate.update(deleteSqlTemplate.formatted(placeholders), chunk.toArray());
+            List<Object> args = new ArrayList<>();
+            args.add(cutoff);
+            args.addAll(chunk);
+            // 删除语句复检筛选条件，避免选中后记录状态变化（如重新推送）被误删。
+            deleted += jdbcTemplate.update(deleteSqlTemplate.formatted(placeholders), args.toArray());
         }
         return deleted;
     }

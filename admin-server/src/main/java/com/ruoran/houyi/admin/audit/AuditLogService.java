@@ -1,5 +1,6 @@
 package com.ruoran.houyi.admin.audit;
 
+import com.ruoran.houyi.admin.config.AdminSecurityProperties;
 import com.ruoran.houyi.admin.settings.SettingsService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -29,10 +30,13 @@ public class AuditLogService {
 
     private final JdbcTemplate jdbcTemplate;
     private final SettingsService settingsService;
+    private final AdminSecurityProperties securityProperties;
 
-    public AuditLogService(JdbcTemplate jdbcTemplate, SettingsService settingsService) {
+    public AuditLogService(JdbcTemplate jdbcTemplate, SettingsService settingsService,
+                           AdminSecurityProperties securityProperties) {
         this.jdbcTemplate = jdbcTemplate;
         this.settingsService = settingsService;
+        this.securityProperties = securityProperties;
     }
 
     public void record(String operator, String action, String target, String detail,
@@ -40,6 +44,20 @@ public class AuditLogService {
         if (!settingsService.booleanValue("security.audit-enabled")) {
             return;
         }
+        write(operator, action, target, detail, request);
+    }
+
+    /**
+     * 强制写入审计日志，忽略 security.audit-enabled 开关。
+     * 用于关闭审计本身等必须留痕的操作。
+     */
+    public void recordForced(String operator, String action, String target, String detail,
+                             HttpServletRequest request) {
+        write(operator, action, target, detail, request);
+    }
+
+    private void write(String operator, String action, String target, String detail,
+                       HttpServletRequest request) {
         long maxLength = settingsService.longValue("security.audit-detail-max-length", 2000);
         String safeDetail = detail != null && detail.length() > maxLength
                 ? detail.substring(0, (int) maxLength)
@@ -51,7 +69,8 @@ public class AuditLogService {
                             VALUES (?, ?, ?, ?, ?, ?, ?)
                             """,
                     operator, action, target, safeDetail,
-                    clientIp(request), MDC.get("traceId"), System.currentTimeMillis());
+                    clientIp(request, securityProperties.trustForwardedFor()),
+                    MDC.get("traceId"), System.currentTimeMillis());
         } catch (RuntimeException ex) {
             // 审计失败不应影响业务操作，但要留下错误日志
             log.error("写入审计日志失败: action={}, target={}", action, target, ex);
@@ -150,17 +169,26 @@ public class AuditLogService {
         return value == null ? "" : value;
     }
 
-    static String clientIp(HttpServletRequest request) {
+    static String clientIp(HttpServletRequest request, boolean trustForwardedFor) {
         if (request == null) {
             return null;
         }
+        if (!trustForwardedFor) {
+            return request.getRemoteAddr();
+        }
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+            String candidate = forwarded.split(",")[0].trim();
+            if (candidate.matches("[0-9a-fA-F:.]{3,45}")) {
+                return candidate;
+            }
         }
         String realIp = request.getHeader("X-Real-IP");
         if (realIp != null && !realIp.isBlank()) {
-            return realIp.trim();
+            String candidate = realIp.trim();
+            if (candidate.matches("[0-9a-fA-F:.]{3,45}")) {
+                return candidate;
+            }
         }
         return request.getRemoteAddr();
     }

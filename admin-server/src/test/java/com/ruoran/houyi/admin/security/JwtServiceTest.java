@@ -88,6 +88,6 @@ class JwtServiceTest {
     }
 
     private static AdminSecurityProperties properties(String secret, Duration accessTtl, Duration refreshTtl) {
-        return new AdminSecurityProperties("admin", "password", secret, accessTtl, refreshTtl, false);
+        return new AdminSecurityProperties("admin", "password", secret, accessTtl, refreshTtl, false, false);
     }
 }

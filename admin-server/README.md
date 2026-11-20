@@ -4,7 +4,7 @@
 
 - 技术栈：Java 21、Spring Boot 3.2.11、JdbcTemplate、Spring Data Redis、RocketMQ Client 5.0.7
 - 端口：`18081`
-- 版本：`0.5.2`
+- 版本：`0.6.0`
 
 ## 构建与启动
 
@@ -45,6 +45,7 @@ H2 开启 `AUTO_SERVER=TRUE` 后可与主服务同时连接；仅用于本地验
 | `ADMIN_PASSWORD` | 无 | 必填 |
 | `ADMIN_JWT_SECRET` | 无 | 必填，至少 32 字符 |
 | `ADMIN_COOKIE_SECURE` | `false` | HTTPS 部署时设为 `true` |
+| `ADMIN_TRUST_FORWARDED_FOR` | `false` | 仅在可信反向代理之后才设为 `true`，否则客户端可伪造来源 IP |
 | `ADMIN_CORS_ORIGINS` | 本地 5173 两个来源 | 逗号分隔，生产建议留空并由 Nginx 同源代理 |
 | `ADMIN_RETRY_ENABLED` | `true` | 是否允许触发消息重试 |
 | `REDIS_MQ_ENABLED` | `false` | 重试写 Redis Streams 延迟队列 |

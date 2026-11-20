@@ -9,11 +9,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -43,7 +45,7 @@ public class AlertService {
     private final StringRedisTemplate redisTemplate;
     private final SettingsService settingsService;
     private final ObjectMapper objectMapper;
-    private final RestClient restClient = RestClient.builder().build();
+    private final RestClient restClient = createRestClient();
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     public AlertService(JdbcTemplate jdbcTemplate, StringRedisTemplate redisTemplate,
@@ -86,6 +88,16 @@ public class AlertService {
         } finally {
             running.set(false);
         }
+    }
+
+    /**
+     * 告警投递必须设置超时，否则 Webhook 挂起会长期占用定时线程并阻塞后续检查。
+     */
+    private static RestClient createRestClient() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(3));
+        factory.setReadTimeout(Duration.ofSeconds(5));
+        return RestClient.builder().requestFactory(factory).build();
     }
 
     public AlertStatus status() {

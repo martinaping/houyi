@@ -302,6 +302,7 @@ export function MessagesPage() {
           dataSource={items}
           loading={messagesQuery.isLoading}
           pagination={false}
+          scroll={{ x: 960 }}
           locale={{ emptyText: t('messages.empty') }}
           onRow={(record) => ({
             onClick: () => setSelectedId(record.id),
@@ -325,6 +326,7 @@ export function MessagesPage() {
         title={t('messages.detailTitle')}
         width={720}
         open={selectedId !== null}
+        loading={detailQuery.isLoading}
         onClose={() => setSelectedId(null)}
         extra={
           detail && detail.hasFile && !(detail.pushAt != null && detail.pushAt > 0) ? (

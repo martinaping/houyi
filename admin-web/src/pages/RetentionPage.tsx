@@ -46,6 +46,9 @@ export function RetentionPage() {
       setTarget(null);
       setConfirmText('');
       void queryClient.invalidateQueries({ queryKey: ['retentionPreview'] });
+      void queryClient.invalidateQueries({ queryKey: ['overview'] });
+      void queryClient.invalidateQueries({ queryKey: ['health'] });
+      void queryClient.invalidateQueries({ queryKey: ['queue'] });
     },
     onError: (error) => message.error(errorMessage(t, error)),
   });

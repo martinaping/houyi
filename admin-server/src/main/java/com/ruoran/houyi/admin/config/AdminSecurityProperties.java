@@ -14,6 +14,7 @@ public record AdminSecurityProperties(
         String jwtSecret,
         Duration accessTtl,
         Duration refreshTtl,
-        boolean cookieSecure
+        boolean cookieSecure,
+        boolean trustForwardedFor
 ) {
 }

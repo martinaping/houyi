@@ -1,7 +1,7 @@
 {
   "name": "houyi-admin-web",
   "private": true,
-  "version": "0.5.2",
+  "version": "0.6.0",
   "type": "module",
   "description": "houyi 会话存档管理后台前端",
   "scripts": {

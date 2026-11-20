@@ -14,6 +14,11 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
 import java.time.Duration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import jakarta.annotation.PreDestroy;
 
 /**
  * RocketMQ Endpoint 可用性探测。
@@ -40,6 +45,13 @@ public class RocketMqProbeService {
     /** 最近一次探测结果，30 秒内复用，避免频繁建立连接。 */
     private volatile ProbeResult cached;
     private volatile long cachedAt;
+    private final AtomicBoolean refreshing = new AtomicBoolean(false);
+    /** 后台刷新线程：探测过期时先返回旧值，避免请求线程被网络阻塞数秒。 */
+    private final ExecutorService refreshExecutor = Executors.newSingleThreadExecutor(task -> {
+        Thread thread = new Thread(task, "rocketmq-probe-refresh");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     public RocketMqProbeService(RocketMqSettingsService rocketMqSettings) {
         this.rocketMqSettings = rocketMqSettings;
@@ -47,28 +59,48 @@ public class RocketMqProbeService {
 
     /**
      * 读取最近一次探测结果（带 30 秒缓存）。未配置时不发起探测。
+     *
+     * <p>缓存过期时若已有旧结果，立即返回旧值并在后台刷新；
+     * 只有首次调用（无任何缓存）才同步探测。</p>
      */
     public ProbeResult status() {
         if (!rocketMqSettings.configured()) {
             return notConfigured(rocketMqSettings.endpoint());
         }
-        long now = System.currentTimeMillis();
         ProbeResult current = cached;
-        if (current != null && now - cachedAt < CACHE_TTL_MS) {
-            return current;
-        }
-        synchronized (this) {
-            now = System.currentTimeMillis();
-            current = cached;
-            if (current != null && now - cachedAt < CACHE_TTL_MS) {
+        if (current != null) {
+            if (System.currentTimeMillis() - cachedAt < CACHE_TTL_MS) {
                 return current;
             }
-            ProbeResult result = probeInternal(rocketMqSettings.endpoint(),
-                    rocketMqSettings.username(), rocketMqSettings.password());
-            cached = result;
-            cachedAt = System.currentTimeMillis();
-            return result;
+            triggerRefresh();
+            return current;
         }
+        return refreshNow();
+    }
+
+    private void triggerRefresh() {
+        if (!refreshing.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            refreshExecutor.execute(() -> {
+                try {
+                    refreshNow();
+                } finally {
+                    refreshing.set(false);
+                }
+            });
+        } catch (RuntimeException ex) {
+            refreshing.set(false);
+        }
+    }
+
+    private ProbeResult refreshNow() {
+        ProbeResult result = probeInternal(rocketMqSettings.endpoint(),
+                rocketMqSettings.username(), rocketMqSettings.password());
+        cached = result;
+        cachedAt = System.currentTimeMillis();
+        return result;
     }
 
     /**
@@ -156,6 +188,11 @@ public class RocketMqProbeService {
     private ProbeResult notConfigured(String endpoint) {
         return new ProbeResult(STATE_NOT_CONFIGURED, false, endpoint == null ? "" : endpoint,
                 null, System.currentTimeMillis(), "未配置 RocketMQ Endpoint");
+    }
+
+    @PreDestroy
+    void shutdown() {
+        refreshExecutor.shutdownNow();
     }
 
     private String abbreviate(String message) {

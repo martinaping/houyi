@@ -54,9 +54,11 @@ export function LogsPage() {
   const [filePath, setFilePath] = useState('');
   const [level, setLevel] = useState('');
   const [lines, setLines] = useState(500);
+  const [linesDraft, setLinesDraft] = useState<number | null>(500);
   const [keywordInput, setKeywordInput] = useState('');
   const [keyword, setKeyword] = useState('');
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  // 默认关闭自动刷新，避免打断日志阅读与选中复制。
+  const [autoRefresh, setAutoRefresh] = useState(false);
 
   const sourcesQuery = useQuery({
     queryKey: ['logSources'],
@@ -209,8 +211,10 @@ export function LogsPage() {
               min={50}
               max={2000}
               step={100}
-              value={lines}
-              onChange={(value) => setLines(value ?? 500)}
+              value={linesDraft}
+              onChange={(value) => setLinesDraft(value)}
+              onBlur={() => setLines(linesDraft ?? 500)}
+              onPressEnter={() => setLines(linesDraft ?? 500)}
               style={{ width: 100 }}
             />
           </Space>

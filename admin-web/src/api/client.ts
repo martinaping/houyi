@@ -37,6 +37,15 @@ async function toApiError(response: Response): Promise<ApiError> {
   }
 }
 
+async function peekErrorCode(response: Response): Promise<string> {
+  try {
+    const body = (await response.clone().json()) as Partial<ApiErrorBody>;
+    return body.code ?? '';
+  } catch {
+    return '';
+  }
+}
+
 async function rawFetch(path: string, init: RequestInit): Promise<Response> {
   const headers = new Headers(init.headers);
   if (init.body && !headers.has('Content-Type')) {
@@ -50,15 +59,20 @@ async function rawFetch(path: string, init: RequestInit): Promise<Response> {
 
 /**
  * 全局请求入口：自动补 Bearer Token，遇到 401 时静默刷新并重试一次。
+ * 仅当 401 的业务码为 UNAUTHORIZED（会话失效）时才刷新；
+ * 其他 401（如查看密钥时密码校验失败）直接抛错，避免误登出。
  */
 export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   let response = await rawFetch(path, init);
   if (response.status === 401 && !path.startsWith('/api/admin/auth/')) {
-    const session = await refreshSession();
-    if (session) {
-      response = await rawFetch(path, init);
-    } else {
-      notifyUnauthorized();
+    const code = await peekErrorCode(response);
+    if (code === 'UNAUTHORIZED') {
+      const session = await refreshSession();
+      if (session) {
+        response = await rawFetch(path, init);
+      } else {
+        notifyUnauthorized();
+      }
     }
   }
   if (!response.ok) {
@@ -77,11 +91,14 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
 export async function download(path: string, init: RequestInit = {}, fallbackName = 'download.csv'): Promise<void> {
   let response = await rawFetch(path, init);
   if (response.status === 401 && !path.startsWith('/api/admin/auth/')) {
-    const session = await refreshSession();
-    if (session) {
-      response = await rawFetch(path, init);
-    } else {
-      notifyUnauthorized();
+    const code = await peekErrorCode(response);
+    if (code === 'UNAUTHORIZED') {
+      const session = await refreshSession();
+      if (session) {
+        response = await rawFetch(path, init);
+      } else {
+        notifyUnauthorized();
+      }
     }
   }
   if (!response.ok) {

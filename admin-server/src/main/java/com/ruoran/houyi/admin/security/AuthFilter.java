@@ -65,6 +65,9 @@ public class AuthFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
         } catch (JwtService.TokenInvalidException ex) {
             writeUnauthorized(response, ex.getMessage());
+        } catch (RuntimeException ex) {
+            // 兜底：任何非法令牌（编码错误、超长、异常字符）都按未认证处理，避免 500。
+            writeUnauthorized(response, "访问令牌不合法");
         }
     }
 

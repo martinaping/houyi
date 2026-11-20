@@ -16,7 +16,7 @@ import {
 import type { TableColumnsType } from 'antd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { request } from '../api/client';
 import { errorMessage } from '../api/errors';
@@ -82,6 +82,16 @@ export function SettingsPage() {
   const [keyword, setKeyword] = useState('');
   const [activeGroup, setActiveGroup] = useState<string>('alert');
 
+  // 供数据刷新时判断哪些项被用户改过（useEffect 中读取最新值，避免闭包过期）。
+  const valuesRef = useRef(values);
+  const originalsRef = useRef(originals);
+  useEffect(() => {
+    valuesRef.current = values;
+  }, [values]);
+  useEffect(() => {
+    originalsRef.current = originals;
+  }, [originals]);
+
   const settingsQuery = useQuery({
     queryKey: ['settings'],
     queryFn: () => request<SettingView[]>('/api/admin/settings'),
@@ -101,12 +111,18 @@ export function SettingsPage() {
     if (!settingsQuery.data) {
       return;
     }
-    const next: Record<string, string> = {};
+    // 重新拉取设置时保留用户尚未保存的修改，只覆盖未编辑项，避免静默丢失输入。
+    const currentValues = valuesRef.current;
+    const currentOriginals = originalsRef.current;
+    const nextValues: Record<string, string> = {};
+    const nextOriginals: Record<string, string> = {};
     settingsQuery.data.forEach((item) => {
-      next[item.key] = item.value;
+      nextOriginals[item.key] = item.value;
+      const edited = (currentValues[item.key] ?? '') !== (currentOriginals[item.key] ?? '');
+      nextValues[item.key] = edited ? currentValues[item.key] ?? '' : item.value;
     });
-    setValues(next);
-    setOriginals(next);
+    setValues(nextValues);
+    setOriginals(nextOriginals);
   }, [settingsQuery.data]);
 
   const dirtyKeys = useMemo(
@@ -413,18 +429,27 @@ export function SettingsPage() {
                         </Button>
                       }
                     >
-                      <Space size="large" wrap>
-                        <Tag color={status?.enabled ? 'green' : 'default'}>
-                          {t('settings.alert.enabled')}:{' '}
-                          {status?.enabled ? t('common.yes') : t('common.no')}
-                        </Tag>
-                        <Tag color={status?.webhookConfigured ? 'blue' : 'default'}>
-                          {t('settings.alert.webhook')}:{' '}
-                          {status?.webhookConfigured
-                            ? t('settings.alert.configured')
-                            : t('settings.alert.notConfigured')}
-                        </Tag>
-                      </Space>
+                      {alertStatusQuery.isError ? (
+                        <Alert
+                          type="warning"
+                          showIcon
+                          title={t('settings.alert.statusLoadFailed')}
+                          description={errorMessage(t, alertStatusQuery.error)}
+                        />
+                      ) : (
+                        <Space size="large" wrap>
+                          <Tag color={status?.enabled ? 'green' : 'default'}>
+                            {t('settings.alert.enabled')}:{' '}
+                            {status?.enabled ? t('common.yes') : t('common.no')}
+                          </Tag>
+                          <Tag color={status?.webhookConfigured ? 'blue' : 'default'}>
+                            {t('settings.alert.webhook')}:{' '}
+                            {status?.webhookConfigured
+                              ? t('settings.alert.configured')
+                              : t('settings.alert.notConfigured')}
+                          </Tag>
+                        </Space>
+                      )}
                     </Card>
                   ) : null}
 
@@ -601,9 +626,14 @@ export function SettingsPage() {
 }
 
 function isValid(item: SettingView, value: string): boolean {
-  if (item.type !== 'NUMBER' || value === '') {
+  if (item.type !== 'NUMBER') {
     return true;
   }
-  const numeric = Number(value);
+  // 数字项必须填写：空串会让后端返回 SETTING_INVALID。
+  const trimmed = value.trim();
+  if (trimmed === '') {
+    return false;
+  }
+  const numeric = Number(trimmed);
   return Number.isFinite(numeric) && numeric >= item.min && numeric <= item.max;
 }

@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -24,7 +25,7 @@ public class CorpService {
 
     /** 与主服务 Message 类中的 Redis 书签 Key 保持一致 */
     static final String LAST_SEQ_PREFIX = "last_seq_";
-    private static final int MAX_PAGE_SIZE = 200;
+    private static final int MAX_PAGE_SIZE = 1000;
     private static final String SELECT_COLUMNS =
             "SELECT id, corpid, corpname, limits, timeout, status, `update` AS update_at, last_seq,"
                     + " secret, CASE WHEN prikey IS NULL OR prikey = '' THEN 0 ELSE 1 END AS has_prikey"
@@ -72,6 +73,9 @@ public class CorpService {
         sql.append(" ORDER BY id ASC LIMIT ").append(MAX_PAGE_SIZE);
 
         List<CorpRow> rows = jdbcTemplate.query(sql.toString(), ROW_MAPPER, args.toArray());
+        if (rows.size() >= MAX_PAGE_SIZE) {
+            log.warn("企业列表达到单次返回上限 {} 条，后续记录未展示，请使用关键字筛选", MAX_PAGE_SIZE);
+        }
         Map<String, String> redisLastSeq = readLastSeq(rows);
         return rows.stream().map(row -> row.toView(redisLastSeq)).toList();
     }
@@ -159,10 +163,15 @@ public class CorpService {
         long status = Boolean.FALSE.equals(request.enabled()) ? 0L : 1L;
         long now = System.currentTimeMillis();
 
-        jdbcTemplate.update(
-                "INSERT INTO corplist (corpid, secret, corpname, prikey, limits, timeout, status,"
-                        + " `update`, last_seq) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)",
-                corpId, secret, corpName, prikey, limits, timeout, status, now);
+        try {
+            jdbcTemplate.update(
+                    "INSERT INTO corplist (corpid, secret, corpname, prikey, limits, timeout, status,"
+                            + " `update`, last_seq) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)",
+                    corpId, secret, corpName, prikey, limits, timeout, status, now);
+        } catch (DuplicateKeyException ex) {
+            // 并发新增同一企业时由唯一索引兜底，返回 409 而非 500。
+            throw new ApiException(HttpStatus.CONFLICT, "CORP_DUPLICATE", "企业 ID 已存在：" + corpId);
+        }
 
         Long id = jdbcTemplate.queryForObject(
                 "SELECT id FROM corplist WHERE corpid = ?", Long.class, corpId);

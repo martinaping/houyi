@@ -1,6 +1,6 @@
 # 后羿（houyi）API 文档
 
-> 版本：0.5.2
+> 版本：0.6.0
 > 适用服务：`admin-server`（管理端，默认 18081）、`houyi`（主服务，默认 18080）
 > 最后更新：2026-11-20
 
@@ -30,7 +30,7 @@
 | 响应头 | 说明 |
 | --- | --- |
 | `X-Trace-Id` | 本次请求的链路 ID。客户端可主动传入（`^[A-Za-z0-9_-]{8,64}$`），否则由服务端生成 |
-| `X-App-Version` | 服务端版本号，当前为 `0.5.2` |
+| `X-App-Version` | 服务端版本号，当前为 `0.6.0` |
 
 **错误响应**（非 2xx）
 
@@ -89,7 +89,7 @@
   "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
   "tokenType": "Bearer",
   "expiresIn": 7200,
-  "user": { "username": "admin", "version": "0.5.2" }
+  "user": { "username": "admin", "version": "0.6.0" }
 }
 ```
 
@@ -130,7 +130,7 @@
 响应 `200`：
 
 ```json
-{ "username": "admin", "version": "0.5.2" }
+{ "username": "admin", "version": "0.6.0" }
 ```
 
 ---
@@ -490,7 +490,7 @@
              "rocketMqEndpoint": "http://127.0.0.1:8081", "rocketMqLatencyMs": 5,
              "rocketMqCheckedAt": 1763000000000, "rocketMqError": "Endpoint 可达，客户端创建成功" },
   "recentFailures": [],
-  "version": "0.5.2",
+  "version": "0.6.0",
   "serverTime": 1763000000000
 }
 ```
@@ -518,7 +518,7 @@
 ```json
 {
   "status": "UP",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "uptimeSeconds": 3600,
   "checkedAt": 1763000000000,
   "database": { "ok": true, "latencyMs": 1, "message": "ok" },
@@ -562,7 +562,7 @@
 
 ```json
 {
-  "version": "0.5.2",
+  "version": "0.6.0",
   "uptimeSeconds": 3600,
   "javaVersion": "21.0.2",
   "jdbcUrl": "jdbc:h2:file:/Users/jc/.houyi-local/db/houyi",
@@ -1294,4 +1294,10 @@ GET /api/admin/monitor/overview
 | 400 | `RETENTION_DISABLED` | 数据清理未启用 | 执行清理 |
 | 400 | `RETENTION_CONFIRM_REQUIRED` | `confirm` 不等于 `DELETE` | 执行清理 |
 | 400 | `RETENTION_INVALID_CATEGORY` | 清理类别不在白名单 | 执行清理 |
+| 400 | `PARAM_INVALID` | 路径或查询参数类型不合法（如 `id=abc`） | 全局 |
+| 400 | `PARAM_MISSING` | 缺少必需的查询参数 | 全局 |
+| 400 | `BODY_INVALID` | 请求体缺失或 JSON 格式不正确 | 全局 |
+| 405 | `METHOD_NOT_ALLOWED` | 接口不支持该 HTTP 方法 | 全局 |
+| 404 | `NOT_FOUND` | 请求的接口不存在 | 全局 |
+| 401 | `UNAUTHORIZED` | 未携带或携带了非法/过期的 access token | 全局（除登录/刷新） |
 | 500 | `INTERNAL_ERROR` | 未预期的服务端错误 | 全局兜底 |

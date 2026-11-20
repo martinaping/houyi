@@ -24,7 +24,7 @@ import {
 } from 'antd';
 import type { TableColumnsType, TableProps } from 'antd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { request } from '../api/client';
 import { errorMessage } from '../api/errors';
@@ -67,6 +67,11 @@ export function CorpsPage() {
   const [revealPassword, setRevealPassword] = useState('');
   const [revealedSecret, setRevealedSecret] = useState<string | null>(null);
   const [rotateTarget, setRotateTarget] = useState<CorpView | null>(null);
+
+  // 筛选条件变化后清空勾选，避免批量操作作用到已隐藏的企业。
+  useEffect(() => {
+    setSelectedRowKeys([]);
+  }, [keyword, statusFilter]);
 
   const corpsQuery = useQuery({
     queryKey: ['corps', keyword, statusFilter],
