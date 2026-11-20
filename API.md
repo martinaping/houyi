@@ -1,6 +1,6 @@
 # 后羿（houyi）API 文档
 
-> 版本：0.7.0
+> 版本：0.8.0
 > 适用服务：`admin-server`（管理端，默认 18081）、`houyi`（主服务，默认 18080）
 > 最后更新：2026-11-20
 
@@ -30,7 +30,7 @@
 | 响应头 | 说明 |
 | --- | --- |
 | `X-Trace-Id` | 本次请求的链路 ID。客户端可主动传入（`^[A-Za-z0-9_-]{8,64}$`），否则由服务端生成 |
-| `X-App-Version` | 服务端版本号，当前为 `0.7.0` |
+| `X-App-Version` | 服务端版本号，当前为 `0.8.0` |
 
 **错误响应**（非 2xx）
 
@@ -89,7 +89,7 @@
   "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
   "tokenType": "Bearer",
   "expiresIn": 7200,
-  "user": { "username": "admin", "version": "0.7.0" }
+  "user": { "username": "admin", "version": "0.8.0" }
 }
 ```
 
@@ -130,7 +130,7 @@
 响应 `200`：
 
 ```json
-{ "username": "admin", "version": "0.7.0" }
+{ "username": "admin", "version": "0.8.0" }
 ```
 
 ---
@@ -490,7 +490,7 @@
              "rocketMqEndpoint": "http://127.0.0.1:8081", "rocketMqLatencyMs": 5,
              "rocketMqCheckedAt": 1763000000000, "rocketMqError": "Endpoint 可达，客户端创建成功" },
   "recentFailures": [],
-  "version": "0.7.0",
+  "version": "0.8.0",
   "serverTime": 1763000000000
 }
 ```
@@ -518,7 +518,7 @@
 ```json
 {
   "status": "UP",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "uptimeSeconds": 3600,
   "checkedAt": 1763000000000,
   "database": { "ok": true, "latencyMs": 1, "message": "ok" },
@@ -562,7 +562,7 @@
 
 ```json
 {
-  "version": "0.7.0",
+  "version": "0.8.0",
   "uptimeSeconds": 3600,
   "javaVersion": "21.0.2",
   "jdbcUrl": "jdbc:h2:file:/Users/jc/.houyi-local/db/houyi",
@@ -1047,7 +1047,9 @@
 
 ## 13. 主服务 API（默认 18080）
 
-主服务接口面向内部运维与联调，**无鉴权、无统一错误结构**，必须通过内网或网关限制来源。除特别说明外均使用 `GET`。
+主服务接口面向内部运维与联调，**默认无鉴权、无统一错误结构**，必须通过内网或网关限制来源。除特别说明外均使用 `GET`。
+
+> 可选：配置环境变量 `HOUYI_INTERNAL_TOKEN` 后，`/api/open/**` 与 `/sync` 必须携带请求头 `X-Internal-Token`，否则返回 `401`。未配置时保持原有行为。
 
 ### 13.1 存活检查
 
@@ -1075,7 +1077,7 @@
 
 响应 `200`：
 
-- 成功：返回 `CorpInfo` 对象（字段见 13.7，**包含 `secret` 与 `prikey` 明文**）。
+- 成功：返回 `CorpInfo` 对象（字段见 13.7，出于安全考虑**不再包含 `secret` 与 `prikey`**）。
 - 失败：返回错误信息字符串（非 JSON 错误结构）。
 
 ### 13.4 触发企业拉取任务
@@ -1125,16 +1127,14 @@
 | --- | --- | --- |
 | `id` | long | 主键 |
 | `corpid` | string | 企业 ID |
-| `secret` | string | 会话存档 Secret（**明文**） |
 | `corpname` | string | 企业名称 |
-| `prikey` | string | 会话存档私钥（**明文**） |
 | `limits` | long | 单次拉取条数上限 |
 | `timeout` | long | 拉取超时（秒） |
 | `status` | long | `1` 启用，`0` 停用 |
 | `update` | long | 最后更新时间（毫秒时间戳） |
 | `lastSeq` | long | 已拉取到的最大序号 |
 
-> 注意：主服务返回的 `CorpInfo` 包含 `secret` 与 `prikey` 明文，切勿将该接口暴露到公网。
+> 注意：`secret` 与 `prikey` 已通过 Jackson 注解排除，不会出现在任何 JSON 响应或实体日志中。主服务接口仍无鉴权，必须通过内网或网关限制来源。
 
 ---
 

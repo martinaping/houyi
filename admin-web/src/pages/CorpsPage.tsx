@@ -17,6 +17,7 @@ import {
   Modal,
   Select,
   Space,
+  Spin,
   Switch,
   Table,
   Tag,
@@ -516,11 +517,12 @@ export function CorpsPage() {
         {detailQuery.isError ? (
           <Alert type="error" showIcon title={errorMessage(t, detailQuery.error)} />
         ) : null}
-        <Descriptions
-          column={1}
-          size="small"
-          bordered
-          items={
+        <Spin spinning={detailQuery.isLoading}>
+          <Descriptions
+            column={1}
+            size="small"
+            bordered
+            items={
             detail
               ? [
                   { key: 'id', label: t('corps.id'), children: detail.id },
@@ -602,8 +604,9 @@ export function CorpsPage() {
                   },
                 ]
               : []
-          }
-        />
+            }
+          />
+        </Spin>
       </Drawer>
 
       <Modal

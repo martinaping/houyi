@@ -1,6 +1,6 @@
 # 后羿（Houyi）系统架构文档
 
-**当前版本**: v0.7.0
+**当前版本：v0.8.0**
 
 ## 📋 系统概述
 
@@ -388,7 +388,7 @@ CREATE TABLE md5_index (
 - `/houyi-eye/prometheus` - Prometheus 格式指标
 - `/houyi-eye/info` - 应用信息
 
-管理端 `admin-server` 同样引入 `micrometer-registry-prometheus`，自带 `/actuator/prometheus`（受 Spring Security/Actuator 自身策略保护，不经过登录过滤器），并作为抓取方汇总主应用指标供后台页面展示。
+主应用仅暴露 `health`、`info`、`metrics`、`prometheus` 四个只读端点，且 `health` 不返回组件详情，避免泄露连接信息。管理端 `admin-server` 同样引入 `micrometer-registry-prometheus`，自带 `/actuator/prometheus`（不在 `/api/admin` 登录过滤器范围内，需通过内网或网关限制来源），并作为抓取方汇总主应用指标供后台页面展示。
 
 ---
 

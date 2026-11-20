@@ -28,10 +28,12 @@ server:
 management:
   endpoints:
     health:
-      show-details: always
+      # 主服务端点未鉴权，health 只暴露聚合状态，避免泄露连接与组件细节。
+      show-details: never
     web:
+      # 仅暴露运维实际使用的只读端点，避免 env/heapdump/loggers 等被任意访问。
       exposure:
-        include: "*"
+        include: health,info,metrics,prometheus
       base-path: /houyi-eye
 
 log:

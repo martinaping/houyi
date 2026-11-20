@@ -256,7 +256,9 @@ public class SettingsService {
     private SettingView toView(SettingsCatalog.Definition definition, StoredSetting stored) {
         String env = envValue(definition);
         boolean fromEnv = !env.isEmpty();
-        String value = fromEnv ? env : (stored == null ? definition.defaultValue() : stored.value());
+        String storedValue = stored == null ? null : stored.value();
+        String value = fromEnv ? env
+                : storedValue == null ? definition.defaultValue() : storedValue;
         if (!fromEnv && definition.sensitive() && SecretCipher.isEncrypted(value)) {
             try {
                 value = secretCipher.decrypt(value);

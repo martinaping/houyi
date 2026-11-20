@@ -20,7 +20,10 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         String[] origins = corsProperties.allowedOrigins() == null
                 ? new String[0]
-                : corsProperties.allowedOrigins().toArray(String[]::new);
+                : corsProperties.allowedOrigins().stream()
+                        .filter(origin -> origin != null && !origin.isBlank())
+                        .map(String::trim)
+                        .toArray(String[]::new);
         if (origins.length == 0) {
             return;
         }

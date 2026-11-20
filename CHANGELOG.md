@@ -1,5 +1,36 @@
 # 更新日志
 
+## v0.8.0（2026-11-20）
+
+### 安全
+
+- 移除 `src/main/resources/wework-corps.yml` 中已提交的真实企业 Secret，改为 `${WEWORK_CORPS_0_SECRET:}` 环境变量；启动同步在 secret 为空时保留数据库已有值，不会覆盖成空串。**该 Secret 仍存在于 Git 历史中，请立即在企业微信后台轮换。**
+- 主服务 `CorpInfo` 的 `secret` 与 `prikey` 增加 Jackson 忽略与日志脱敏，`/api/open/status`、`/api/open/pull/corp` 不再输出企业密钥与私钥。
+- 移除未被引用且硬编码数据库地址/账号密码的 `DataSource` 死代码。
+- 主服务 Actuator 从 `include: "*"` 收紧为 `health,info,metrics,prometheus`，`health` 不再展示组件详情，避免 `env`、`heapdump`、`loggers` 等端点被未授权访问。
+- 单条补拉接口不再以 WARN 级别记录完整消息内容，改为 DEBUG 级别记录 `corpId/msgId/seq`。
+- 主服务新增可选共享令牌 `HOUYI_INTERNAL_TOKEN`：配置后 `/api/open/**` 与 `/sync` 需携带 `X-Internal-Token`，未配置时行为不变。
+- 退出登录接口不再要求 access token，access token 过期后也能清除 HttpOnly refresh Cookie，避免“退出后刷新又自动登录”。
+- 登录失败跟踪达到容量上限时不再清空整张表（防止大量来源重置其他 IP 的锁定），改为清理过期/空闲记录。
+- 审计日志 `operator/action/target/client_ip/trace_id` 按数据库列宽截断，避免超长输入导致审计写入失败。
+- CSV 公式注入防护覆盖前导空白（如 `"  =1+1"`）。
+- 管理端统一增加 `X-Content-Type-Options`、`X-Frame-Options`、`Referrer-Policy`、`Permissions-Policy` 响应头，`/api/admin/**` 增加 `Cache-Control: no-store`。
+
+### 修复
+
+- 设置页未保存修改的站内跳转确认框不再重复弹出。
+- 消息列表行支持 Enter/空格键打开详情；已归档（存在 OSS 路径）的消息不再显示重试按钮。
+- 企业详情抽屉增加加载态；概览页最近失败列表补充空态文案；登录页恢复会话期间显示加载态，避免闪现登录表单。
+- 退出登录与会话失效时清空 React Query 缓存，避免上一个会话的敏感数据残留在内存中。
+- CSV/日志下载延迟释放 Blob URL，降低部分浏览器下载被中断的概率。
+- 错误提示附带服务端字段校验明细，便于定位参数问题。
+- 审计日志动作筛选改为下拉选择（展示中文动作名，实际按动作码筛选）。
+- 监控指标页统计卡片改为响应式栅格，小屏不再挤压。
+
+### 文档
+
+- `API.md` 更新主服务接口不再返回 `secret`/`prikey`；`README.md`、`ARCHITECTURE.md` 同步 Actuator 暴露范围。
+
 ## v0.7.0（2026-11-20）
 
 ### 新增

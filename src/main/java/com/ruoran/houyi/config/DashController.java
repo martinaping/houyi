@@ -93,7 +93,7 @@ public class DashController {
         if(!msgOptional.isPresent()){
             return "msg not exists:"+msgId ;
         }
-        log.warn("msg:{}",msgOptional.get().getContent());
+        log.debug("单条补拉: corpId={}, msgId={}, seq={}", corpId, msgId, seq);
         JSONObject object = new JSONObject(msgOptional.get().getContent());
         downloadThreadKeeper.execute(corpId,msgId,corpInfoOptional.get().getSecret(),seq, object);
         return object;

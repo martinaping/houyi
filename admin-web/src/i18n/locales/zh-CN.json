@@ -465,7 +465,7 @@
     "clientIp": "客户端 IP",
     "traceId": "Trace ID",
     "timeRange": "时间范围",
-    "actionPlaceholder": "如 CORP_SECRET_ROTATE",
+    "actionPlaceholder": "选择动作",
     "operatorPlaceholder": "操作人",
     "empty": "暂无审计日志",
     "actions": {
@@ -521,7 +521,7 @@
   },
   "apiDocs": {
     "title": "API 文档",
-    "versionTag": "v0.7.0",
+    "versionTag": "v0.8.0",
     "description": "管理端与主服务的全部 HTTP 接口说明，内容直接渲染仓库根目录的 API.md。",
     "toc": "目录",
     "searchPlaceholder": "搜索接口、字段或错误码",

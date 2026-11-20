@@ -112,7 +112,8 @@ export async function download(path: string, init: RequestInit = {}, fallbackNam
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-  URL.revokeObjectURL(url);
+  // 立即 revoke 在部分浏览器会中断下载，延迟释放更稳妥。
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function filenameFrom(disposition: string | null): string | null {

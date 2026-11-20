@@ -1,5 +1,5 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
-import { Alert, App, Button, Card, Form, Input, Typography } from 'antd';
+import { Alert, App, Button, Card, Form, Input, Spin, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
@@ -31,7 +31,18 @@ export function LoginPage() {
     return <Navigate to={from} replace />;
   }
 
+  if (status === 'loading') {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
   const onFinish = async (values: LoginForm) => {
+    if (submitting) {
+      return;
+    }
     setSubmitting(true);
     try {
       await login(values.username, values.password);

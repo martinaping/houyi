@@ -24,6 +24,11 @@ public class AuditLogService {
     private static final int DEFAULT_LIMIT = 50;
     private static final int MAX_LIMIT = 200;
     private static final int MAX_EXPORT_ROWS = 5000;
+    private static final int OPERATOR_MAX_LENGTH = 64;
+    private static final int ACTION_MAX_LENGTH = 64;
+    private static final int TARGET_MAX_LENGTH = 128;
+    private static final int CLIENT_IP_MAX_LENGTH = 64;
+    private static final int TRACE_ID_MAX_LENGTH = 64;
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter
             .ofPattern("yyyy-MM-dd HH:mm:ss")
             .withZone(ZoneId.of("Asia/Shanghai"));
@@ -59,22 +64,32 @@ public class AuditLogService {
     private void write(String operator, String action, String target, String detail,
                        HttpServletRequest request) {
         long maxLength = settingsService.longValue("security.audit-detail-max-length", 2000);
-        String safeDetail = detail != null && detail.length() > maxLength
-                ? detail.substring(0, (int) maxLength)
-                : detail;
+        String safeDetail = truncate(detail, (int) Math.max(1, Math.min(maxLength, 100_000)));
         try {
             jdbcTemplate.update("""
                             INSERT INTO admin_audit_log (operator, action, target, detail,
                                                          client_ip, trace_id, created_at)
                             VALUES (?, ?, ?, ?, ?, ?, ?)
                             """,
-                    operator, action, target, safeDetail,
-                    clientIp(request, securityProperties.trustForwardedFor()),
-                    MDC.get("traceId"), System.currentTimeMillis());
+                    truncate(operator, OPERATOR_MAX_LENGTH),
+                    truncate(action, ACTION_MAX_LENGTH),
+                    truncate(target, TARGET_MAX_LENGTH),
+                    safeDetail,
+                    truncate(clientIp(request, securityProperties.trustForwardedFor()),
+                            CLIENT_IP_MAX_LENGTH),
+                    truncate(MDC.get("traceId"), TRACE_ID_MAX_LENGTH),
+                    System.currentTimeMillis());
         } catch (RuntimeException ex) {
             // 审计失败不应影响业务操作，但要留下错误日志
             log.error("写入审计日志失败: action={}, target={}", action, target, ex);
         }
+    }
+
+    private static String truncate(String value, int maxLength) {
+        if (value == null || value.length() <= maxLength) {
+            return value;
+        }
+        return value.substring(0, maxLength);
     }
 
     public AuditLogPage page(String action, String operator, Long cursor, Integer limit,
@@ -152,8 +167,8 @@ public class AuditLogService {
             args.add(action.trim());
         }
         if (operator != null && !operator.isBlank()) {
-            sql.append(" AND operator LIKE ?");
-            args.add("%" + operator.trim() + "%");
+            sql.append(" AND operator LIKE ? ESCAPE '!'");
+            args.add("%" + escapeLike(operator.trim()) + "%");
         }
         if (startAt != null) {
             sql.append(" AND created_at >= ?");
@@ -167,6 +182,10 @@ public class AuditLogService {
 
     private String nullToEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    private static String escapeLike(String value) {
+        return value.replace("!", "!!").replace("%", "!%").replace("_", "!_");
     }
 
     static String clientIp(HttpServletRequest request, boolean trustForwardedFor) {

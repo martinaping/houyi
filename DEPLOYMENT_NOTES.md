@@ -9,7 +9,7 @@
 ### 2. 企业微信配置
 已配置单个企业微信：
 - **Corp ID**: `ww129e1e186af00f38`
-- **Secret**: `Ib9OlzyiU-NjcTZxOScXY9JXo315t1NYmuItZVhQgFE`
+- **Secret**: 通过环境变量 `WEWORK_CORPS_0_SECRET` 提供（不要写入仓库）
 - **私钥文件**: `/etc/houyi/corp-1.pem`
 
 ### 3. 文件位置
@@ -103,7 +103,7 @@ wework:
   corps:
     - corp-id: ww129e1e186af00f38
       corp-name: 主企业
-      secret: Ib9OlzyiU-NjcTZxOScXY9JXo315t1NYmuItZVhQgFE
+      secret: "${WEWORK_CORPS_0_SECRET:}"
       private-key-file: /etc/houyi/corp-1.pem
       enabled: true
 ```

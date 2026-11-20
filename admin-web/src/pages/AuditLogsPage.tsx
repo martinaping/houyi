@@ -7,6 +7,7 @@ import {
   DatePicker,
   Form,
   Input,
+  Select,
   Space,
   Table,
   Tag,
@@ -49,6 +50,27 @@ const EMPTY_FILTERS: Filters = {
   startAt: null,
   endAt: null,
 };
+
+const AUDIT_ACTIONS = [
+  'LOGIN_SUCCESS',
+  'LOGIN_FAILED',
+  'CORP_CREATE',
+  'CORP_UPDATE',
+  'CORP_STATUS',
+  'CORP_BATCH_STATUS',
+  'CORP_SECRET_ROTATE',
+  'CORP_SECRET_REVEAL',
+  'CORP_SECRET_REVEAL_FAILED',
+  'MESSAGE_EXPORT',
+  'MESSAGE_RETRY',
+  'SETTING_UPDATE',
+  'SETTING_RESET',
+  'ALERT_TEST',
+  'RETENTION_EXECUTE',
+  'AUDIT_EXPORT',
+  'LOG_DOWNLOAD',
+  'ROCKETMQ_TEST',
+];
 
 function filterParams(filters: Filters, cursor: number | null = null): URLSearchParams {
   const params = new URLSearchParams();
@@ -187,7 +209,17 @@ export function AuditLogsPage() {
       <Card>
         <Form<FilterForm> form={form} layout="inline" onFinish={onSubmit} style={{ rowGap: 12 }}>
           <Form.Item name="action" label={t('audit.action')}>
-            <Input allowClear placeholder={t('audit.actionPlaceholder')} style={{ width: 200 }} />
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder={t('audit.actionPlaceholder')}
+              style={{ width: 220 }}
+              options={AUDIT_ACTIONS.map((code) => ({
+                value: code,
+                label: `${actionLabel(t, code)} · ${code}`,
+              }))}
+            />
           </Form.Item>
           <Form.Item name="operator" label={t('audit.operator')}>
             <Input allowClear placeholder={t('audit.operatorPlaceholder')} style={{ width: 160 }} />

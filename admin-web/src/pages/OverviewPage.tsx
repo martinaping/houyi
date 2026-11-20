@@ -105,6 +105,7 @@ export function OverviewPage() {
           dataSource={data?.recentFailures ?? []}
           loading={overviewQuery.isLoading}
           pagination={false}
+          locale={{ emptyText: t('common.noData') }}
         />
       </Card>
     </Space>

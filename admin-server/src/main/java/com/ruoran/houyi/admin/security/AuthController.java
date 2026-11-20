@@ -82,6 +82,7 @@ public class AuthController {
         ResponseCookie cookie = baseCookie("", Duration.ZERO);
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .build();
     }
 
@@ -113,6 +114,7 @@ public class AuthController {
     private ResponseEntity<LoginResponse> clearCookieResponse(HttpStatus status) {
         return ResponseEntity.status(status)
                 .header(HttpHeaders.SET_COOKIE, baseCookie("", Duration.ZERO).toString())
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .build();
     }
 

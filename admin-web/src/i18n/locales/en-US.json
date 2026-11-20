@@ -465,7 +465,7 @@
     "clientIp": "Client IP",
     "traceId": "Trace ID",
     "timeRange": "Time range",
-    "actionPlaceholder": "e.g. CORP_SECRET_ROTATE",
+    "actionPlaceholder": "Select action",
     "operatorPlaceholder": "Operator",
     "empty": "No audit logs",
     "actions": {
@@ -521,7 +521,7 @@
   },
   "apiDocs": {
     "title": "API documentation",
-    "versionTag": "v0.7.0",
+    "versionTag": "v0.8.0",
     "description": "All HTTP endpoints of admin-server and houyi, rendered directly from API.md at the repository root.",
     "toc": "Contents",
     "searchPlaceholder": "Search endpoints, fields or error codes",

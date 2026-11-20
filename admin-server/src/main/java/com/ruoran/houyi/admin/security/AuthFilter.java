@@ -28,7 +28,9 @@ public class AuthFilter extends OncePerRequestFilter {
 
     private static final Set<String> PUBLIC_PATHS = Set.of(
             "/api/admin/auth/login",
-            "/api/admin/auth/refresh"
+            "/api/admin/auth/refresh",
+            // 退出只清理 HttpOnly Cookie，放行后即使 access token 已过期也能真正退出。
+            "/api/admin/auth/logout"
     );
 
     private final JwtService jwtService;

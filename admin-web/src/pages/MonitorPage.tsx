@@ -289,20 +289,20 @@ export function MonitorPage() {
             <Col xs={24}>
               <Card title={t('monitor.httpTitle')} styles={{ body: { paddingTop: 16 } }}>
                 <Row gutter={[16, 16]}>
-                  <Col span={6}>
+                  <Col xs={12} sm={6}>
                     <Statistic title={t('monitor.totalRequests')} value={http?.total ?? 0} />
                   </Col>
-                  <Col span={6}>
+                  <Col xs={12} sm={6}>
                     <Statistic
                       title={t('monitor.serverErrors')}
                       value={http?.serverErrors ?? 0}
                       valueStyle={{ color: (http?.serverErrors ?? 0) > 0 ? '#cf1322' : undefined }}
                     />
                   </Col>
-                  <Col span={6}>
+                  <Col xs={12} sm={6}>
                     <Statistic title={t('monitor.clientErrors')} value={http?.clientErrors ?? 0} />
                   </Col>
-                  <Col span={6}>
+                  <Col xs={12} sm={6}>
                     <Statistic
                       title={t('monitor.avgLatency')}
                       value={formatMillis(
@@ -325,19 +325,19 @@ export function MonitorPage() {
             <Col xs={24}>
               <Card title={t('monitor.poolTitle')}>
                 <Row gutter={[16, 16]}>
-                  <Col span={8}>
+                  <Col xs={12} sm={8}>
                     <Statistic title={t('monitor.active')} value={pool?.active ?? '-'} />
                   </Col>
-                  <Col span={8}>
+                  <Col xs={12} sm={8}>
                     <Statistic title={t('monitor.idle')} value={pool?.idle ?? '-'} />
                   </Col>
-                  <Col span={8}>
+                  <Col xs={12} sm={8}>
                     <Statistic title={t('monitor.max')} value={pool?.max ?? '-'} />
                   </Col>
-                  <Col span={8}>
+                  <Col xs={12} sm={8}>
                     <Statistic title={t('monitor.pending')} value={pool?.pending ?? '-'} />
                   </Col>
-                  <Col span={8}>
+                  <Col xs={12} sm={8}>
                     <Statistic
                       title={t('monitor.timeout')}
                       value={pool?.timeoutTotal ?? 0}

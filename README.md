@@ -194,9 +194,10 @@ thread-pool:
 
 ### Actuator 端点
 
-访问 `http://localhost:8080/houyi-eye` 查看所有可用端点：
+主服务仅暴露以下只读端点（未鉴权，请通过内网或网关限制来源）：
 
-- `/houyi-eye/health` - 健康检查
+- `/houyi-eye/health` - 健康检查（仅返回聚合状态）
+- `/houyi-eye/info` - 应用信息
 - `/houyi-eye/metrics` - 应用指标
 - `/houyi-eye/prometheus` - Prometheus 格式指标
 

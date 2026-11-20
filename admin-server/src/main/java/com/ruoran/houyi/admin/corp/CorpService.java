@@ -58,8 +58,8 @@ public class CorpService {
         List<Object> args = new ArrayList<>();
         List<String> conditions = new ArrayList<>();
         if (keyword != null && !keyword.isBlank()) {
-            conditions.add("(corpname LIKE ? OR corpid LIKE ?)");
-            String pattern = "%" + keyword.trim() + "%";
+            conditions.add("(corpname LIKE ? ESCAPE '!' OR corpid LIKE ? ESCAPE '!')");
+            String pattern = "%" + escapeLike(keyword.trim()) + "%";
             args.add(pattern);
             args.add(pattern);
         }
@@ -320,6 +320,10 @@ public class CorpService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private static String escapeLike(String value) {
+        return value.replace("!", "!!").replace("%", "!%").replace("_", "!_");
     }
 
     private static Long parseLong(Object value) {

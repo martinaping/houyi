@@ -210,6 +210,16 @@ spec:
 - 配置安全组规则
 - 启用 HTTPS/TLS
 
+### 6. 主服务内部接口
+
+主服务（默认 `8080`）的 `/status`、`/sync`、`/api/open/**` 与 `/houyi-eye/**` 默认无登录鉴权，设计上只允许内网访问：
+
+- 必须通过安全组、Nginx 网关或 IP 白名单限制来源，禁止直接暴露公网。
+- 可选配置 `HOUYI_INTERNAL_TOKEN`：配置后 `/api/open/**` 与 `/sync` 必须携带请求头 `X-Internal-Token`，未配置时保持原有行为。
+- 企业 `secret` 与 `prikey` 已在实体层通过 Jackson 注解排除，不会再出现在 JSON 响应或实体日志中。
+- Actuator 仅暴露 `health`、`info`、`metrics`、`prometheus`，且 `health` 不展示组件详情。
+- 如确需跨网访问，建议在网关层增加统一认证，而不是直接开放端口。
+
 ---
 
 ## 🔍 检查是否泄露敏感信息
@@ -232,6 +242,8 @@ git secrets --scan
 ---
 
 ## 🆘 如果密钥已经泄露
+
+> **本仓库历史中曾提交过真实企业 Secret**：`src/main/resources/wework-corps.yml` 现已改为环境变量占位，但旧值仍存在于 Git 历史与任何已克隆的仓库中。请立即在企业微信后台轮换该企业 Secret（以及对应私钥，如怀疑泄露），必要时使用 BFG / git-filter-repo 清理历史并强制更新所有克隆。
 
 ### 立即行动：
 

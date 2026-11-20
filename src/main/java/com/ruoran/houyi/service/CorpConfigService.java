@@ -83,8 +83,18 @@ public class CorpConfigService {
 
         // 更新配置信息
         corpInfo.setCorpname(corpConfig.getCorpName());
-        corpInfo.setSecret(corpConfig.getSecret());
-        
+
+        // 密钥不再写入仓库，配置文件中留空时保留数据库已有值，避免覆盖成空串。
+        String configuredSecret = corpConfig.getSecret();
+        if (configuredSecret != null && !configuredSecret.isBlank()) {
+            corpInfo.setSecret(configuredSecret);
+        } else if (corpInfo.getSecret() == null || corpInfo.getSecret().isBlank()) {
+            log.error("企业 {} 未配置 secret（请通过环境变量 WEWORK_CORPS_0_SECRET 提供），跳过同步", corpId);
+            return;
+        } else {
+            log.warn("企业 {} 未提供 secret，保留数据库已有值", corpId);
+        }
+
         // 获取私钥（支持从文件读取）
         String privateKey = getPrivateKey(corpConfig);
         corpInfo.setPrikey(privateKey);

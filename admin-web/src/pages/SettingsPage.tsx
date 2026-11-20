@@ -6,6 +6,7 @@ import {
   Card,
   Input,
   InputNumber,
+  Modal,
   Space,
   Switch,
   Table,
@@ -147,20 +148,8 @@ export function SettingsPage() {
   }, [dirtyKeys.length]);
 
   // 站内跳转（左侧菜单、返回首页等）同样需要确认，避免未保存的修改被静默丢弃。
+  // 用受控 Modal 直接跟随 blocker.state，避免命令式弹窗在回调中重入。
   const blocker = useBlocker(dirtyKeys.length > 0);
-  useEffect(() => {
-    if (blocker.state !== 'blocked') {
-      return;
-    }
-    modal.confirm({
-      title: t('settings.unsavedConfirmTitle'),
-      content: t('settings.unsavedConfirmContent'),
-      okText: t('settings.unsavedConfirmOk'),
-      cancelText: t('settings.unsavedConfirmCancel'),
-      onOk: () => blocker.proceed(),
-      onCancel: () => blocker.reset(),
-    });
-  }, [blocker, modal, t]);
 
   const saveMutation = useMutation({
     mutationFn: async (group: string) => {
@@ -638,6 +627,17 @@ export function SettingsPage() {
           })}
         />
       )}
+
+      <Modal
+        open={blocker.state === 'blocked'}
+        title={t('settings.unsavedConfirmTitle')}
+        okText={t('settings.unsavedConfirmOk')}
+        cancelText={t('settings.unsavedConfirmCancel')}
+        onOk={() => blocker.proceed?.()}
+        onCancel={() => blocker.reset?.()}
+      >
+        <Typography.Text>{t('settings.unsavedConfirmContent')}</Typography.Text>
+      </Modal>
     </Space>
   );
 }

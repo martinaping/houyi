@@ -35,7 +35,12 @@ public final class CsvWriter {
             return "";
         }
         String text = value;
-        if (!text.isEmpty() && "=+-@\t".indexOf(text.charAt(0)) >= 0) {
+        int probe = 0;
+        // Excel 会忽略前导空白，因此按第一个非空白字符判断公式注入。
+        while (probe < text.length() && Character.isWhitespace(text.charAt(probe))) {
+            probe++;
+        }
+        if (probe < text.length() && "=+-@\t".indexOf(text.charAt(probe)) >= 0) {
             text = "'" + text;
         }
         return text.replace("\"", "\"\"");

@@ -6,7 +6,10 @@ import { ApiError } from './client';
  */
 export function errorMessage(t: TFunction, error: unknown): string {
   if (error instanceof ApiError) {
-    return t(`errors.${error.code}`, { defaultValue: error.message });
+    const localized = t(`errors.${error.code}`, { defaultValue: '' });
+    const base = localized || error.message;
+    const details = error.details.length > 0 ? error.details.slice(0, 2).join('; ') : '';
+    return details ? `${base} (${details})` : base;
   }
   if (error instanceof Error) {
     return error.message;

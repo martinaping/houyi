@@ -6,7 +6,9 @@ wework:
     # 企业微信 - 使用文件系统私钥
     - corp-id: ww129e1e186af00f38
       corp-name: 主企业
-      secret: Ib9OlzyiU-NjcTZxOScXY9JXo315t1NYmuItZVhQgFE
+      # 密钥不要写入仓库；本地/生产均通过环境变量提供。
+      # 留空时启动同步会保留数据库中已有的 secret，不会用空值覆盖。
+      secret: "${WEWORK_CORPS_0_SECRET:}"
       private-key-file: /etc/houyi/corp-1.pem
       enabled: true
 

@@ -38,6 +38,7 @@ class CsvWriterTest {
         assertEquals("'+A1", CsvWriter.escape("+A1"));
         assertEquals("'-B2", CsvWriter.escape("-B2"));
         assertEquals("'@cmd", CsvWriter.escape("@cmd"));
+        assertEquals("'  =1+1", CsvWriter.escape("  =1+1"));
         assertEquals("plain", CsvWriter.escape("plain"));
     }
 }

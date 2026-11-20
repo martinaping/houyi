@@ -1,7 +1,8 @@
 package com.ruoran.houyi.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import org.springframework.web.bind.annotation.GetMapping;
+import lombok.ToString;
 
 import jakarta.persistence.*;
 
@@ -17,8 +18,13 @@ public class CorpInfo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     long id;
     String corpid;
+    // 调试接口会直接序列化该实体，密钥与私钥绝不允许出现在响应或日志中。
+    @JsonIgnore
+    @ToString.Exclude
     String secret;
     String corpname;
+    @JsonIgnore
+    @ToString.Exclude
     String prikey;
     long limits;
     long timeout;

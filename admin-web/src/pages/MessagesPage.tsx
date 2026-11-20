@@ -306,6 +306,15 @@ export function MessagesPage() {
           locale={{ emptyText: t('messages.empty') }}
           onRow={(record) => ({
             onClick: () => setSelectedId(record.id),
+            onKeyDown: (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setSelectedId(record.id);
+              }
+            },
+            tabIndex: 0,
+            role: 'button',
+            'aria-label': `${t('messages.detailTitle')}: ${record.msgId}`,
             style: { cursor: 'pointer' },
           })}
         />
@@ -329,7 +338,7 @@ export function MessagesPage() {
         loading={detailQuery.isLoading}
         onClose={() => setSelectedId(null)}
         extra={
-          detail && detail.hasFile && !(detail.pushAt != null && detail.pushAt > 0) ? (
+          detail && detail.hasFile && !(detail.pushAt != null && detail.pushAt > 0) && !detail.ossPath ? (
             <Button
               type="primary"
               loading={retryMutation.isPending}
