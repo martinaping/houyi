@@ -17,7 +17,8 @@ import java.util.Optional;
 /**
  * 管理端在线配置读写。
  *
- * <p>仅允许修改 {@link SettingsCatalog} 中声明的 Key，所有变更由调用方记录审计日志。</p>
+ * <p>仅允许修改 {@link SettingsCatalog} 中声明的 Key，所有变更由调用方记录审计日志。
+ * 取值优先级为：环境变量 &gt; 管理端配置（敏感项密文存储）&gt; 默认值。</p>
  */
 @Service
 @DependsOn("adminSchemaInitializer")
@@ -25,10 +26,14 @@ public class SettingsService {
 
     private static final Logger log = LoggerFactory.getLogger(SettingsService.class);
 
-    private final JdbcTemplate jdbcTemplate;
+    private static final String SOURCE_ENV = "env";
 
-    public SettingsService(JdbcTemplate jdbcTemplate) {
+    private final JdbcTemplate jdbcTemplate;
+    private final SecretCipher secretCipher;
+
+    public SettingsService(JdbcTemplate jdbcTemplate, SecretCipher secretCipher) {
         this.jdbcTemplate = jdbcTemplate;
+        this.secretCipher = secretCipher;
     }
 
     @PostConstruct
@@ -75,32 +80,35 @@ public class SettingsService {
     }
 
     public SettingView update(String key, String rawValue, String operator) {
-        SettingsCatalog.Definition definition = SettingsCatalog.find(key)
-                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "SETTING_NOT_FOUND",
-                        "未知配置项：" + key));
+        SettingsCatalog.Definition definition = requireDefinition(key);
         if (!definition.editable()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "SETTING_READONLY",
                     "配置项 " + key + " 为只读，不支持后台修改");
         }
+        if (SettingsCatalog.envProvided(definition.envName())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "SETTING_ENV_OVERRIDDEN",
+                    "配置项 " + key + " 由环境变量 " + definition.envName() + " 提供，请修改环境变量后重启");
+        }
         String normalized = normalize(definition, rawValue);
+        String storedValue = definition.sensitive() ? encrypt(definition, normalized) : normalized;
         long now = System.currentTimeMillis();
         int updated = jdbcTemplate.update("""
                         UPDATE admin_config
                         SET config_value = ?, updated_by = ?, updated_at = ?
                         WHERE config_key = ?
                         """,
-                normalized, operator, now, key);
+                storedValue, operator, now, key);
         if (updated == 0) {
             jdbcTemplate.update("""
                             INSERT INTO admin_config (config_key, config_value, value_type, config_group,
                                                       description, sensitive, updated_by, updated_at)
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                             """,
-                    definition.key(), normalized, definition.type(), definition.group(),
+                    definition.key(), storedValue, definition.type(), definition.group(),
                     definition.description(), definition.sensitive() ? 1L : 0L, operator, now);
         }
         log.info("管理端更新配置: key={}, operator={}", key, operator);
-        return toView(definition, new StoredSetting(definition.key(), normalized, definition.type(),
+        return toView(definition, new StoredSetting(definition.key(), storedValue, definition.type(),
                 definition.group(), definition.description(), definition.sensitive(), operator, now));
     }
 
@@ -108,9 +116,7 @@ public class SettingsService {
      * 恢复为白名单中声明的默认值。
      */
     public SettingView reset(String key, String operator) {
-        SettingsCatalog.Definition definition = SettingsCatalog.find(key)
-                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "SETTING_NOT_FOUND",
-                        "未知配置项：" + key));
+        SettingsCatalog.Definition definition = requireDefinition(key);
         return update(definition.key(), definition.defaultValue(), operator);
     }
 
@@ -129,13 +135,73 @@ public class SettingsService {
         }
     }
 
+    /**
+     * 读取生效值：环境变量 &gt; 管理端配置 &gt; 兜底值。敏感项自动解密。
+     */
     public String stringValue(String key, String fallback) {
+        SettingsCatalog.Definition definition = SettingsCatalog.find(key).orElse(null);
+        if (definition != null) {
+            String env = envValue(definition);
+            if (!env.isEmpty()) {
+                return env;
+            }
+        }
         List<String> values = jdbcTemplate.queryForList(
                 "SELECT config_value FROM admin_config WHERE config_key = ?", String.class, key);
         if (values.isEmpty() || values.get(0) == null) {
             return fallback;
         }
-        return values.get(0);
+        String raw = values.get(0);
+        if (!SecretCipher.isEncrypted(raw)) {
+            return raw;
+        }
+        try {
+            return secretCipher.decrypt(raw);
+        } catch (IllegalStateException ex) {
+            log.warn("读取加密配置失败，回退兜底值: key={}, error={}", key, ex.getMessage());
+            return fallback;
+        }
+    }
+
+    /**
+     * 配置来源：ENV / DB / DEFAULT。
+     */
+    public String source(String key) {
+        SettingsCatalog.Definition definition = SettingsCatalog.find(key).orElse(null);
+        if (definition == null) {
+            return SettingView.SOURCE_DEFAULT;
+        }
+        if (!envValue(definition).isEmpty()) {
+            return SettingView.SOURCE_ENV;
+        }
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(1) FROM admin_config WHERE config_key = ?", Integer.class, key);
+        return count != null && count > 0 ? SettingView.SOURCE_DB : SettingView.SOURCE_DEFAULT;
+    }
+
+    private SettingsCatalog.Definition requireDefinition(String key) {
+        return SettingsCatalog.find(key)
+                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "SETTING_NOT_FOUND",
+                        "未知配置项：" + key));
+    }
+
+    private String encrypt(SettingsCatalog.Definition definition, String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        if (!secretCipher.available()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "SETTING_KEY_MISSING",
+                    "缺少环境变量 " + SecretCipher.ENV_KEY + "，敏感配置不可写入");
+        }
+        return secretCipher.encrypt(value);
+    }
+
+    private static String envValue(SettingsCatalog.Definition definition) {
+        if (definition.envName() == null || definition.envName().isBlank()) {
+            return "";
+        }
+        String value = System.getenv(definition.envName());
+        return value == null ? "" : value.trim();
     }
 
     private String normalize(SettingsCatalog.Definition definition, String rawValue) {
@@ -188,24 +254,37 @@ public class SettingsService {
     }
 
     private SettingView toView(SettingsCatalog.Definition definition, StoredSetting stored) {
-        String value = stored == null ? definition.defaultValue() : stored.value();
+        String env = envValue(definition);
+        boolean fromEnv = !env.isEmpty();
+        String value = fromEnv ? env : (stored == null ? definition.defaultValue() : stored.value());
+        if (!fromEnv && definition.sensitive() && SecretCipher.isEncrypted(value)) {
+            try {
+                value = secretCipher.decrypt(value);
+            } catch (IllegalStateException ex) {
+                log.warn("展示加密配置失败: key={}, error={}", definition.key(), ex.getMessage());
+                value = "";
+            }
+        }
         String displayValue = definition.sensitive() ? mask(value) : value;
+        String source = fromEnv ? SettingView.SOURCE_ENV
+                : stored == null ? SettingView.SOURCE_DEFAULT : SettingView.SOURCE_DB;
         return new SettingView(
                 definition.key(),
                 definition.group(),
                 definition.type(),
                 displayValue,
                 definition.defaultValue(),
-                stored == null ? definition.description() : Optional.ofNullable(stored.description())
+                stored == null || fromEnv ? definition.description() : Optional.ofNullable(stored.description())
                         .orElse(definition.description()),
                 definition.sensitive(),
-                stored == null ? null : stored.updatedBy(),
-                stored == null ? null : stored.updatedAt(),
+                fromEnv ? SOURCE_ENV : stored == null ? null : stored.updatedBy(),
+                fromEnv ? null : stored == null ? null : stored.updatedAt(),
                 definition.min(),
                 definition.max(),
                 definition.unit(),
                 definition.applyMode(),
-                definition.editable());
+                definition.editable() && !fromEnv,
+                source);
     }
 
     static String mask(String value) {

@@ -124,6 +124,7 @@ export type SettingView = {
   unit: string;
   applyMode: SettingApplyMode;
   editable: boolean;
+  source: 'ENV' | 'DB' | 'DEFAULT';
 };
 
 export type RocketMqTestResult = {

@@ -20,7 +20,7 @@ class SettingsServiceTest {
     @BeforeEach
     void setUp() {
         jdbcTemplate = mock(JdbcTemplate.class);
-        settingsService = new SettingsService(jdbcTemplate);
+        settingsService = new SettingsService(jdbcTemplate, new SecretCipher());
     }
 
     @Test
@@ -140,6 +140,16 @@ class SettingsServiceTest {
                 () -> settingsService.update("rocketmq.retry-topic", "other-topic", "admin"));
 
         assertEquals("SETTING_READONLY", ex.getCode());
+    }
+
+    @Test
+    void rejectsSensitiveWriteWithoutKey() {
+        org.junit.jupiter.api.Assumptions.assumeTrue(System.getenv(SecretCipher.ENV_KEY) == null);
+
+        ApiException ex = assertThrows(ApiException.class,
+                () -> settingsService.update("alert.webhook-url", "https://example.com/hook", "admin"));
+
+        assertEquals("SETTING_KEY_MISSING", ex.getCode());
     }
 
     @Test

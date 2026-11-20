@@ -272,7 +272,11 @@
       "rocketmq": "RocketMQ",
       "retention": "Retention",
       "security": "Security",
-      "runtime": "Runtime"
+      "runtime": "Runtime",
+      "oss": "Aliyun OSS",
+      "mns": "Aliyun MNS",
+      "aliyun": "Aliyun AK/SK",
+      "redismq": "Redis Queue"
     },
     "keys": {
       "alert": {
@@ -315,6 +319,34 @@
         "download-max-size": "Download max threads",
         "oss-core-size": "OSS core threads",
         "oss-max-size": "OSS max threads"
+      },
+      "aliyun": {
+        "access-key": "AccessKey ID",
+        "access-secret": "AccessKey Secret"
+      },
+      "oss": {
+        "bucket": "Bucket",
+        "endpoint": "Endpoint",
+        "access-key": "AccessKey ID",
+        "access-secret": "AccessKey Secret"
+      },
+      "mns": {
+        "endpoint": "Endpoint",
+        "queue-name": "Queue name"
+      },
+      "redismq": {
+        "enabled": "Enable Redis queue",
+        "topic": "Main stream key",
+        "retry-topic": "Retry stream key",
+        "delay-queue-key": "Delay queue key",
+        "consumer-group": "Consumer group",
+        "retry-consumer-group": "Retry consumer group",
+        "tag": "Message tag",
+        "retry-delay-ms": "Retry delay",
+        "batch-size": "Batch size",
+        "poll-interval-ms": "Poll interval",
+        "delay-scan-interval-ms": "Delay scan interval",
+        "enable-message-backup": "Message backup"
       }
     },
     "alert": {
@@ -342,6 +374,10 @@
       "latency": "Latency {{ms}} ms",
       "checkedAt": "Checked at",
       "endpoint": "Endpoint"
+    },
+    "source": {
+      "env": "Environment",
+      "envHint": "Provided by an environment variable; edit it and restart the main service"
     }
   },
   "system": {

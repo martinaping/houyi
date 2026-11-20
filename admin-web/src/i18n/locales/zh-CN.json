@@ -272,7 +272,11 @@
       "rocketmq": "RocketMQ",
       "retention": "数据保留",
       "security": "安全",
-      "runtime": "运行参数"
+      "runtime": "运行参数",
+      "oss": "阿里云 OSS",
+      "mns": "阿里云 MNS",
+      "aliyun": "阿里云 AK/SK",
+      "redismq": "Redis 消息队列"
     },
     "keys": {
       "alert": {
@@ -315,6 +319,34 @@
         "download-max-size": "下载线程最大数",
         "oss-core-size": "OSS 上传核心线程数",
         "oss-max-size": "OSS 上传最大线程数"
+      },
+      "aliyun": {
+        "access-key": "AccessKey ID",
+        "access-secret": "AccessKey Secret"
+      },
+      "oss": {
+        "bucket": "Bucket",
+        "endpoint": "Endpoint",
+        "access-key": "AccessKey ID",
+        "access-secret": "AccessKey Secret"
+      },
+      "mns": {
+        "endpoint": "Endpoint",
+        "queue-name": "队列名称"
+      },
+      "redismq": {
+        "enabled": "启用 Redis 消息队列",
+        "topic": "主队列 Topic",
+        "retry-topic": "重试队列 Topic",
+        "delay-queue-key": "延迟队列 Key",
+        "consumer-group": "消费组",
+        "retry-consumer-group": "重试消费组",
+        "tag": "消息 Tag",
+        "retry-delay-ms": "重试延迟",
+        "batch-size": "批处理大小",
+        "poll-interval-ms": "轮询间隔",
+        "delay-scan-interval-ms": "延迟扫描间隔",
+        "enable-message-backup": "消息备份"
       }
     },
     "alert": {
@@ -342,6 +374,10 @@
       "latency": "耗时 {{ms}} ms",
       "checkedAt": "检测时间",
       "endpoint": "Endpoint"
+    },
+    "source": {
+      "env": "环境变量",
+      "envHint": "该值来自环境变量，需修改环境变量后重启主服务"
     }
   },
   "system": {

@@ -29,7 +29,17 @@ import type {
 } from '../api/types';
 import { formatTime } from '../utils/format';
 
-const GROUP_ORDER = ['alert', 'rocketmq', 'security', 'runtime', 'retention'];
+const GROUP_ORDER = [
+  'alert',
+  'oss',
+  'mns',
+  'aliyun',
+  'redismq',
+  'rocketmq',
+  'security',
+  'runtime',
+  'retention',
+];
 
 type RocketMqTestPayload = {
   endpoint?: string;
@@ -508,7 +518,9 @@ export function SettingsPage() {
                                     defaultValue: item.applyMode,
                                   })}
                                 </Tag>
-                                {item.editable === false ? (
+                                {item.source === 'ENV' ? (
+                                  <Tag color="blue">{t('settings.source.env')}</Tag>
+                                ) : item.editable === false ? (
                                   <Tag>{t('settings.readOnly')}</Tag>
                                 ) : null}
                                 {changed ? (
@@ -520,6 +532,13 @@ export function SettingsPage() {
                                   {item.description}
                                 </Typography.Text>
                               </div>
+                              {item.source === 'ENV' ? (
+                                <div>
+                                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                                    {t('settings.source.envHint')}
+                                  </Typography.Text>
+                                </div>
+                              ) : null}
                               {item.updatedAt || item.updatedBy ? (
                                 <div>
                                   <Typography.Text type="secondary" style={{ fontSize: 12 }}>
