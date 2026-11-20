@@ -596,7 +596,7 @@
 
 `GET /api/admin/settings`
 
-响应 `200`：`SettingView[]`（31 项，按分组顺序返回）
+响应 `200`：`SettingView[]`（51 项，按分组顺序返回）
 
 ```json
 [
@@ -614,20 +614,22 @@
     "max": 0,
     "unit": "",
     "applyMode": "INSTANT",
-    "editable": true
+    "editable": true,
+    "source": "DB"
   }
 ]
 ```
 
 | 字段 | 说明 |
 | --- | --- |
-| `group` | `alert` / `retention` / `security` / `runtime` / `rocketmq` |
+| `group` | `alert` / `oss` / `mns` / `aliyun` / `redismq` / `rocketmq` / `security` / `runtime` / `retention` |
 | `type` | `BOOLEAN` / `NUMBER` / `STRING` |
-| `sensitive` | 为 `true` 时 `value` 仅返回掩码（如 `****a1b2`） |
+| `sensitive` | 为 `true` 时 `value` 仅返回掩码（如 `****a1b2`），数据库中以密文存储 |
 | `min` / `max` | `NUMBER` 类型的取值范围，其它类型为 `0` |
 | `unit` | 数值单位（分钟/秒/毫秒/条/天/次/个/行/字符） |
 | `applyMode` | 生效方式，见 9.2 |
-| `editable` | 是否允许在后台修改；`false` 时仅展示，不可更新或恢复默认 |
+| `editable` | 是否允许在后台修改；`false` 时仅展示，不可更新或恢复默认；来源为环境变量时也为 `false` |
+| `source` | 当前生效值来源：`ENV`（环境变量）/ `DB`（管理端配置）/ `DEFAULT`（默认值），见 9.7 |
 
 ### 9.2 生效方式
 
@@ -635,7 +637,7 @@
 | --- | --- |
 | `INSTANT` | 管理端保存后立即生效（告警、保留、安全、RocketMQ） |
 | `HOT` | 主服务每 30 秒轮询 `admin_config` 生效，保存后通常半分钟内生效 |
-| `RESTART` | 保存后需人工重启主服务（当前用于 `rocketmq.retry-topic`，且该键只读） |
+| `RESTART` | 保存后需人工重启主服务（OSS/MNS/AK-SK/Redis 队列，以及只读的 `rocketmq.retry-topic`） |
 
 ### 9.3 修改设置项
 
@@ -654,9 +656,11 @@
 - `STRING`：长度不超过 **2000** 个字符。
 - `alert.quiet-hours`：不为空时必须是 `HH:mm-HH:mm` 格式（如 `22:00-08:00`）。
 - `alert.webhook-url`：不为空时必须以 `http://` 或 `https://` 开头。
-- 敏感项（如 `alert.webhook-url`）不接受以 `****` 开头的值，避免把掩码当成真实值写入。
-- 敏感项写入后，再次读取仅返回掩码 `****` + 后 4 位（原文长度 ≤ 4 时为 `****`）。
+- 敏感项（如 `alert.webhook-url`、`oss.access-key`）不接受以 `****` 开头的值，避免把掩码当成真实值写入。
+- 敏感项写入前使用 `HOUYI_CONFIG_KEY` 派生的 AES-256-GCM 密钥加密，库中存储 `enc:v1:<base64>`；未设置该环境变量时写入返回 `SETTING_KEY_MISSING`。
+- 敏感项读取仅返回掩码 `****` + 后 4 位（原文长度 ≤ 4 时为 `****`）。
 - 只读项（`editable = false`，如 `rocketmq.retry-topic`）不接受更新或恢复默认。
+- 由环境变量提供的项（`source = ENV`）不接受更新或恢复默认，须修改环境变量后重启。
 
 错误：
 
@@ -665,6 +669,8 @@
 | 400 | `SETTING_NOT_FOUND` | Key 不在白名单 |
 | 400 | `SETTING_INVALID` | 取值不符合类型、范围或格式 |
 | 400 | `SETTING_READONLY` | 配置项为只读，不支持后台修改 |
+| 400 | `SETTING_ENV_OVERRIDDEN` | 该配置由环境变量提供，后台不可修改 |
+| 400 | `SETTING_KEY_MISSING` | 缺少 `HOUYI_CONFIG_KEY`，敏感配置不可写入 |
 
 ### 9.4 恢复默认值
 
@@ -678,7 +684,7 @@
 
 错误：`400 SETTING_NOT_FOUND` / `400 SETTING_READONLY`。
 
-### 9.5 配置项清单（31 项）
+### 9.5 配置项清单（51 项）
 
 **告警（alert）**
 
@@ -738,6 +744,54 @@
 | `rocketmq.password` | 访问密码（敏感） | STRING | 空 | 留空回退环境变量，即时生效 |
 | `rocketmq.retry-topic` | 重试 Topic（只读） | STRING | 空 | 须与主应用 `ROCKETMQ_RETRY_TOPIC` 一致，重启生效 |
 
+**阿里云通用 AK/SK（aliyun，重启生效）**
+
+主应用启动时读取，用于 MNS 等通用调用；对应环境变量 `ALIYUN_ACCESS_KEY` / `ALIYUN_ACCESS_SECRET`。
+
+| Key | 名称 | 类型 | 默认值 | 范围/单位 |
+| --- | --- | --- | --- | --- |
+| `aliyun.access-key` | AccessKey ID（敏感） | STRING | 空 | 密文存储 |
+| `aliyun.access-secret` | AccessKey Secret（敏感） | STRING | 空 | 密文存储 |
+
+**阿里云 OSS（oss，重启生效）**
+
+对应环境变量 `ALIYUN_OSS_BUCKET` / `ALIYUN_OSS_ENDPOINT` / `ALIYUN_OSS_ACCESS_KEY` / `ALIYUN_OSS_ACCESS_SECRET`。
+
+| Key | 名称 | 类型 | 默认值 | 范围/单位 |
+| --- | --- | --- | --- | --- |
+| `oss.bucket` | Bucket | STRING | `wechat-monitoring` | - |
+| `oss.endpoint` | Endpoint | STRING | `oss-cn-shanghai.aliyuncs.com` | - |
+| `oss.access-key` | AccessKey ID（敏感） | STRING | 空 | 密文存储 |
+| `oss.access-secret` | AccessKey Secret（敏感） | STRING | 空 | 密文存储 |
+
+**阿里云 MNS（mns，重启生效）**
+
+对应环境变量 `ALIYUN_MNS_ENDPOINT` / `ALIYUN_MNS_QUEUE_NAME`。
+
+| Key | 名称 | 类型 | 默认值 | 范围/单位 |
+| --- | --- | --- | --- | --- |
+| `mns.endpoint` | Endpoint | STRING | 空 | - |
+| `mns.queue-name` | 队列名称 | STRING | 空 | - |
+
+**Redis 消息队列（redismq，重启生效）**
+
+对应环境变量 `REDIS_MQ_*`；Redis 连接本身（地址/密码/DB）不在白名单中，只能通过环境变量配置。
+
+| Key | 名称 | 类型 | 默认值 | 范围/单位 |
+| --- | --- | --- | --- | --- |
+| `redismq.enabled` | 启用 Redis 队列 | BOOLEAN | `true` | - |
+| `redismq.topic` | 主队列 Stream Key | STRING | `mq:topic:main` | - |
+| `redismq.retry-topic` | 重试队列 Stream Key | STRING | `mq:topic:retry` | - |
+| `redismq.delay-queue-key` | 延迟队列 Key | STRING | `mq:delay:queue` | - |
+| `redismq.consumer-group` | 消费组 | STRING | `houyi-consumer-group` | - |
+| `redismq.retry-consumer-group` | 重试消费组 | STRING | `houyi-retry-consumer-group` | - |
+| `redismq.tag` | 消息 Tag | STRING | `default` | - |
+| `redismq.retry-delay-ms` | 重试延迟 | NUMBER | `30000` | 1000~3600000 毫秒 |
+| `redismq.batch-size` | 批处理大小 | NUMBER | `10` | 1~1000 条 |
+| `redismq.poll-interval-ms` | 轮询间隔 | NUMBER | `1000` | 100~60000 毫秒 |
+| `redismq.delay-scan-interval-ms` | 延迟扫描间隔 | NUMBER | `1000` | 100~60000 毫秒 |
+| `redismq.enable-message-backup` | 消息备份 | BOOLEAN | `true` | - |
+
 ### 9.6 RocketMQ 连接测试
 
 `POST /api/admin/settings/rocketmq/test`
@@ -771,6 +825,24 @@
 | `message` | string | 成功说明或错误原因（最多 300 字符） |
 
 说明：测试只做 TCP 连通性探测并创建/关闭一次生产者，不会向业务 Topic 发送消息。
+
+### 9.7 配置优先级与加密
+
+配置取值遵循三层优先级：
+
+| 优先级 | 来源 | 说明 |
+| --- | --- | --- |
+| 1 | 环境变量 | 对应环境变量有值时，后台只读展示，修改后台返回 `SETTING_ENV_OVERRIDDEN` |
+| 2 | 管理端配置（`admin_config`） | 敏感项以 `enc:v1:` 密文存储，密钥由 `HOUYI_CONFIG_KEY` 派生 |
+| 3 | 默认值 | 白名单中声明的默认值 |
+
+主应用启动时由 `AdminConfigEnvironmentPostProcessor` 读取 `admin_config`，把非环境变量来源的值注入 Spring Environment（优先级低于系统环境变量、高于 `application.yml`），因此：
+
+- 生产环境可继续只使用环境变量，管理端仅作只读展示；
+- 测试或轻量部署可直接在后台填写 OSS/MNS/Redis 队列参数，重启主应用后生效；
+- 已有敏感配置需要轮换主密钥时，修改 `HOUYI_CONFIG_KEY` 后原密文将无法解密，须在后台重新填写，因此变更前应先备份旧密钥。
+
+> `HOUYI_CONFIG_KEY` 至少 16 个字符，建议使用随机生成的 32 字节 Base64 字符串；该密钥不得与数据库备份存放在同一位置。
 
 ---
 
