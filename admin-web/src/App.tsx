@@ -17,10 +17,12 @@ import { CorpsPage } from './pages/CorpsPage';
 import { HealthPage } from './pages/HealthPage';
 import { LoginPage } from './pages/LoginPage';
 import { LogsPage } from './pages/LogsPage';
+import { MnsPage } from './pages/mns/MnsPage';
 import { MonitorPage } from './pages/MonitorPage';
 import { MessagesPage } from './pages/MessagesPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { QueuePage } from './pages/QueuePage';
+import { RedisPage } from './pages/redis/RedisPage';
 import { RetentionPage } from './pages/RetentionPage';
 import { RocketMqPage } from './pages/rocketmq/RocketMqPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -54,6 +56,8 @@ const router = createBrowserRouter([
       { path: 'messages', element: <MessagesPage /> },
       { path: 'queue', element: <QueuePage /> },
       { path: 'rocketmq', element: <RocketMqPage /> },
+      { path: 'redis', element: <RedisPage /> },
+      { path: 'mns', element: <MnsPage /> },
       { path: 'retention', element: <RetentionPage /> },
       { path: 'audit', element: <AuditLogsPage /> },
       { path: 'logs', element: <LogsPage /> },

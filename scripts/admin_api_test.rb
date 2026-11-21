@@ -132,6 +132,11 @@ class Runner
     rocketmq_config
     rocketmq_retry
     rocketmq_recent_messages
+    redis_overview
+    redis_config
+    redis_keys
+    mns_overview
+    mns_config
     list_settings
     update_setting_rejects_invalid_value
     setting_reset_rejects_unknown_key
@@ -223,6 +228,17 @@ class Runner
       ok = response.status == 200 && response.body['messages'].is_a?(Array) &&
            response.body.key?('scannedTopics')
       [ok, "rows=#{response.body['messages'].is_a?(Array) ? response.body['messages'].length : 'n/a'}"]
+    when 'redis_overview'
+      [response.status == 200 && response.body.key?('available'), "available=#{response.body['available']}"]
+    when 'redis_config'
+      [response.status == 200 && response.body.key?('redisMqItems'), "status=#{response.status}"]
+    when 'redis_keys'
+      ok = response.status == 200 && response.body['keys'].is_a?(Array)
+      [ok, "keys=#{response.body['keys'].is_a?(Array) ? response.body['keys'].length : 'n/a'}"]
+    when 'mns_overview'
+      [response.status == 200 && response.body.key?('configured'), "configured=#{response.body['configured']}"]
+    when 'mns_config'
+      [response.status == 200 && response.body.key?('items'), "status=#{response.status}"]
     when 'list_settings'
       ok = response.status == 200 && response.body.is_a?(Array) && !response.body.empty? &&
            response.body.all? { |item| item.key?('applyMode') && item.key?('unit') }
@@ -406,6 +422,26 @@ class Runner
     check('rocketmq_recent_messages') do
       @client.get('/api/admin/rocketmq/messages/recent?limit=20', token: @token)
     end
+  end
+
+  def redis_overview
+    check('redis_overview') { @client.get('/api/admin/redis/overview', token: @token) }
+  end
+
+  def redis_config
+    check('redis_config') { @client.get('/api/admin/redis/config', token: @token) }
+  end
+
+  def redis_keys
+    check('redis_keys') { @client.get('/api/admin/redis/keys?pattern=houyi:*&limit=10', token: @token) }
+  end
+
+  def mns_overview
+    check('mns_overview') { @client.get('/api/admin/mns/overview', token: @token) }
+  end
+
+  def mns_config
+    check('mns_config') { @client.get('/api/admin/mns/config', token: @token) }
   end
 
   def list_settings

@@ -1,6 +1,6 @@
 # 后羿（Houyi）系统架构文档
 
-**当前版本：v0.10.0**
+**当前版本：v0.11.0**
 
 ## 📋 系统概述
 
@@ -621,6 +621,18 @@ houyi/
 | POST | `/api/admin/rocketmq/retry/{id}/discard` | 标记丢弃（状态 3，不删除记录，写审计） |
 | POST | `/api/admin/rocketmq/test-send` | 发送测试消息（≤64 KB，禁止系统 Topic，写审计） |
 | GET | `/api/admin/rocketmq/config` | 管理端 RocketMQ 生效配置、来源与重启提示 |
+| GET | `/api/admin/redis/overview` | Redis INFO、Keyspace、Streams、应用指标计数 |
+| GET | `/api/admin/redis/streams` | 应用 Stream 概览 |
+| GET | `/api/admin/redis/streams/detail` | Stream 消费组/消费者/Pending/最近条目 |
+| GET | `/api/admin/redis/keys` | SCAN Key 浏览（类型/TTL/大小/预览） |
+| POST | `/api/admin/redis/keys/delete` | 删除应用自有 Key（写审计） |
+| GET | `/api/admin/redis/metrics` | 拉取书签、拉取/推送指标、告警状态 |
+| GET | `/api/admin/redis/config` | Redis 连接与 Redis MQ 配置 |
+| GET | `/api/admin/mns/overview` | MNS 队列状态与属性 |
+| GET | `/api/admin/mns/queues` | MNS 队列列表 |
+| GET | `/api/admin/mns/messages` | MNS Peek 消息（只读） |
+| POST | `/api/admin/mns/test-send` | 发送 MNS 测试消息（写审计） |
+| GET | `/api/admin/mns/config` | MNS 生效配置与开关 |
 | GET | `/api/admin/retention/preview` | 预览可清理数据量与最早时间 |
 | POST | `/api/admin/retention/execute` | 执行清理（需开启开关并输入 `DELETE` 确认） |
 
@@ -633,6 +645,13 @@ houyi/
 - **最近消息浏览**：使用临时 Pull Consumer 按 Topic 队列读取最近消息；全部业务 Topic 时最多扫描 20 个 Topic，单次最多 200 条，按时间范围/关键字过滤；不提交 Offset、不消费原消息。
 - **审计**：DLQ 重投、消息查询/轨迹、测试发送、重试队列重投/丢弃均写 `admin_audit_log`，不记录消息体本身。
 - **告警**：`AlertService` 复用现有 Webhook/冷却/静默时段，新增消费组 Lag 与 DLQ 总数阈值；RocketMQ 不可用时只记录 WARN。
+
+### Redis 与 MNS 管理
+
+- **Redis**：`RedisAdminService` 使用 `RedisConnection` 低层命令读取 INFO/SCAN/Streams/Pending；Key 删除仅允许 `houyi:`、`alert-sent:`、`corp-stall:` 前缀，`mq:` Streams 与 `last_seq_` 书签受保护；不提供 FLUSH/KEYS/Stream 删除/ACK。
+- **MNS**：`MnsAdminService` 使用 `aliyun-sdk-mns` 惰性初始化，连接超时 3 秒、读取 5 秒；提供队列属性/列表、只读 Peek（不改变可见性）与测试发送（≤64 KB、延迟 0~604800 秒）。
+- **配置来源**：MNS/Redis MQ 均优先环境变量，其次 `admin_config`；敏感凭据由 `SecretCipher` 解密。修改后主服务需重启。
+- **审计**：`REDIS_KEY_DELETE`、`MNS_TEST_SEND` 写入 `admin_audit_log`。
 
 ### 管理端自建表
 

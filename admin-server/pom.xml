@@ -13,7 +13,7 @@
 
     <groupId>com.ruoran.houyi</groupId>
     <artifactId>admin-server</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
     <name>houyi-admin-server</name>
     <description>houyi 会话存档管理端后端，独立部署，共享主服务的数据库与消息队列</description>
 
@@ -58,6 +58,21 @@
             <artifactId>rocketmq-tools</artifactId>
             <version>${rocketmq-tools.version}</version>
             <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.aliyun.mns</groupId>
+            <artifactId>aliyun-sdk-mns</artifactId>
+            <version>1.1.9.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>servlet-api</artifactId>
+                </exclusion>
                 <exclusion>
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging</artifactId>

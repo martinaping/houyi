@@ -4,7 +4,7 @@
 
 - 技术栈：Java 21、Spring Boot 3.2.11、JdbcTemplate、Spring Data Redis、RocketMQ Client 5.0.7
 - 端口：`18081`
-- 版本：`0.10.0`
+- 版本：`0.11.0`
 
 ## 构建与启动
 
@@ -55,6 +55,7 @@ H2 开启 `AUTO_SERVER=TRUE` 后可与主服务同时连接；仅用于本地验
 | `ROCKETMQ_NAMESRV_ADDR` | `127.0.0.1:9876` | 管理端查询消费进度/Topic/Broker 的 NameServer |
 | `ROCKETMQ_CLUSTER_NAME` | `DefaultCluster` | 管理端展示的集群名称 |
 | `ROCKETMQ_ADMIN_TIMEOUT_MS` | `5000` | 管理端访问 NameServer/Broker 的超时时间 |
+| `ALIYUN_MNS_ENABLED` | `true` | 主服务是否启用 MNS 备份（管理端可在线修改，需重启） |
 
 ## 接口
 
@@ -96,6 +97,18 @@ H2 开启 `AUTO_SERVER=TRUE` 后可与主服务同时连接；仅用于本地验
 | POST | `/api/admin/rocketmq/retry/{id}/discard` | 丢弃重试消息 |
 | POST | `/api/admin/rocketmq/test-send` | 发送测试消息 |
 | GET | `/api/admin/rocketmq/config` | RocketMQ 生效配置 |
+| GET | `/api/admin/redis/overview` | Redis 运行概览 |
+| GET | `/api/admin/redis/streams` | Redis Streams 概览 |
+| GET | `/api/admin/redis/streams/detail` | Stream 组/消费者/Pending/最近条目 |
+| GET | `/api/admin/redis/keys` | SCAN Key 浏览 |
+| POST | `/api/admin/redis/keys/delete` | 删除应用自有 Key（写审计） |
+| GET | `/api/admin/redis/metrics` | 企业拉取书签与运行指标 |
+| GET | `/api/admin/redis/config` | Redis 连接与 Redis MQ 配置 |
+| GET | `/api/admin/mns/overview` | MNS 队列状态与属性 |
+| GET | `/api/admin/mns/queues` | MNS 队列列表 |
+| GET | `/api/admin/mns/messages` | MNS Peek 消息（只读） |
+| POST | `/api/admin/mns/test-send` | 发送 MNS 测试消息（写审计） |
+| GET | `/api/admin/mns/config` | MNS 生效配置 |
 | GET | `/api/admin/settings` | 配置项列表（范围/单位/生效方式） |
 | PUT | `/api/admin/settings` | 更新配置项 |
 | POST | `/api/admin/settings/reset` | 按 key 恢复默认值 |
@@ -138,7 +151,7 @@ H2 开启 `AUTO_SERVER=TRUE` 后可与主服务同时连接；仅用于本地验
 
 ## 配置分组与生效方式
 
-`SettingsCatalog` 为白名单（60 项），分为八组：
+`SettingsCatalog` 为白名单（61 项），分为八组：
 
 | 分组 | 内容 | 生效方式 |
 | --- | --- | --- |

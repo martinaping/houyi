@@ -200,6 +200,9 @@ public final class SettingsCatalog {
                     true, 0, 0, "", APPLY_RESTART, "ALIYUN_OSS_ACCESS_SECRET", true),
 
             // ---------- 阿里云 MNS 备份队列（主服务重启生效） ----------
+            new Definition("mns.enabled", GROUP_MNS, TYPE_BOOLEAN, "true",
+                    "是否启用 MNS 备份推送；环境变量 ALIYUN_MNS_ENABLED 有值时以其为准",
+                    false, 0, 0, "", APPLY_RESTART, "ALIYUN_MNS_ENABLED", true),
             new Definition("mns.endpoint", GROUP_MNS, TYPE_STRING, "",
                     "MNS 服务地址，如 http://1234567890.mns.cn-shanghai.aliyuncs.com/；环境变量 ALIYUN_MNS_ENDPOINT 有值时以其为准",
                     false, 0, 0, "", APPLY_RESTART, "ALIYUN_MNS_ENDPOINT", true),

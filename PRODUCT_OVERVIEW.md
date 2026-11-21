@@ -1,6 +1,6 @@
 # 后羿（Houyi）产品概览
 
-**当前版本：v0.10.0**
+**当前版本：v0.11.0**
 
 ## 产品定位
 
@@ -42,6 +42,8 @@
 17. **日志中心**：集中查看 admin-server、主服务、消息拉取/下载、RocketMQ、一键脚本与前端开发日志，支持按来源/文件/级别/关键字过滤、自动刷新、在线查看与下载，下载路径做白名单校验并写审计。
 18. **监控指标**：admin-server 暴露 `/actuator/prometheus`，并抓取主应用 `/houyi-eye/prometheus` 在后台展示 JVM（堆/非堆、线程、GC、CPU、运行时长、类加载）、HTTP 请求、HikariCP 连接池、线程池与 `dayu_*` 业务指标，15 秒自动刷新。
 19. **RocketMQ 管理**：概览、消费组 Lag/队列进度/在线连接、Topic 拓扑、Broker/Proxy 状态、DLQ 查看与重投、最近消息浏览与按 MsgID/Key 精确查询、消息轨迹、Redis 重试队列可视化与重投/丢弃、有效配置对比与测试发送；写操作全部审计。
+20. **Redis 管理**：运行概览、Keyspace、Streams/消费组/Pending/最近条目、SCAN Key 浏览与受限删除、企业拉取书签与运行指标、Redis MQ 配置。
+21. **阿里云 MNS**：队列状态/属性、队列列表、只读 Peek 消息、测试发送、备份配置与开关。
 
 ## 边界与非目标
 
@@ -54,4 +56,4 @@
 
 ## 版本
 
-admin-server 与 admin-web 统一使用 `0.10.0` 作为本次交付版本；主服务保持 `0.0.1-SNAPSHOT`。
+admin-server 与 admin-web 统一使用 `0.11.0` 作为本次交付版本；主服务保持 `0.0.1-SNAPSHOT`。

@@ -11,6 +11,8 @@
     "messages": "消息",
     "queue": "队列",
     "rocketmq": "RocketMQ",
+    "redis": "Redis",
+    "mns": "阿里云 MNS",
     "retention": "数据清理",
     "audit": "审计日志",
     "logs": "日志中心",
@@ -392,6 +394,7 @@
         "access-secret": "AccessKey Secret"
       },
       "mns": {
+        "enabled": "启用 MNS 备份",
         "endpoint": "Endpoint",
         "queue-name": "队列名称",
         "access-key": "AccessKey ID",
@@ -501,7 +504,9 @@
       "ROCKETMQ_MESSAGE_TRACE": "查看消息轨迹",
       "ROCKETMQ_TEST_SEND": "发送测试消息",
       "RETRY_QUEUE_REQUEUE": "重新投递重试消息",
-      "RETRY_QUEUE_DISCARD": "丢弃重试消息"
+      "RETRY_QUEUE_DISCARD": "丢弃重试消息",
+      "REDIS_KEY_DELETE": "删除 Redis Key",
+      "MNS_TEST_SEND": "发送 MNS 测试消息"
     }
   },
   "logs": {
@@ -536,7 +541,7 @@
   },
   "apiDocs": {
     "title": "API 文档",
-    "versionTag": "v0.10.0",
+    "versionTag": "v0.11.0",
     "description": "管理端与主服务的全部 HTTP 接口说明，内容直接渲染仓库根目录的 API.md。",
     "toc": "目录",
     "searchPlaceholder": "搜索接口、字段或错误码",
@@ -568,6 +573,207 @@
       "MD5_INDEX": "MD5 索引",
       "AUDIT_LOG": "审计日志",
       "ALERT_LOG": "告警记录"
+    }
+  },
+  "redis": {
+    "title": "Redis 管理",
+    "hint": "查看运行状态、Streams/消费组、应用 Key 与运行指标；删除仅限应用自有前缀。",
+    "connected": "已连接",
+    "unavailable": "不可用",
+    "unavailableHint": "管理端无法连接 Redis，请检查地址、密码与网络。",
+    "loadFailed": "Redis 数据加载失败",
+    "tabs": {
+      "overview": "概览",
+      "streams": "Streams",
+      "keys": "Key 浏览",
+      "metrics": "应用指标",
+      "config": "配置"
+    },
+    "overview": {
+      "memory": "内存使用",
+      "clients": "客户端",
+      "ops": "每秒命令",
+      "dbSize": "当前 DB Keys",
+      "lastSeq": "拉取书签",
+      "pullMetrics": "拉取指标",
+      "pushMetric": "推送指标",
+      "latency": "探测延迟 {{ms}} ms",
+      "info": "Redis INFO",
+      "keyspaces": "Keyspace",
+      "streams": "Streams",
+      "note": "Redis 管理页面仅执行只读查询与受限 Key 删除，不会执行 FLUSH/KEYS 等危险命令。"
+    },
+    "fields": {
+      "db": "DB",
+      "keys": "Keys",
+      "expires": "过期 Key",
+      "avgTtl": "平均 TTL",
+      "stream": "Stream",
+      "length": "长度",
+      "groups": "消费组数",
+      "firstId": "首条 ID",
+      "lastId": "末条 ID",
+      "group": "消费组",
+      "consumers": "消费者",
+      "consumer": "消费者",
+      "pending": "Pending",
+      "lastDelivered": "最后投递 ID",
+      "pendingRange": "Pending {{total}} 条，范围 {{min}} ~ {{max}}",
+      "idle": "空闲",
+      "recentEntries": "最近条目",
+      "first": "首条",
+      "last": "末条",
+      "key": "Key",
+      "type": "类型",
+      "ttl": "TTL",
+      "size": "大小",
+      "preview": "预览",
+      "deletable": "可删除",
+      "host": "Host",
+      "port": "Port",
+      "database": "Database",
+      "latency": "延迟",
+      "source": "来源",
+      "applyMode": "生效方式",
+      "value": "值",
+      "corpId": "企业 ID",
+      "fields": "字段"
+    },
+    "streams": {
+      "hint": "展示应用自有 Stream（mq: / houyi:）的消费组、Pending 与最近条目；只读，不提交 Offset。",
+      "loadFailed": "Stream 数据加载失败",
+      "empty": "暂无 Stream",
+      "detailTitle": "Stream：{{key}}",
+      "noConsumers": "暂无消费者",
+      "recentEntries": "最近 20 条",
+      "noEntries": "暂无条目"
+    },
+    "keys": {
+      "hint": "使用 SCAN 按模式扫描（不使用 KEYS）。仅允许删除 houyi: / alert-sent: / corp-stall: 前缀的 Key；mq: Streams 与 last_seq_ 拉取书签受保护。",
+      "patternPlaceholder": "匹配模式，例如 houyi:metric:*",
+      "result": "扫描结果（已扫描 {{scanned}} 个 Key）",
+      "truncated": "结果已达到条数上限，请缩小匹配模式。",
+      "empty": "未找到 Key",
+      "detailTitle": "Key 详情",
+      "delete": "删除 Key",
+      "deleteTitle": "确认删除 Redis Key",
+      "deleteHint": "将删除 Key：{{key}}。该操作不可恢复，已写入审计。",
+      "deleteSuccess": "已删除 {{key}}",
+      "noExpiry": "永不过期",
+      "missing": "Key 不存在",
+      "allowed": "可删除",
+      "protected": "受保护",
+      "protectedHint": "mq: Streams、last_seq_ 拉取书签等关键 Key 不允许在面板删除",
+      "previewTruncated": "预览已截断"
+    },
+    "metrics": {
+      "loadFailed": "应用指标加载失败",
+      "lastSeq": "各企业拉取书签（last_seq_*）",
+      "pull": "拉取指标（houyi:metric:pull:*）",
+      "lastEndAt": "最近拉取",
+      "lastFetched": "本次条数",
+      "totalFetched": "累计条数",
+      "lastError": "最近错误",
+      "push": "推送指标（houyi:metric:push）",
+      "alertStates": "告警/停滞状态 Key"
+    },
+    "config": {
+      "title": "Redis 连接与 Redis MQ 配置",
+      "loadFailed": "Redis 配置加载失败",
+      "unavailable": "Redis 当前不可达，配置仍可查看",
+      "openSettings": "打开系统设置",
+      "note": "Redis 连接参数只能通过环境变量配置；Redis MQ 参数修改后需重启主服务。",
+      "source": {
+        "ENV": "环境变量",
+        "DB": "管理端",
+        "DEFAULT": "默认值"
+      }
+    }
+  },
+  "mns": {
+    "title": "阿里云 MNS",
+    "hint": "查看备份队列状态、队列列表与消息，发送测试消息；Peek 不会消费或删除消息。",
+    "connected": "已连接",
+    "unavailable": "不可用",
+    "notConfigured": "未配置",
+    "notConfiguredHint": "请先在系统设置 → 阿里云 MNS 配置 endpoint、队列名、AccessKey 与 Secret。",
+    "queuePlaceholder": "选择队列",
+    "loadFailed": "MNS 数据加载失败",
+    "tabs": {
+      "overview": "概览",
+      "queues": "队列",
+      "messages": "消息 Peek",
+      "config": "配置与测试"
+    },
+    "fields": {
+      "endpoint": "Endpoint",
+      "queue": "队列",
+      "exists": "队列存在",
+      "retention": "消息保留",
+      "visibility": "可见性超时",
+      "defaultDelay": "默认延迟",
+      "pollingWait": "长轮询等待",
+      "createTime": "创建时间",
+      "modifyTime": "最后修改",
+      "queueUrl": "队列 URL",
+      "messageId": "MessageID",
+      "dequeueCount": "出队次数",
+      "priority": "优先级",
+      "enqueueTime": "入队时间",
+      "nextVisibleTime": "下次可见",
+      "firstDequeueTime": "首次出队",
+      "body": "消息体",
+      "delaySeconds": "延迟秒数",
+      "enabled": "备份开关",
+      "configured": "配置完整",
+      "available": "连接可用",
+      "source": "来源",
+      "applyMode": "生效方式",
+      "key": "配置项",
+      "value": "值"
+    },
+    "overview": {
+      "active": "Active",
+      "delayed": "Delayed",
+      "inactive": "Inactive",
+      "maxMessageSize": "最大消息",
+      "queueMeta": "队列属性",
+      "queueMissing": "队列不存在",
+      "unavailable": "MNS 当前不可用",
+      "note": "MNS 是主消息的备份队列；Peek 只读，不改变消息可见性。"
+    },
+    "queues": {
+      "title": "MNS 队列列表",
+      "prefixPlaceholder": "队列名前缀，例如 houyi",
+      "empty": "暂无队列",
+      "hint": "点击队列查看属性；队列列表需要 AccessKey 具备 ListQueue 权限。"
+    },
+    "messages": {
+      "title": "Peek 消息",
+      "count": "每次条数",
+      "hint": "Peek 不会改变消息可见性、不会删除消息；每次最多 16 条。",
+      "empty": "当前队列没有可 Peek 的消息",
+      "detailTitle": "MNS 消息详情"
+    },
+    "config": {
+      "title": "MNS 生效配置",
+      "loadFailed": "MNS 配置加载失败",
+      "unavailable": "MNS 当前不可用，配置仍可查看",
+      "openSettings": "打开系统设置",
+      "note": "MNS 由主服务在启动时初始化；修改 endpoint/队列/开关后需要重启主服务。",
+      "source": {
+        "ENV": "环境变量",
+        "DB": "管理端",
+        "DEFAULT": "默认值"
+      },
+      "testTitle": "发送 MNS 测试消息",
+      "testHint": "测试消息会真实写入目标队列，请确认队列用于测试或可接受测试数据。",
+      "testSend": "发送测试",
+      "testConfirmTitle": "确认发送 MNS 测试消息",
+      "testConfirmContent": "目标队列：{{queue}}，消息大小约 {{bytes}} 字节。",
+      "testSuccess": "发送成功，MessageID={{messageId}}",
+      "testResult": "最近一次发送结果",
+      "bodyRequired": "请输入测试消息内容"
     }
   },
   "rocketmq": {
@@ -861,6 +1067,19 @@
     "RETRY_MESSAGE_NOT_FOUND": "重试消息不存在",
     "RETRY_QUEUE_UNAVAILABLE": "重试队列数据库不可用",
     "RETRY_STATUS_INVALID": "不支持的重试状态",
-    "RETRY_REASON_TOO_LONG": "丢弃原因过长"
+    "RETRY_REASON_TOO_LONG": "丢弃原因过长",
+    "REDIS_UNAVAILABLE": "Redis 不可用",
+    "REDIS_NOT_STREAM": "目标 Key 不是 Redis Stream",
+    "REDIS_PATTERN_INVALID": "Key 匹配模式不合法",
+    "REDIS_KEY_DELETE_DENIED": "该 Key 受保护，不允许删除",
+    "REDIS_KEY_NOT_FOUND": "Redis Key 不存在",
+    "REDIS_KEY_REQUIRED": "缺少 Redis Key",
+    "REDIS_STREAM_KEY_DENIED": "不允许查看该系统 Stream",
+    "MNS_UNAVAILABLE": "阿里云 MNS 不可用",
+    "MNS_DISABLED": "MNS 未启用",
+    "MNS_NOT_CONFIGURED": "MNS 未配置完整",
+    "MNS_MESSAGE_REQUIRED": "消息体不能为空",
+    "MNS_MESSAGE_TOO_LARGE": "测试消息不能超过 64 KB",
+    "MNS_DELAY_INVALID": "MNS 延迟秒数不合法"
   }
 }

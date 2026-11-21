@@ -46,6 +46,7 @@ public class AdminConfigEnvironmentPostProcessor implements EnvironmentPostProce
             new Binding("mns.queue-name", "ALIYUN_MNS_QUEUE_NAME", "mns.queue-name"),
             new Binding("mns.access-key", "ALIYUN_MNS_ACCESS_KEY", "mns.access-key"),
             new Binding("mns.access-secret", "ALIYUN_MNS_ACCESS_SECRET", "mns.access-secret"),
+            new Binding("mns.enabled", "ALIYUN_MNS_ENABLED", "mns.enabled"),
             new Binding("rocketmq.endpoint", "ROCKETMQ_ENDPOINT", "rocketmq.endpoint"),
             new Binding("rocketmq.username", "ROCKETMQ_USERNAME", "rocketmq.username"),
             new Binding("rocketmq.password", "ROCKETMQ_PASSWORD", "rocketmq.password"),

@@ -1,5 +1,25 @@
 # 更新日志
 
+## v0.11.0（2026-11-21）
+
+### 新增
+
+- 新增「Redis」管理页：运行概览（内存/客户端/QPS/Keyspace/INFO）、Streams/消费组/消费者/Pending/最近条目、SCAN Key 浏览与受限删除、企业拉取书签与运行指标、Redis MQ 生效配置。
+- 新增「阿里云 MNS」管理页：队列状态/属性、队列列表、只读 Peek 消息、测试发送、备份开关与生效配置。
+- 新增设置项 `mns.enabled`（主服务重启生效），并接入主服务启动配置注入。
+- 新增审计动作：`REDIS_KEY_DELETE`、`MNS_TEST_SEND`。
+
+### 安全
+
+- Redis Key 浏览使用 SCAN，禁止 KEYS/FLUSH；删除仅允许 `houyi:`、`alert-sent:`、`corp-stall:` 前缀，`mq:` Streams 与 `last_seq_` 书签受保护。
+- Redis Stream 只读查看，不提交 Offset、不 ACK、不删除消息。
+- MNS 提供只读 Peek（不改变可见性）和受限大小的测试发送；删除消息/清空队列不在面板开放。
+
+### 说明
+
+- MNS 凭据优先读环境变量，其次读取管理端 `mns.*` 配置（敏感项加密存储）。
+- 当前主服务发送链路仍以 RocketMQ 为准（RedisMqProducer 未接入 MessageProducerAdapter）；Redis MQ 参数主要影响重试/延迟处理器与管理端重试入队。
+
 ## v0.10.0（2026-11-21）
 
 ### 新增

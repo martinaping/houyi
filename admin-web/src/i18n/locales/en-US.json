@@ -11,6 +11,8 @@
     "messages": "Messages",
     "queue": "Queues",
     "rocketmq": "RocketMQ",
+    "redis": "Redis",
+    "mns": "Aliyun MNS",
     "retention": "Retention",
     "audit": "Audit logs",
     "logs": "Log center",
@@ -392,6 +394,7 @@
         "access-secret": "AccessKey Secret"
       },
       "mns": {
+        "enabled": "Enable MNS backup",
         "endpoint": "Endpoint",
         "queue-name": "Queue name",
         "access-key": "AccessKey ID",
@@ -501,7 +504,9 @@
       "ROCKETMQ_MESSAGE_TRACE": "View message trace",
       "ROCKETMQ_TEST_SEND": "Send test message",
       "RETRY_QUEUE_REQUEUE": "Requeue retry message",
-      "RETRY_QUEUE_DISCARD": "Discard retry message"
+      "RETRY_QUEUE_DISCARD": "Discard retry message",
+      "REDIS_KEY_DELETE": "Delete Redis key",
+      "MNS_TEST_SEND": "Send MNS test message"
     }
   },
   "logs": {
@@ -536,7 +541,7 @@
   },
   "apiDocs": {
     "title": "API documentation",
-    "versionTag": "v0.10.0",
+    "versionTag": "v0.11.0",
     "description": "All HTTP endpoints of admin-server and houyi, rendered directly from API.md at the repository root.",
     "toc": "Contents",
     "searchPlaceholder": "Search endpoints, fields or error codes",
@@ -568,6 +573,207 @@
       "MD5_INDEX": "MD5 index",
       "AUDIT_LOG": "Audit logs",
       "ALERT_LOG": "Alert logs"
+    }
+  },
+  "redis": {
+    "title": "Redis",
+    "hint": "Inspect runtime, Streams/consumer groups, app keys and metrics. Deletion is limited to app-owned prefixes.",
+    "connected": "Connected",
+    "unavailable": "Unavailable",
+    "unavailableHint": "admin-server cannot reach Redis. Check host, password and network.",
+    "loadFailed": "Failed to load Redis data",
+    "tabs": {
+      "overview": "Overview",
+      "streams": "Streams",
+      "keys": "Keys",
+      "metrics": "App metrics",
+      "config": "Config"
+    },
+    "overview": {
+      "memory": "Memory",
+      "clients": "Clients",
+      "ops": "Ops / sec",
+      "dbSize": "Keys in DB",
+      "lastSeq": "Pull bookmarks",
+      "pullMetrics": "Pull metrics",
+      "pushMetric": "Push metrics",
+      "latency": "Probe latency {{ms}} ms",
+      "info": "Redis INFO",
+      "keyspaces": "Keyspaces",
+      "streams": "Streams",
+      "note": "This page only performs read-only queries and restricted key deletion; it never runs FLUSH/KEYS."
+    },
+    "fields": {
+      "db": "DB",
+      "keys": "Keys",
+      "expires": "Expiring keys",
+      "avgTtl": "Avg TTL",
+      "stream": "Stream",
+      "length": "Length",
+      "groups": "Groups",
+      "firstId": "First ID",
+      "lastId": "Last ID",
+      "group": "Group",
+      "consumers": "Consumers",
+      "consumer": "Consumer",
+      "pending": "Pending",
+      "lastDelivered": "Last delivered",
+      "pendingRange": "{{total}} pending, range {{min}} ~ {{max}}",
+      "idle": "Idle",
+      "recentEntries": "Recent entries",
+      "first": "First",
+      "last": "Last",
+      "key": "Key",
+      "type": "Type",
+      "ttl": "TTL",
+      "size": "Size",
+      "preview": "Preview",
+      "deletable": "Deletable",
+      "host": "Host",
+      "port": "Port",
+      "database": "Database",
+      "latency": "Latency",
+      "source": "Source",
+      "applyMode": "Apply mode",
+      "value": "Value",
+      "corpId": "Corporation ID",
+      "fields": "Fields"
+    },
+    "streams": {
+      "hint": "Shows app-owned streams (mq: / houyi:) with groups, pending and recent entries. Read-only; no offsets are committed.",
+      "loadFailed": "Failed to load streams",
+      "empty": "No streams",
+      "detailTitle": "Stream: {{key}}",
+      "noConsumers": "No consumers",
+      "recentEntries": "Latest 20 entries",
+      "noEntries": "No entries"
+    },
+    "keys": {
+      "hint": "Uses SCAN (never KEYS). Only houyi: / alert-sent: / corp-stall: keys can be deleted; mq: streams and last_seq_ bookmarks are protected.",
+      "patternPlaceholder": "Pattern, e.g. houyi:metric:*",
+      "result": "Scan result ({{scanned}} keys scanned)",
+      "truncated": "Result reached the limit; narrow the pattern.",
+      "empty": "No keys found",
+      "detailTitle": "Key detail",
+      "delete": "Delete key",
+      "deleteTitle": "Delete Redis key",
+      "deleteHint": "Delete key: {{key}}. This cannot be undone and is audited.",
+      "deleteSuccess": "Deleted {{key}}",
+      "noExpiry": "No expiry",
+      "missing": "Key missing",
+      "allowed": "Deletable",
+      "protected": "Protected",
+      "protectedHint": "mq: streams and last_seq_ bookmarks cannot be deleted here",
+      "previewTruncated": "Preview truncated"
+    },
+    "metrics": {
+      "loadFailed": "Failed to load app metrics",
+      "lastSeq": "Pull bookmarks (last_seq_*)",
+      "pull": "Pull metrics (houyi:metric:pull:*)",
+      "lastEndAt": "Last pull",
+      "lastFetched": "Fetched",
+      "totalFetched": "Total fetched",
+      "lastError": "Last error",
+      "push": "Push metrics (houyi:metric:push)",
+      "alertStates": "Alert/stall state keys"
+    },
+    "config": {
+      "title": "Redis connection and Redis MQ config",
+      "loadFailed": "Failed to load Redis config",
+      "unavailable": "Redis is unreachable; configuration is still visible",
+      "openSettings": "Open settings",
+      "note": "Redis connection settings are environment-only. Restart the main service after changing Redis MQ settings.",
+      "source": {
+        "ENV": "Env",
+        "DB": "Admin",
+        "DEFAULT": "Default"
+      }
+    }
+  },
+  "mns": {
+    "title": "Aliyun MNS",
+    "hint": "Inspect backup queue status, queue list and messages, and send test messages. Peek never consumes or deletes messages.",
+    "connected": "Connected",
+    "unavailable": "Unavailable",
+    "notConfigured": "Not configured",
+    "notConfiguredHint": "Configure endpoint, queue name, AccessKey and Secret under Settings → Aliyun MNS.",
+    "queuePlaceholder": "Select queue",
+    "loadFailed": "Failed to load MNS data",
+    "tabs": {
+      "overview": "Overview",
+      "queues": "Queues",
+      "messages": "Message peek",
+      "config": "Config & test"
+    },
+    "fields": {
+      "endpoint": "Endpoint",
+      "queue": "Queue",
+      "exists": "Queue exists",
+      "retention": "Retention",
+      "visibility": "Visibility timeout",
+      "defaultDelay": "Default delay",
+      "pollingWait": "Long polling wait",
+      "createTime": "Created at",
+      "modifyTime": "Last modified",
+      "queueUrl": "Queue URL",
+      "messageId": "MessageID",
+      "dequeueCount": "Dequeue count",
+      "priority": "Priority",
+      "enqueueTime": "Enqueued at",
+      "nextVisibleTime": "Next visible",
+      "firstDequeueTime": "First dequeued",
+      "body": "Message body",
+      "delaySeconds": "Delay seconds",
+      "enabled": "Backup enabled",
+      "configured": "Configured",
+      "available": "Available",
+      "source": "Source",
+      "applyMode": "Apply mode",
+      "key": "Key",
+      "value": "Value"
+    },
+    "overview": {
+      "active": "Active",
+      "delayed": "Delayed",
+      "inactive": "Inactive",
+      "maxMessageSize": "Max message",
+      "queueMeta": "Queue attributes",
+      "queueMissing": "Queue not found",
+      "unavailable": "MNS is unavailable",
+      "note": "MNS is the backup queue for outgoing messages. Peek is read-only and does not change visibility."
+    },
+    "queues": {
+      "title": "MNS queues",
+      "prefixPlaceholder": "Queue name prefix, e.g. houyi",
+      "empty": "No queues",
+      "hint": "Click a queue to inspect attributes. Listing queues requires ListQueue permission."
+    },
+    "messages": {
+      "title": "Peek messages",
+      "count": "Count",
+      "hint": "Peek does not change visibility or delete messages; up to 16 per request.",
+      "empty": "No messages to peek in this queue",
+      "detailTitle": "MNS message detail"
+    },
+    "config": {
+      "title": "Effective MNS config",
+      "loadFailed": "Failed to load MNS config",
+      "unavailable": "MNS is unavailable; configuration is still visible",
+      "openSettings": "Open settings",
+      "note": "The main service initializes MNS at startup. Restart it after changing endpoint/queue/enabled.",
+      "source": {
+        "ENV": "Env",
+        "DB": "Admin",
+        "DEFAULT": "Default"
+      },
+      "testTitle": "Send MNS test message",
+      "testHint": "This publishes a real message to the target queue. Use a test queue or one that accepts test data.",
+      "testSend": "Send test",
+      "testConfirmTitle": "Send MNS test message",
+      "testConfirmContent": "Target queue: {{queue}}, about {{bytes}} bytes.",
+      "testSuccess": "Sent, MessageID={{messageId}}",
+      "testResult": "Latest send result",
+      "bodyRequired": "Please enter the test message body"
     }
   },
   "rocketmq": {
@@ -861,6 +1067,19 @@
     "RETRY_MESSAGE_NOT_FOUND": "Retry message not found",
     "RETRY_QUEUE_UNAVAILABLE": "Retry queue database is unavailable",
     "RETRY_STATUS_INVALID": "Unsupported retry status",
-    "RETRY_REASON_TOO_LONG": "Discard reason is too long"
+    "RETRY_REASON_TOO_LONG": "Discard reason is too long",
+    "REDIS_UNAVAILABLE": "Redis is unavailable",
+    "REDIS_NOT_STREAM": "Target key is not a Redis Stream",
+    "REDIS_PATTERN_INVALID": "Invalid key pattern",
+    "REDIS_KEY_DELETE_DENIED": "This key is protected and cannot be deleted",
+    "REDIS_KEY_NOT_FOUND": "Redis key not found",
+    "REDIS_KEY_REQUIRED": "Redis key is required",
+    "REDIS_STREAM_KEY_DENIED": "This system stream cannot be viewed",
+    "MNS_UNAVAILABLE": "Aliyun MNS is unavailable",
+    "MNS_DISABLED": "MNS is disabled",
+    "MNS_NOT_CONFIGURED": "MNS is not fully configured",
+    "MNS_MESSAGE_REQUIRED": "Message body is required",
+    "MNS_MESSAGE_TOO_LARGE": "Test message cannot exceed 64 KB",
+    "MNS_DELAY_INVALID": "Invalid MNS delay seconds"
   }
 }

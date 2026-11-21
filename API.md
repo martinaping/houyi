@@ -1,6 +1,6 @@
 # 后羿（houyi）API 文档
 
-> 版本：0.10.0
+> 版本：0.11.0
 > 适用服务：`admin-server`（管理端，默认 18081）、`houyi`（主服务，默认 18080）
 > 最后更新：2026-11-20
 
@@ -30,7 +30,7 @@
 | 响应头 | 说明 |
 | --- | --- |
 | `X-Trace-Id` | 本次请求的链路 ID。客户端可主动传入（`^[A-Za-z0-9_-]{8,64}$`），否则由服务端生成 |
-| `X-App-Version` | 服务端版本号，当前为 `0.10.0` |
+| `X-App-Version` | 服务端版本号，当前为 `0.11.0` |
 
 **错误响应**（非 2xx）
 
@@ -89,7 +89,7 @@
   "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
   "tokenType": "Bearer",
   "expiresIn": 7200,
-  "user": { "username": "admin", "version": "0.10.0" }
+  "user": { "username": "admin", "version": "0.11.0" }
 }
 ```
 
@@ -130,7 +130,7 @@
 响应 `200`：
 
 ```json
-{ "username": "admin", "version": "0.10.0" }
+{ "username": "admin", "version": "0.11.0" }
 ```
 
 ---
@@ -490,7 +490,7 @@
              "rocketMqEndpoint": "http://127.0.0.1:8081", "rocketMqLatencyMs": 5,
              "rocketMqCheckedAt": 1763000000000, "rocketMqError": "Endpoint 可达，客户端创建成功" },
   "recentFailures": [],
-  "version": "0.10.0",
+  "version": "0.11.0",
   "serverTime": 1763000000000
 }
 ```
@@ -518,7 +518,7 @@
 ```json
 {
   "status": "UP",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "uptimeSeconds": 3600,
   "checkedAt": 1763000000000,
   "database": { "ok": true, "latencyMs": 1, "message": "ok" },
@@ -562,7 +562,7 @@
 
 ```json
 {
-  "version": "0.10.0",
+  "version": "0.11.0",
   "uptimeSeconds": 3600,
   "javaVersion": "21.0.2",
   "jdbcUrl": "jdbc:h2:file:/Users/jc/.houyi-local/db/houyi",
@@ -1432,7 +1432,42 @@ gRPC `ROCKETMQ_ENDPOINT` 是两个不同入口。
 
 ---
 
-## 17. 错误码总表
+## 17. Redis 与 MNS 管理
+
+### 17.1 Redis（`/api/admin/redis`）
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/overview` | 连接信息、INFO 摘要、Keyspace、Streams、应用指标计数 |
+| GET | `/streams` | 应用自有 Stream 的 key/长度/消费组数/首末条目 |
+| GET | `/streams/detail?key=` | Stream 消费组、消费者、Pending 与最近 20 条 |
+| GET | `/keys?pattern=&limit=` | 使用 SCAN 浏览 Key，返回类型/TTL/大小/预览/是否可删除 |
+| POST | `/keys/delete` | 删除应用自有 Key（写审计） |
+| GET | `/metrics` | `last_seq_*`、`houyi:metric:pull:*`、`houyi:metric:push`、告警状态 |
+| GET | `/config` | Redis 连接与 Redis MQ 生效配置、来源、重启提示 |
+
+安全约束：
+
+- Key 浏览使用 `SCAN`，禁止 `KEYS`；单次最多 200 个。
+- 仅允许删除 `houyi:`、`alert-sent:`、`corp-stall:` 前缀；`mq:` Streams 与 `last_seq_` 拉取书签受保护。
+- Stream 查看只读，不提交 Offset、不 ACK、不删除消息。
+- 修改 Redis MQ 参数后主服务需重启；当前主发送链路仍以 RocketMQ 为准。
+
+### 17.2 阿里云 MNS（`/api/admin/mns`）
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/overview?queue=` | 配置状态、队列是否存在、Active/Delayed/Inactive、队列属性 |
+| GET | `/queues?prefix=&limit=` | 队列列表与统计 |
+| GET | `/messages?queue=&limit=` | Peek 消息（不改变可见性、不删除），最多 16 条 |
+| POST | `/test-send` | 发送测试消息（≤64 KB，延迟 0~604800 秒，写审计） |
+| GET | `/config` | MNS 生效配置、开关、来源与重启提示 |
+
+MNS 凭据从管理端配置（`mns.*`，敏感项 AES 加密）或环境变量读取；Peek 只读。测试发送会真实写入目标队列。
+
+---
+
+## 18. 错误码总表
 
 | HTTP | code | 说明 | 出现位置 |
 | --- | --- | --- | --- |
@@ -1482,6 +1517,19 @@ gRPC `ROCKETMQ_ENDPOINT` 是两个不同入口。
 | 503 | `RETRY_QUEUE_UNAVAILABLE` | 重试队列表读取失败 | 重试队列 |
 | 400 | `RETRY_STATUS_INVALID` | 不支持的重试状态 | 重试队列 |
 | 400 | `RETRY_REASON_TOO_LONG` | 丢弃原因超过 500 字符 | 重试队列 |
+| 503 | `REDIS_UNAVAILABLE` | Redis 不可达 | Redis 管理 |
+| 400 | `REDIS_NOT_STREAM` | 目标 Key 不是 Stream | Redis Stream |
+| 400 | `REDIS_PATTERN_INVALID` | Key 匹配模式非法 | Redis Key |
+| 400 | `REDIS_KEY_DELETE_DENIED` | Key 前缀受保护 | Redis Key |
+| 404 | `REDIS_KEY_NOT_FOUND` | Key 不存在 | Redis Key |
+| 400 | `REDIS_KEY_REQUIRED` | 缺少 Key | Redis Stream |
+| 400 | `REDIS_STREAM_KEY_DENIED` | 不允许查看该系统 Stream | Redis Stream |
+| 503 | `MNS_UNAVAILABLE` | MNS 调用失败 | MNS 管理 |
+| 503 | `MNS_DISABLED` | MNS 未启用 | MNS 管理 |
+| 503 | `MNS_NOT_CONFIGURED` | MNS 配置不完整 | MNS 管理 |
+| 400 | `MNS_MESSAGE_REQUIRED` | 测试消息体为空 | MNS 测试发送 |
+| 400 | `MNS_MESSAGE_TOO_LARGE` | 测试消息超过 64 KB | MNS 测试发送 |
+| 400 | `MNS_DELAY_INVALID` | 延迟秒数不合法 | MNS 测试发送 |
 | 400 | `PARAM_INVALID` | 路径或查询参数类型不合法（如 `id=abc`） | 全局 |
 | 400 | `PARAM_MISSING` | 缺少必需的查询参数 | 全局 |
 | 400 | `BODY_INVALID` | 请求体缺失或 JSON 格式不正确 | 全局 |
