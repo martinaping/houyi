@@ -9,7 +9,7 @@ import { MnsMessagesTab } from './MessagesTab';
 import { MnsOverviewTab } from './OverviewTab';
 import { MnsQueuesTab } from './QueuesTab';
 
-export function MnsPage() {
+export function MnsPage({ embedded = false }: { embedded?: boolean }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [activeKey, setActiveKey] = useState('overview');
@@ -47,13 +47,18 @@ export function MnsPage() {
 
   return (
     <Space orientation="vertical" size="large" style={{ width: '100%' }}>
-      <Space style={{ justifyContent: 'space-between', width: '100%' }} align="start">
-        <Space orientation="vertical" size={2}>
-          <Typography.Title level={4} style={{ margin: 0 }}>
-            <CloudServerOutlined /> {t('mns.title')}
-          </Typography.Title>
-          <Typography.Text type="secondary">{t('mns.hint')}</Typography.Text>
-        </Space>
+      <Space
+        style={{ justifyContent: embedded ? 'flex-end' : 'space-between', width: '100%' }}
+        align="start"
+      >
+        {!embedded ? (
+          <Space orientation="vertical" size={2}>
+            <Typography.Title level={4} style={{ margin: 0 }}>
+              <CloudServerOutlined /> {t('mns.title')}
+            </Typography.Title>
+            <Typography.Text type="secondary">{t('mns.hint')}</Typography.Text>
+          </Space>
+        ) : null}
         <Space>
           {statusTag}
           <Select

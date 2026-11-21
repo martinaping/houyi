@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.11.1（2026-11-21）
+
+### 优化
+
+- 将 RocketMQ、Redis、阿里云 MNS 统一集成到「队列」菜单，队列页改为「概览 / RocketMQ / Redis / 阿里云 MNS」四个 Tab，左侧菜单不再重复展示三个独立入口。
+- 队列 Tab 与 URL 同步（`/queue?tab=rocketmq|redis|mns`）；旧路径 `/rocketmq`、`/redis`、`/mns` 自动重定向到对应 Tab，兼容历史书签。
+- 嵌入模式隐藏重复页面标题，仅保留状态与刷新操作；队列概览保留原有 Redis/RocketMQ/延迟消息统计。
+
 ## v0.11.0（2026-11-21）
 
 ### 新增

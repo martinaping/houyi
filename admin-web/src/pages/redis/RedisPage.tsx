@@ -10,7 +10,7 @@ import { RedisMetricsTab } from './MetricsTab';
 import { RedisOverviewTab } from './OverviewTab';
 import { RedisStreamsTab } from './StreamsTab';
 
-export function RedisPage() {
+export function RedisPage({ embedded = false }: { embedded?: boolean }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [activeKey, setActiveKey] = useState('overview');
@@ -23,13 +23,18 @@ export function RedisPage() {
 
   return (
     <Space orientation="vertical" size="large" style={{ width: '100%' }}>
-      <Space style={{ justifyContent: 'space-between', width: '100%' }} align="start">
-        <Space orientation="vertical" size={2}>
-          <Typography.Title level={4} style={{ margin: 0 }}>
-            <DatabaseOutlined /> {t('redis.title')}
-          </Typography.Title>
-          <Typography.Text type="secondary">{t('redis.hint')}</Typography.Text>
-        </Space>
+      <Space
+        style={{ justifyContent: embedded ? 'flex-end' : 'space-between', width: '100%' }}
+        align="start"
+      >
+        {!embedded ? (
+          <Space orientation="vertical" size={2}>
+            <Typography.Title level={4} style={{ margin: 0 }}>
+              <DatabaseOutlined /> {t('redis.title')}
+            </Typography.Title>
+            <Typography.Text type="secondary">{t('redis.hint')}</Typography.Text>
+          </Space>
+        ) : null}
         <Space>
           {overview ? (
             <Tag color={overview.available ? 'green' : 'red'}>

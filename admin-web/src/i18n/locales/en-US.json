@@ -10,9 +10,6 @@
     "corps": "Corporations",
     "messages": "Messages",
     "queue": "Queues",
-    "rocketmq": "RocketMQ",
-    "redis": "Redis",
-    "mns": "Aliyun MNS",
     "retention": "Retention",
     "audit": "Audit logs",
     "logs": "Log center",
@@ -231,7 +228,14 @@
     "empty": "No messages matched"
   },
   "queue": {
-    "title": "Queue status",
+    "title": "Queues & middleware",
+    "hint": "Unified view for Redis Streams, RocketMQ, Aliyun MNS and delayed messages.",
+    "tabs": {
+      "overview": "Overview",
+      "rocketmq": "RocketMQ",
+      "redis": "Redis",
+      "mns": "Aliyun MNS"
+    },
     "redisEnabled": "Redis queue",
     "on": "Enabled",
     "off": "Disabled",
@@ -541,7 +545,7 @@
   },
   "apiDocs": {
     "title": "API documentation",
-    "versionTag": "v0.11.0",
+    "versionTag": "v0.11.1",
     "description": "All HTTP endpoints of admin-server and houyi, rendered directly from API.md at the repository root.",
     "toc": "Contents",
     "searchPlaceholder": "Search endpoints, fields or error codes",

@@ -30,7 +30,7 @@ log:
   path: ${LOG_PATH:/tmp/}
 
 admin:
-  version: 0.11.0
+  version: 0.11.1
   rocketmq:
     # 管理端通过 NameServer 查询消费进度/Topic/Broker，与 gRPC Endpoint 不同
     namesrv-addr: ${ROCKETMQ_NAMESRV_ADDR:127.0.0.1:9876}

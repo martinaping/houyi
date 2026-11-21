@@ -1,11 +1,15 @@
 import { ReloadOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Col, Row, Space, Statistic, Table, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Col, Row, Space, Statistic, Table, Tabs, Tag, Typography } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { request } from '../api/client';
 import { errorMessage } from '../api/errors';
 import type { DelayStatusCount, QueueOverview, RocketMqState } from '../api/types';
+import { MnsPage } from './mns/MnsPage';
+import { RedisPage } from './redis/RedisPage';
+import { RocketMqPage } from './rocketmq/RocketMqPage';
 import { formatNumber, formatTime } from '../utils/format';
 
 const ROCKET_STATE_COLOR: Record<RocketMqState, string> = {
@@ -21,6 +25,54 @@ const ROCKET_STATE_KEY: Record<RocketMqState, string> = {
 };
 
 export function QueuePage() {
+  const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeKey = searchParams.get('tab') ?? 'overview';
+
+  const changeTab = (key: string) => {
+    setSearchParams(key === 'overview' ? {} : { tab: key }, { replace: true });
+  };
+
+  return (
+    <Space orientation="vertical" size="large" style={{ width: '100%' }}>
+      <Space orientation="vertical" size={2}>
+        <Typography.Title level={4} style={{ margin: 0 }}>
+          {t('queue.title')}
+        </Typography.Title>
+        <Typography.Text type="secondary">{t('queue.hint')}</Typography.Text>
+      </Space>
+
+      <Tabs
+        activeKey={activeKey}
+        onChange={changeTab}
+        items={[
+          {
+            key: 'overview',
+            label: t('queue.tabs.overview'),
+            children: <QueueOverviewTab />,
+          },
+          {
+            key: 'rocketmq',
+            label: t('queue.tabs.rocketmq'),
+            children: <RocketMqPage embedded />,
+          },
+          {
+            key: 'redis',
+            label: t('queue.tabs.redis'),
+            children: <RedisPage embedded />,
+          },
+          {
+            key: 'mns',
+            label: t('queue.tabs.mns'),
+            children: <MnsPage embedded />,
+          },
+        ]}
+      />
+    </Space>
+  );
+}
+
+function QueueOverviewTab() {
   const { t } = useTranslation();
   const queueQuery = useQuery({
     queryKey: ['queue'],
@@ -55,10 +107,7 @@ export function QueuePage() {
 
   return (
     <Space orientation="vertical" size="large" style={{ width: '100%' }}>
-      <Space style={{ justifyContent: 'space-between', width: '100%' }}>
-        <Typography.Title level={4} style={{ margin: 0 }}>
-          {t('queue.title')}
-        </Typography.Title>
+      <Space style={{ justifyContent: 'flex-end', width: '100%' }}>
         <Button
           icon={<ReloadOutlined />}
           loading={queueQuery.isFetching}

@@ -7,7 +7,7 @@ import 'dayjs/locale/zh-cn';
 import { Component, useEffect } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createBrowserRouter, RouterProvider, useNavigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, RouterProvider, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { RequireAuth } from './auth/RequireAuth';
 import { AdminLayout } from './components/AdminLayout';
@@ -17,14 +17,11 @@ import { CorpsPage } from './pages/CorpsPage';
 import { HealthPage } from './pages/HealthPage';
 import { LoginPage } from './pages/LoginPage';
 import { LogsPage } from './pages/LogsPage';
-import { MnsPage } from './pages/mns/MnsPage';
 import { MonitorPage } from './pages/MonitorPage';
 import { MessagesPage } from './pages/MessagesPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { QueuePage } from './pages/QueuePage';
-import { RedisPage } from './pages/redis/RedisPage';
 import { RetentionPage } from './pages/RetentionPage';
-import { RocketMqPage } from './pages/rocketmq/RocketMqPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { SystemPage } from './pages/SystemPage';
 
@@ -55,9 +52,9 @@ const router = createBrowserRouter([
       { path: 'corps', element: <CorpsPage /> },
       { path: 'messages', element: <MessagesPage /> },
       { path: 'queue', element: <QueuePage /> },
-      { path: 'rocketmq', element: <RocketMqPage /> },
-      { path: 'redis', element: <RedisPage /> },
-      { path: 'mns', element: <MnsPage /> },
+      { path: 'rocketmq', element: <Navigate to="/queue?tab=rocketmq" replace /> },
+      { path: 'redis', element: <Navigate to="/queue?tab=redis" replace /> },
+      { path: 'mns', element: <Navigate to="/queue?tab=mns" replace /> },
       { path: 'retention', element: <RetentionPage /> },
       { path: 'audit', element: <AuditLogsPage /> },
       { path: 'logs', element: <LogsPage /> },
