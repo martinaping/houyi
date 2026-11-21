@@ -545,7 +545,7 @@
   },
   "apiDocs": {
     "title": "API documentation",
-    "versionTag": "v0.11.1",
+    "versionTag": "v0.11.2",
     "description": "All HTTP endpoints of admin-server and houyi, rendered directly from API.md at the repository root.",
     "toc": "Contents",
     "searchPlaceholder": "Search endpoints, fields or error codes",

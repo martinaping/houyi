@@ -490,7 +490,7 @@ public class MsgHandler {
             if(object.has("push_at")){
                 if(object.getLong("push_at")< -5 && object.getLong("push_at")> -100){
                     // 下载次数达5次后直接突破文件不能并行下载的限制 // 除了大文件
-                    log.error("MsgOverDown , msgId：{},{}",msgId,object);
+                    log.error("MsgOverDown, msgId={}", msgId);
                 }else{
                     return;
                 }
@@ -537,7 +537,7 @@ public class MsgHandler {
                 /**
                  * 网络有波动，先发进 rocket,一分钟后重试;
                  */
-                log.error("下载失败，丢进 rocketMq 10秒后下载,downFileError,msgId:{},tryMsg:{}",msgId,object);
+                log.error("下载失败，丢进 rocketMq 10秒后下载, downFileError, msgId={}", msgId);
                 String tag = getProfile();
                 if (tag == null || tag.isEmpty()) {
                     tag = "dev";
@@ -574,7 +574,7 @@ public class MsgHandler {
                                 tag = "dev";
                             }
                             object.put("secret", this.getSecret());
-                            log.error("下载失败，丢进 rocketMq 10秒后下载,downFileError,msgId:{},tryMsg:{}", msgId, object);
+                            log.error("下载失败，丢进 rocketMq 10秒后下载, downFileError, msgId={}", msgId);
                             getEventBus().getRocketRetryCounter().incrementAndGet();
                             object.put("rocketRetry", "1");
                             if (object.has("tryCount")) {
@@ -670,7 +670,7 @@ public class MsgHandler {
                             // 有可能修复线程发了消息消费成功了
                             if(StringUtils.isEmpty(originalMsgOptional.get().getOssPath())){
                                 object.put("secret", this.getSecret());
-                                log.error("下载失败，丢进 rocketMq 10秒后下载,downFileError,msgId:{},tryMsg:{}",msgId,object);
+                                log.error("下载失败，丢进 rocketMq 10秒后下载, downFileError, msgId={}", msgId);
                                 getEventBus().getRocketRetryCounter().incrementAndGet();
                                 object.put("rocketRetry", "1");
                                 if (object.has("tryCount")) {
@@ -843,7 +843,7 @@ public class MsgHandler {
         try {
             msgType = object.getString("msgtype");
         } catch (JSONException e) {
-            log.error("意外错误:找不到 msgtype:{}", object.toString());
+            log.error("意外错误:找不到 msgtype, msgId={}", msgId);
             return;
         }
         Boolean bigFile = false;

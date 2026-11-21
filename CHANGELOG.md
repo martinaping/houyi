@@ -1,5 +1,17 @@
 # 更新日志
 
+## v0.11.2（2026-11-21）
+
+### 修复
+
+- 修复消息清理与补推任务在 H2/非 MySQL 方言下持续报错的问题：`original_msg` 相关原生 SQL 移除 `date_format()`/`DATE_SUB()`，改为在 Java 侧计算 `yyyyMMdd` 截止日期并以参数传入，`deleteOldMsgs`、`findNotPushMessage`、`findBigFileNotPushMessage` 同步调整。
+- 修复消息清理任务 cron 配置错误：原 `* * 4-8 * * ?` 会在 04:00–08:59 每秒执行一次；改为每天 05:00 执行一次。
+- 修复启动和服务诊断日志级别错误：RocketMQ 配置启动日志、Endpoint 条件判断、OSS 初始化、企业密钥缺失、企业时差计算等正常信息不再以 ERROR 输出，改为 INFO/DEBUG，ERROR 仅保留可处置故障。
+
+### 安全
+
+- 移除日志中的敏感信息：解密失败日志不再输出加密随机密钥/加密消息体/原文；消息下载失败日志不再输出包含 `secret` 的完整消息对象；原始消息内容降为 DEBUG 且仅记录 seq。
+
 ## v0.11.1（2026-11-21）
 
 ### 优化

@@ -25,9 +25,9 @@ public class OssClientConfig {
         ClientBuilderConfiguration configuration = new ClientBuilderConfiguration();
         configuration.setConnectionTimeout(3000);
         configuration.setMaxErrorRetry(3);
-        log.warn("before ossClient:endpoint:{},key:{},secret:{}", 
-            ossEndPoint, 
-            maskSensitiveInfo(ossAccessKey), 
+        log.info("初始化 OSS 客户端: endpoint={}, key={}, secret={}",
+            ossEndPoint,
+            maskSensitiveInfo(ossAccessKey),
             maskSensitiveInfo(ossAccessSecret));
         return new OSSClientBuilder().build(ossEndPoint, ossAccessKey, ossAccessSecret,configuration);
     }

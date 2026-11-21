@@ -20,23 +20,23 @@ public class OnRocketMqEndpointCondition implements org.springframework.context.
         Environment env = context.getEnvironment();
         
         // 记录调试信息（使用 ERROR 级别确保在生产环境也能看到）
-        log.error("========== OnRocketMqEndpointCondition 评估开始 ==========");
-        log.error("JDK 版本: {}", System.getProperty("java.version"));
-        log.error("JDK 供应商: {}", System.getProperty("java.vendor"));
+        log.debug("========== OnRocketMqEndpointCondition 评估开始 ==========");
+        log.debug("JDK 版本: {}", System.getProperty("java.version"));
+        log.debug("JDK 供应商: {}", System.getProperty("java.vendor"));
         
         // 方法1: 读取配置属性 rocketmq.endpoint（可能来自 application.yml 或环境变量）
         String endpoint = env.getProperty("rocketmq.endpoint");
-        log.error("方法1 - env.getProperty('rocketmq.endpoint'): {}", StringUtils.hasText(endpoint) ? maskEndpoint(endpoint) : "(空)");
+        log.debug("方法1 - env.getProperty('rocketmq.endpoint'): {}", StringUtils.hasText(endpoint) ? maskEndpoint(endpoint) : "(空)");
         if (StringUtils.hasText(endpoint)) {
-            log.error("✅ 通过 rocketmq.endpoint 找到配置，返回 true");
+            log.debug("✅ 通过 rocketmq.endpoint 找到配置，返回 true");
             return true;
         }
         
         // 方法2: 直接读取环境变量 ROCKETMQ_ENDPOINT（兼容属性尚未解析时的情况）
         String envEndpoint = env.getProperty("ROCKETMQ_ENDPOINT");
-        log.error("方法2 - env.getProperty('ROCKETMQ_ENDPOINT'): {}", StringUtils.hasText(envEndpoint) ? maskEndpoint(envEndpoint) : "(空)");
+        log.debug("方法2 - env.getProperty('ROCKETMQ_ENDPOINT'): {}", StringUtils.hasText(envEndpoint) ? maskEndpoint(envEndpoint) : "(空)");
         if (StringUtils.hasText(envEndpoint)) {
-            log.error("✅ 通过环境变量 ROCKETMQ_ENDPOINT 找到配置，返回 true");
+            log.debug("✅ 通过环境变量 ROCKETMQ_ENDPOINT 找到配置，返回 true");
             return true;
         }
         
@@ -44,25 +44,25 @@ public class OnRocketMqEndpointCondition implements org.springframework.context.
         try {
             Map<String, String> systemEnv = System.getenv();
             String systemEnvEndpoint = systemEnv.get("ROCKETMQ_ENDPOINT");
-            log.error("方法3 - System.getenv('ROCKETMQ_ENDPOINT'): {}", StringUtils.hasText(systemEnvEndpoint) ? maskEndpoint(systemEnvEndpoint) : "(空)");
+            log.debug("方法3 - System.getenv('ROCKETMQ_ENDPOINT'): {}", StringUtils.hasText(systemEnvEndpoint) ? maskEndpoint(systemEnvEndpoint) : "(空)");
             if (StringUtils.hasText(systemEnvEndpoint)) {
-                log.error("✅ 通过 System.getenv() 找到配置，返回 true");
+                log.debug("✅ 通过 System.getenv() 找到配置，返回 true");
                 return true;
             }
         } catch (Exception e) {
-            log.error("❌ 读取系统环境变量失败", e);
+            log.debug("❌ 读取系统环境变量失败", e);
         }
         
         // 方法4: 尝试从 System Properties 读取（某些部署环境可能通过 -D 参数传递）
         String systemPropEndpoint = System.getProperty("ROCKETMQ_ENDPOINT");
-        log.error("方法4 - System.getProperty('ROCKETMQ_ENDPOINT'): {}", StringUtils.hasText(systemPropEndpoint) ? maskEndpoint(systemPropEndpoint) : "(空)");
+        log.debug("方法4 - System.getProperty('ROCKETMQ_ENDPOINT'): {}", StringUtils.hasText(systemPropEndpoint) ? maskEndpoint(systemPropEndpoint) : "(空)");
         if (StringUtils.hasText(systemPropEndpoint)) {
-            log.error("✅ 通过 System Property 找到配置，返回 true");
+            log.debug("✅ 通过 System Property 找到配置，返回 true");
             return true;
         }
         
-        log.error("❌ 所有方法都未找到 RocketMQ endpoint 配置，返回 false，跳过 RocketMQ 相关 Bean 的创建");
-        log.error("========================================================");
+        log.debug("❌ 所有方法都未找到 RocketMQ endpoint 配置，返回 false，跳过 RocketMQ 相关 Bean 的创建");
+        log.debug("========================================================");
         return false;
     }
     

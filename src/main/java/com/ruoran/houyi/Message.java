@@ -269,8 +269,7 @@ public class Message extends Thread {
                 }
             }
             if (StringUtils.isEmpty(encryptKey)) {
-                log.error("encryptRandomKey:{},encryptMsg:{},original:{}", encryptRandomKey, encryptMsg,original);
-                log.error("encryptKey解密失败,{}", encryptKey);
+                log.error("消息解密失败: 无法派生加密密钥, corpId={}", this.corpid);
                 return "";
             }
             message = Finance.NewSlice();
@@ -409,24 +408,7 @@ public class Message extends Thread {
         JSONObject obj = new JSONObject(message);
         String msgid = obj.getString("msgid");
         String action = obj.getString("action");
-
-        // 208606, 209707
-//        2444653
-//        2445164
-//        2445941
-//        2445998
-//        2448004
-//        2449379
-//        2453488
-//        2455808
-//        2456350
-        if (seq == 2444653 || seq == 2445164 || seq == 2445941 || seq == 2445998 || seq == 2448004 || seq == 2449379 || seq == 2453488 || seq == 2455808 || seq == 2456350) {
-            log.warn("debug seq:{},{}", seq, message);
-        } else {
-            log.warn("normal debug seq:{},{}", seq, message);
-        }
-
-
+        log.debug("处理消息 seq={}", seq);
 
         /*
          * switch 不是一条真正的消息，结构不一样，可以忽略;
@@ -443,7 +425,7 @@ public class Message extends Thread {
                 diff.set((System.currentTimeMillis() - msgTime) / 1000);
             }
         } catch (JSONException e2) {
-            log.error("取不到msgTime,原始字符串:{}", message);
+            log.error("取不到 msgTime, corpId={}", this.corpid);
         }
 
         String msgType = obj.getString("msgtype");

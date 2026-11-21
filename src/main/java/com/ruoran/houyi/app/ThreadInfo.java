@@ -64,7 +64,7 @@ public class ThreadInfo implements MeterBinder {
         }
         for(CorpInfo corpInfo :corpInfos){
             String corpId = corpInfo.getCorpid();
-            log.error("time diff for corpId:{}",corpId);
+            log.debug("注册企业消息时间差指标: corpId={}", corpId);
             Gauge.builder("dayu.timediff."+corpId,()-> eventBus.getDiffs().get(corpId)).baseUnit("ms").description("当前消息与系统时间之差").register(meterRegistry);
         }
         Gauge.builder("dayu.counter.succCorpsCount",this::getSuccCorps).baseUnit("个").description("当前成功拉取消息的企业微信主体个数").register(meterRegistry);

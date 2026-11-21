@@ -26,11 +26,11 @@ public class MixedHandler extends MsgHandler {
         try{
             msgType = object.getString("msgtype");
         }catch(JSONException e){
-            log.error("意外错误:找不到 msgtype:{}", object);
+            log.error("意外错误:找不到 msgtype, msgId={}", msgId);
             return;
         }
         if(!"mixed".equalsIgnoreCase(msgType) &&!"chatrecord".equalsIgnoreCase(msgType)){
-            log.error("MixedHandler只处理Mixed和ChatRecord类型的消息,现在是:{}",msgType);
+            log.debug("MixedHandler skipped non-mixed message, msgId={}, msgType={}", msgId, msgType);
             return;
         }
         JSONObject msgTypeObject = object.getJSONObject(normalizeMsgType(msgType));

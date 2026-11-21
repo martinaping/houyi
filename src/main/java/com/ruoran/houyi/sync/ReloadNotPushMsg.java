@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import jakarta.annotation.Resource;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +72,7 @@ public class ReloadNotPushMsg {
         if (tag == null || tag.isEmpty()) {
             tag = "dev";
         }
-        List<OriginalMsg> msgList = originalMsgRepo.findNotPushMessage();
+        List<OriginalMsg> msgList = originalMsgRepo.findNotPushMessage(yesterdayCutoff());
         if (!CollectionUtils.isEmpty(msgList)) {
             for (OriginalMsg msg : msgList) {
                 String secret = getSecret(msg.getCorpId());
@@ -96,7 +98,7 @@ public class ReloadNotPushMsg {
                     }
                     originalMsgRepo.save(msg);
                 } catch (Exception e) {
-                    log.error("ReloadNotPushMsgError,msg:{}", jsonObject);
+                    log.error("ReloadNotPushMsgError, msgId={}, error={}", msg.getMsgId(), e.getMessage());
                 }
             }
         }
@@ -112,10 +114,10 @@ public class ReloadNotPushMsg {
         int maxPoolSize = executorService.getMaximumPoolSize();
         // 多大文件下载也没有意义
         if(eventBus.getActiveThreadCount() < maxPoolSize*0.1) {
-            List<OriginalMsg> msgList = originalMsgRepo.findBigFileNotPushMessage();
+            List<OriginalMsg> msgList = originalMsgRepo.findBigFileNotPushMessage(yesterdayCutoff());
             if (!CollectionUtils.isEmpty(msgList)) {
                 for (OriginalMsg msg : msgList) {
-                    log.error("tryDownBigFile , msgid:{}",msg.getMsgId());
+                    log.warn("tryDownBigFile, msgId={}", msg.getMsgId());
                     String secret = getSecret(msg.getCorpId());
                     if (StringUtils.isEmpty(secret)) {
                         continue;
@@ -130,10 +132,16 @@ public class ReloadNotPushMsg {
                         msg.setPushAt( msg.getPushAt()-1);
                         originalMsgRepo.save(msg);
                     } catch (Exception e) {
-                        log.error("ReloadBigFileNotPushMsgError,msg:{}", jsonObject);
+                        log.error("ReloadBigFileNotPushMsgError, msgId={}, error={}",
+                                msg.getMsgId(), e.getMessage());
                     }
                 }
             }
         }
+    }
+
+    private static int yesterdayCutoff() {
+        return Integer.parseInt(LocalDate.now().minusDays(1)
+                .format(DateTimeFormatter.BASIC_ISO_DATE));
     }
 }

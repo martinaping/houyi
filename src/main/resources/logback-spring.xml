@@ -126,6 +126,9 @@ configuration 子节点为 appender、logger、root
     <logger name="com.ruoran.houyi.MixedHandler" level="ERROR">
         <appender-ref ref="mixLog"/>
     </logger>
+    <logger name="com.ruoran.houyi.mq.MqConfigStartupLogger" level="INFO" additivity="false">
+        <appender-ref ref="stdout"/>
+    </logger>
     <logger name="com.ruoran.houyi" level="WARN">
         <appender-ref ref="warnLog"/>
         <appender-ref ref="stdout"/>

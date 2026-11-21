@@ -89,7 +89,7 @@ public class CorpConfigService {
         if (configuredSecret != null && !configuredSecret.isBlank()) {
             corpInfo.setSecret(configuredSecret);
         } else if (corpInfo.getSecret() == null || corpInfo.getSecret().isBlank()) {
-            log.error("企业 {} 未配置 secret（请通过环境变量 WEWORK_CORPS_0_SECRET 提供），跳过同步", corpId);
+            log.warn("企业 {} 未配置 secret（请通过环境变量 WEWORK_CORPS_0_SECRET 提供），跳过同步", corpId);
             return;
         } else {
             log.warn("企业 {} 未提供 secret，保留数据库已有值", corpId);
