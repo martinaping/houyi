@@ -1,5 +1,6 @@
 package com.ruoran.houyi.admin.redis;
 
+import com.ruoran.houyi.admin.config.RedisMqSettingsService;
 import com.ruoran.houyi.admin.error.ApiException;
 import com.ruoran.houyi.admin.settings.SettingsService;
 import org.slf4j.Logger;
@@ -56,6 +57,7 @@ public class RedisAdminService {
 
     private final RedisConnectionFactory connectionFactory;
     private final SettingsService settingsService;
+    private final RedisMqSettingsService redisMqSettings;
 
     @Value("${spring.data.redis.host:127.0.0.1}")
     private String host;
@@ -66,9 +68,11 @@ public class RedisAdminService {
     @Value("${spring.data.redis.database:0}")
     private int database;
 
-    public RedisAdminService(RedisConnectionFactory connectionFactory, SettingsService settingsService) {
+    public RedisAdminService(RedisConnectionFactory connectionFactory, SettingsService settingsService,
+                             RedisMqSettingsService redisMqSettings) {
         this.connectionFactory = connectionFactory;
         this.settingsService = settingsService;
+        this.redisMqSettings = redisMqSettings;
     }
 
     public RedisViews.Overview overview() {
@@ -540,9 +544,13 @@ public class RedisAdminService {
     }
 
     private String producerNote() {
-        return "当前主服务发送链路仍以 RocketMQ 为准（RedisMqProducer 未接入 MessageProducerAdapter）；"
-                + "REDIS_MQ_ENABLED 主要影响重试/延迟处理器与管理端重试入队。"
-                + "修改 Redis MQ 参数后需重启主服务。";
+        String tail = "修改 Redis MQ 参数后需重启主服务生效。";
+        if (!redisMqSettings.enabled()) {
+            return "当前配置使用 RocketMQ 发送消息（REDIS_MQ_ENABLED=false）。" + tail;
+        }
+        return "主服务重启后通过 Redis Streams 发送主消息（" + redisMqSettings.topic()
+                + "）与重试消息（" + redisMqSettings.retryTopic()
+                + "），重试延迟由 delay_message 表调度；若主服务尚未重启，仍在用上一次配置。" + tail;
     }
 
     private <T> T execute(Function<RedisConnection, T> action) {

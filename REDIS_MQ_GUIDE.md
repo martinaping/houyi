@@ -48,7 +48,7 @@ redis:
 
 | 配置项 | 说明 | 默认值 |
 |--------|------|--------|
-| `redis.mq.enabled` | 是否启用 Redis MQ | `false` |
+| `redis.mq.enabled` | 是否启用 Redis MQ（接管主消息与重试消息发送） | `true` |
 | `redis.mq.topic` | 主消息队列 Stream Key | `mq:topic:main` |
 | `redis.mq.retry-topic` | 重试队列 Stream Key | `mq:topic:retry` |
 | `redis.mq.delay-queue-key` | 延迟消息 Sorted Set Key | `mq:delay:queue` |
@@ -59,6 +59,18 @@ redis:
 | `redis.mq.batch-size` | 消费者批处理大小 | `10` |
 | `redis.mq.poll-interval-ms` | 消费者轮询间隔（毫秒） | `1000` |
 | `redis.mq.delay-scan-interval-ms` | 延迟消息扫描间隔（毫秒） | `1000` |
+
+## 主发送链路
+
+启用后主服务重启即由 Redis Streams 接管发送，不需要改业务代码：
+
+- **主消息**：`MessageProducerAdapter` 选择 `RedisMqProducer`，写入 `redis.mq.topic`；
+- **重试/延迟消息**：先写入数据库 `delay_message`，由扫描器到期后投递到 `redis.mq.retry-topic`；
+- **重试消费者**：启用后即运行（不再区分 dev/prod），处理失败的消息保留在 Pending，每分钟认领重投，超过 10 次放弃并记 `give_up` 指标；
+- **备份**：`redis.mq.enable-message-backup=true` 时主消息另存 `redis_message_backup`，按 7 天保留窗口清理；
+- **管理端**：重试入队与配置展示读取同一份 `redismq.*` 配置（环境变量优先）。
+
+修改 `redis.mq.*` 后需重启主服务生效。
 
 ## 使用方式
 

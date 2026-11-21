@@ -1,6 +1,6 @@
 # 后羿（houyi）API 文档
 
-> 版本：0.11.2
+> 版本：0.12.0
 > 适用服务：`admin-server`（管理端，默认 18081）、`houyi`（主服务，默认 18080）
 > 最后更新：2026-11-20
 
@@ -30,7 +30,7 @@
 | 响应头 | 说明 |
 | --- | --- |
 | `X-Trace-Id` | 本次请求的链路 ID。客户端可主动传入（`^[A-Za-z0-9_-]{8,64}$`），否则由服务端生成 |
-| `X-App-Version` | 服务端版本号，当前为 `0.11.2` |
+| `X-App-Version` | 服务端版本号，当前为 `0.12.0` |
 
 **错误响应**（非 2xx）
 
@@ -89,7 +89,7 @@
   "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
   "tokenType": "Bearer",
   "expiresIn": 7200,
-  "user": { "username": "admin", "version": "0.11.2" }
+  "user": { "username": "admin", "version": "0.12.0" }
 }
 ```
 
@@ -130,7 +130,7 @@
 响应 `200`：
 
 ```json
-{ "username": "admin", "version": "0.11.2" }
+{ "username": "admin", "version": "0.12.0" }
 ```
 
 ---
@@ -490,7 +490,7 @@
              "rocketMqEndpoint": "http://127.0.0.1:8081", "rocketMqLatencyMs": 5,
              "rocketMqCheckedAt": 1763000000000, "rocketMqError": "Endpoint 可达，客户端创建成功" },
   "recentFailures": [],
-  "version": "0.11.2",
+  "version": "0.12.0",
   "serverTime": 1763000000000
 }
 ```
@@ -518,7 +518,7 @@
 ```json
 {
   "status": "UP",
-  "version": "0.11.2",
+  "version": "0.12.0",
   "uptimeSeconds": 3600,
   "checkedAt": 1763000000000,
   "database": { "ok": true, "latencyMs": 1, "message": "ok" },
@@ -562,7 +562,7 @@
 
 ```json
 {
-  "version": "0.11.2",
+  "version": "0.12.0",
   "uptimeSeconds": 3600,
   "javaVersion": "21.0.2",
   "jdbcUrl": "jdbc:h2:file:/Users/jc/.houyi-local/db/houyi",
@@ -1451,7 +1451,7 @@ gRPC `ROCKETMQ_ENDPOINT` 是两个不同入口。
 - Key 浏览使用 `SCAN`，禁止 `KEYS`；单次最多 200 个。
 - 仅允许删除 `houyi:`、`alert-sent:`、`corp-stall:` 前缀；`mq:` Streams 与 `last_seq_` 拉取书签受保护。
 - Stream 查看只读，不提交 Offset、不 ACK、不删除消息。
-- 修改 Redis MQ 参数后主服务需重启；当前主发送链路仍以 RocketMQ 为准。
+- 修改 Redis MQ 参数后主服务需重启；`redismq.enabled=true` 时主服务重启后由 Redis Streams 接管主消息与重试消息发送，管理端重试入队同样走 Redis 延迟队列。
 
 ### 17.2 阿里云 MNS（`/api/admin/mns`）
 

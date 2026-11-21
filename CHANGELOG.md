@@ -1,5 +1,20 @@
 # 更新日志
 
+## v0.12.0（2026-11-21）
+
+### 新增
+
+- Redis MQ 完整接管主发送链路：`MessageProducerAdapter` 按 `redis.mq.enabled` 选择 `RedisMqProducer`，主消息写入 `redis.mq.topic`，重试/延迟消息写入 `delay_message` 后由扫描器投递到重试 Stream；启动时输出当前生效链路。
+- 管理端 Redis MQ 配置统一为「环境变量 > 管理端设置 > 默认值」：重试入队、队列概览、健康巡检、系统信息与 Redis 配置说明读取同一份 `redismq.*` 配置，避免管理端与主服务模式不一致。
+- Redis 重试消费者启用即运行（不再区分 dev/prod），新增 Pending 消息定期认领重投，超过 10 次投递自动放弃并记录 `give_up` 指标。
+- 新增适配器选择单元测试，覆盖 Redis 优先、RocketMQ 回退与无生产者报错。
+
+### 修复
+
+- Redis 重试消息 Tag 不匹配时会永久滞留 Pending；现确认并跳过，同时日志不再输出完整消息体。
+- `redis_message_backup` 主消息备份从未被确认，导致记录无限增长；改为按创建时间保留 7 天统一清理。
+- 修复消息备份标记已确认时因自调用事务未生效导致的更新失败。
+
 ## v0.11.2（2026-11-21）
 
 ### 修复

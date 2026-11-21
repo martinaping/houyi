@@ -1,6 +1,6 @@
 package com.ruoran.houyi.admin.queue;
 
-import com.ruoran.houyi.admin.config.RedisMqProperties;
+import com.ruoran.houyi.admin.config.RedisMqSettingsService;
 import com.ruoran.houyi.admin.config.RocketMqSettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,17 +20,17 @@ public class QueueService {
 
     private final StringRedisTemplate redisTemplate;
     private final JdbcTemplate jdbcTemplate;
-    private final RedisMqProperties redisMqProperties;
+    private final RedisMqSettingsService redisMqSettings;
     private final RocketMqSettingsService rocketMqSettingsService;
     private final RocketMqProbeService rocketMqProbeService;
 
     public QueueService(StringRedisTemplate redisTemplate, JdbcTemplate jdbcTemplate,
-                        RedisMqProperties redisMqProperties,
+                        RedisMqSettingsService redisMqSettings,
                         RocketMqSettingsService rocketMqSettingsService,
                         RocketMqProbeService rocketMqProbeService) {
         this.redisTemplate = redisTemplate;
         this.jdbcTemplate = jdbcTemplate;
-        this.redisMqProperties = redisMqProperties;
+        this.redisMqSettings = redisMqSettings;
         this.rocketMqSettingsService = rocketMqSettingsService;
         this.rocketMqProbeService = rocketMqProbeService;
     }
@@ -38,9 +38,9 @@ public class QueueService {
     public QueueOverview overview() {
         RocketMqProbeService.ProbeResult probe = rocketMqProbeService.status();
         return new QueueOverview(
-                redisMqProperties.enabled(),
-                streamStats(redisMqProperties.topic()),
-                streamStats(redisMqProperties.retryTopic()),
+                redisMqSettings.enabled(),
+                streamStats(redisMqSettings.topic()),
+                streamStats(redisMqSettings.retryTopic()),
                 delayStatusCounts(),
                 rocketMqSettingsService.configured(),
                 rocketMqSettingsService.retryTopic(),

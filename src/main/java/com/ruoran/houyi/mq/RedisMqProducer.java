@@ -90,7 +90,7 @@ public class RedisMqProducer implements MessageProducerInterface {
     private void sendToRedis(String messageBody, String messageKey, String topic, 
                             boolean isDelay, long delayTimeMs) {
         try {
-            log.info("发送消息到 Redis - Topic: {}, Tag: {}, Key: {}, Delay: {}ms", 
+            log.debug("发送消息到 Redis - Topic: {}, Tag: {}, Key: {}, Delay: {}ms", 
                 topic, mqConfig.getTag(), messageKey, isDelay ? delayTimeMs : 0);
             
             // 提取 ShardingKey

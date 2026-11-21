@@ -1,5 +1,6 @@
 package com.ruoran.houyi.admin.redis;
 
+import com.ruoran.houyi.admin.config.RedisMqSettingsService;
 import com.ruoran.houyi.admin.error.ApiException;
 import com.ruoran.houyi.admin.settings.SettingsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +17,8 @@ class RedisAdminServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new RedisAdminService(mock(RedisConnectionFactory.class), mock(SettingsService.class));
+        service = new RedisAdminService(mock(RedisConnectionFactory.class), mock(SettingsService.class),
+                mock(RedisMqSettingsService.class));
     }
 
     @Test

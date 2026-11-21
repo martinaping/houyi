@@ -1,7 +1,7 @@
 package com.ruoran.houyi.admin.health;
 
 import com.ruoran.houyi.admin.alert.AlertService;
-import com.ruoran.houyi.admin.config.RedisMqProperties;
+import com.ruoran.houyi.admin.config.RedisMqSettingsService;
 import com.ruoran.houyi.admin.config.RocketMqSettingsService;
 import com.ruoran.houyi.admin.queue.QueueOverview;
 import com.ruoran.houyi.admin.queue.QueueService;
@@ -35,7 +35,7 @@ public class HealthService {
     private final QueueService queueService;
     private final AlertService alertService;
     private final SettingsService settingsService;
-    private final RedisMqProperties redisMqProperties;
+    private final RedisMqSettingsService redisMqSettings;
     private final RocketMqSettingsService rocketMqSettingsService;
     private final RocketMqProbeService rocketMqProbeService;
 
@@ -44,7 +44,7 @@ public class HealthService {
 
     public HealthService(JdbcTemplate jdbcTemplate, StringRedisTemplate redisTemplate,
                          QueueService queueService, AlertService alertService,
-                         SettingsService settingsService, RedisMqProperties redisMqProperties,
+                         SettingsService settingsService, RedisMqSettingsService redisMqSettings,
                          RocketMqSettingsService rocketMqSettingsService,
                          RocketMqProbeService rocketMqProbeService) {
         this.jdbcTemplate = jdbcTemplate;
@@ -52,7 +52,7 @@ public class HealthService {
         this.queueService = queueService;
         this.alertService = alertService;
         this.settingsService = settingsService;
-        this.redisMqProperties = redisMqProperties;
+        this.redisMqSettings = redisMqSettings;
         this.rocketMqSettingsService = rocketMqSettingsService;
         this.rocketMqProbeService = rocketMqProbeService;
     }
@@ -120,7 +120,7 @@ public class HealthService {
         } catch (RuntimeException ex) {
             log.warn("队列健康检查失败: {}", ex.getMessage());
             RocketMqProbeService.ProbeResult probe = rocketMqProbeService.status();
-            return new HealthReport.QueueStats(redisMqProperties.enabled(), null, null, null,
+            return new HealthReport.QueueStats(redisMqSettings.enabled(), null, null, null,
                     rocketMqSettingsService.configured(), probe.state(), probe.latencyMs(),
                     probe.checkedAt(), probe.message());
         }

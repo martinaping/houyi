@@ -1,6 +1,6 @@
 package com.ruoran.houyi.admin.system;
 
-import com.ruoran.houyi.admin.config.RedisMqProperties;
+import com.ruoran.houyi.admin.config.RedisMqSettingsService;
 import com.ruoran.houyi.admin.config.RocketMqSettingsService;
 import com.ruoran.houyi.admin.settings.SettingsCatalog;
 import com.ruoran.houyi.admin.settings.SettingsService;
@@ -27,7 +27,7 @@ public class SystemInfoService {
     private final JdbcTemplate jdbcTemplate;
     private final StringRedisTemplate redisTemplate;
     private final SettingsService settingsService;
-    private final RedisMqProperties redisMqProperties;
+    private final RedisMqSettingsService redisMqSettings;
     private final RocketMqSettingsService rocketMqSettingsService;
 
     @Value("${admin.version}")
@@ -46,12 +46,12 @@ public class SystemInfoService {
     private int redisDatabase;
 
     public SystemInfoService(JdbcTemplate jdbcTemplate, StringRedisTemplate redisTemplate,
-                             SettingsService settingsService, RedisMqProperties redisMqProperties,
+                             SettingsService settingsService, RedisMqSettingsService redisMqSettings,
                              RocketMqSettingsService rocketMqSettingsService) {
         this.jdbcTemplate = jdbcTemplate;
         this.redisTemplate = redisTemplate;
         this.settingsService = settingsService;
-        this.redisMqProperties = redisMqProperties;
+        this.redisMqSettings = redisMqSettings;
         this.rocketMqSettingsService = rocketMqSettingsService;
     }
 
@@ -77,7 +77,7 @@ public class SystemInfoService {
                 redisPort,
                 redisDatabase,
                 redisReachable,
-                redisMqProperties.enabled(),
+                redisMqSettings.enabled(),
                 rocketMqSettingsService.configured(),
                 corpTotal,
                 corpEnabled,

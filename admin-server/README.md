@@ -4,7 +4,7 @@
 
 - 技术栈：Java 21、Spring Boot 3.2.11、JdbcTemplate、Spring Data Redis、RocketMQ Client 5.0.7
 - 端口：`18081`
-- 版本：`0.11.2`
+- 版本：`0.12.0`
 
 ## 构建与启动
 
@@ -48,7 +48,7 @@ H2 开启 `AUTO_SERVER=TRUE` 后可与主服务同时连接；仅用于本地验
 | `ADMIN_TRUST_FORWARDED_FOR` | `false` | 仅在可信反向代理之后才设为 `true`，否则客户端可伪造来源 IP |
 | `ADMIN_CORS_ORIGINS` | 本地 5173 两个来源 | 逗号分隔，生产建议留空并由 Nginx 同源代理 |
 | `ADMIN_RETRY_ENABLED` | `true` | 是否允许触发消息重试 |
-| `REDIS_MQ_ENABLED` | `false` | 重试写 Redis Streams 延迟队列 |
+| `REDIS_MQ_ENABLED` | `true` | 主服务发送链路使用 Redis Streams，管理端重试同样入 Redis 延迟队列；`false` 使用 RocketMQ |
 | `REDIS_MQ_TOPIC` / `REDIS_MQ_RETRY_TOPIC` | `mq:topic:main` / `mq:topic:retry` | 与主服务保持一致 |
 | `ROCKETMQ_ENDPOINT` / `ROCKETMQ_USERNAME` / `ROCKETMQ_PASSWORD` | 空 | 配置后重试改发 RocketMQ |
 | `ROCKETMQ_RETRY_TOPIC` / `ROCKETMQ_TAG` | `wechat-archive-retry` / `default` | 重试主题与 Tag |

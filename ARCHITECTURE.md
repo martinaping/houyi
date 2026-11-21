@@ -1,6 +1,6 @@
 # 后羿（Houyi）系统架构文档
 
-**当前版本：v0.11.2**
+**当前版本：v0.12.0**
 
 ## 📋 系统概述
 
@@ -649,6 +649,7 @@ houyi/
 ### Redis 与 MNS 管理
 
 - **Redis**：`RedisAdminService` 使用 `RedisConnection` 低层命令读取 INFO/SCAN/Streams/Pending；Key 删除仅允许 `houyi:`、`alert-sent:`、`corp-stall:` 前缀，`mq:` Streams 与 `last_seq_` 书签受保护；不提供 FLUSH/KEYS/Stream 删除/ACK。
+- **发送链路**：`MessageProducerAdapter` 按 `redis.mq.enabled` 选择 `RedisMqProducer`（Redis Streams）或 RocketMQ；Redis 模式下延迟/重试消息先落 `delay_message` 表，再由扫描器投递到重试 Stream，重试消费者处理失败会进入 Pending 并定期认领重投，超过 10 次放弃。主消息备份表按 7 天保留窗口清理。
 - **MNS**：`MnsAdminService` 使用 `aliyun-sdk-mns` 惰性初始化，连接超时 3 秒、读取 5 秒；提供队列属性/列表、只读 Peek（不改变可见性）与测试发送（≤64 KB、延迟 0~604800 秒）。
 - **配置来源**：MNS/Redis MQ 均优先环境变量，其次 `admin_config`；敏感凭据由 `SecretCipher` 解密。修改后主服务需重启。
 - **审计**：`REDIS_KEY_DELETE`、`MNS_TEST_SEND` 写入 `admin_audit_log`。

@@ -3,7 +3,7 @@ package com.ruoran.houyi.admin.retry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ruoran.houyi.admin.config.AdminRetryProperties;
-import com.ruoran.houyi.admin.config.RedisMqProperties;
+import com.ruoran.houyi.admin.config.RedisMqSettingsService;
 import com.ruoran.houyi.admin.config.RocketMqProperties;
 import com.ruoran.houyi.admin.config.RocketMqSettingsService;
 import com.ruoran.houyi.admin.error.ApiException;
@@ -39,18 +39,18 @@ public class RetryService {
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
     private final AdminRetryProperties retryProperties;
-    private final RedisMqProperties redisMqProperties;
+    private final RedisMqSettingsService redisMqSettings;
     private final RocketMqProperties rocketMqProperties;
     private final RocketMqSettingsService rocketMqSettingsService;
 
     public RetryService(JdbcTemplate jdbcTemplate, ObjectMapper objectMapper,
-                        AdminRetryProperties retryProperties, RedisMqProperties redisMqProperties,
+                        AdminRetryProperties retryProperties, RedisMqSettingsService redisMqSettings,
                         RocketMqProperties rocketMqProperties,
                         RocketMqSettingsService rocketMqSettingsService) {
         this.jdbcTemplate = jdbcTemplate;
         this.objectMapper = objectMapper;
         this.retryProperties = retryProperties;
-        this.redisMqProperties = redisMqProperties;
+        this.redisMqSettings = redisMqSettings;
         this.rocketMqProperties = rocketMqProperties;
         this.rocketMqSettingsService = rocketMqSettingsService;
     }
@@ -68,7 +68,7 @@ public class RetryService {
         String body = buildMessageBody(source, secret);
 
         RetryResult result;
-        if (redisMqProperties.enabled()) {
+        if (redisMqSettings.enabled()) {
             result = enqueueRedis(messageKey, source.corpId(), body);
         } else if (rocketMqSettingsService.configured()) {
             result = sendRocketMq(messageKey, body);
@@ -120,7 +120,7 @@ public class RetryService {
         jdbcTemplate.update(
                 "INSERT INTO delay_message (topic, message_body, message_key, tag, sharding_key,"
                         + " deliver_time, status, retry_count, create_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                redisMqProperties.retryTopic(), body, messageKey, redisMqProperties.effectiveTag(),
+                redisMqSettings.retryTopic(), body, messageKey, redisMqSettings.tag(),
                 corpId, now, 0, 0, now);
         return new RetryResult(MODE_REDIS, messageKey, now);
     }

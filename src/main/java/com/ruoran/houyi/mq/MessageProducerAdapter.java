@@ -1,13 +1,15 @@
 package com.ruoran.houyi.mq;
 
 import com.ruoran.houyi.service.RuntimeMetricRecorder;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
  * 消息生产者适配器
- * 使用 RocketMQ 作为消息队列
+ * 按 redis.mq.enabled 选择 Redis Streams 或 RocketMQ
  * 
  * @author lh
  */
@@ -19,16 +21,38 @@ public class MessageProducerAdapter {
     private RocketMqProducerAdapter rocketMqProducer;
 
     @Autowired(required = false)
+    private RedisMqProducer redisMqProducer;
+
+    @Resource
+    private RedisMqConfig redisMqConfig;
+
+    @Autowired(required = false)
     private RuntimeMetricRecorder runtimeMetricRecorder;
 
     @Autowired(required = false)
     private MnsService mnsService;
+
+    @PostConstruct
+    public void logEffectiveProducer() {
+        if (useRedis()) {
+            log.info("消息发送链路: Redis Streams (main={}, retry={})",
+                    redisMqConfig.getTopic(), redisMqConfig.getRetryTopic());
+        } else if (rocketMqProducer != null) {
+            log.info("消息发送链路: RocketMQ");
+        } else {
+            log.warn("未找到可用的消息生产者，发送消息将失败");
+        }
+    }
+
+    private boolean useRedis() {
+        return redisMqConfig.isEnabled() && redisMqProducer != null;
+    }
     
     /**
      * 获取当前使用的消息生产者
      */
     private MessageProducerInterface getProducer() {
-        return rocketMqProducer;
+        return useRedis() ? redisMqProducer : rocketMqProducer;
     }
     
     /**

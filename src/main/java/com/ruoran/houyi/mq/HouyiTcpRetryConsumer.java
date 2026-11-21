@@ -150,7 +150,7 @@ public class HouyiTcpRetryConsumer {
             
             // 验证必需字段
             if (!validateMessage(object)) {
-                log.warn("重试消息缺少必需字段，跳过: {}", msgBody);
+                log.warn("重试消息缺少必需字段，跳过: msgId={}", msgId);
                 meterRegistry.counter("houyi_retry_msg", 
                     Tags.of("result", "invalid")).increment();
                 return true; // 无效消息，不再重试

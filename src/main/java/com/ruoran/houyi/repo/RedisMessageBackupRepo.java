@@ -7,6 +7,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +35,7 @@ public interface RedisMessageBackupRepo extends CrudRepository<RedisMessageBacku
      * 标记消息为已确认
      */
     @Modifying(clearAutomatically = true)
+    @Transactional
     @Query("UPDATE RedisMessageBackup r SET r.status = 1, r.ackAt = :ackAt WHERE r.redisMsgId = :redisMsgId")
     void markAsAcknowledged(@Param("redisMsgId") String redisMsgId, @Param("ackAt") Long ackAt);
 
@@ -45,11 +47,13 @@ public interface RedisMessageBackupRepo extends CrudRepository<RedisMessageBacku
     void markAsFailed(@Param("id") Long id);
 
     /**
-     * 清理已确认的旧消息（保留最近 N 天）
+     * 清理指定时间之前的备份记录。
+     * 主队列没有本地消费者，备份行不会被标记为已确认，按创建时间统一保留窗口。
      */
     @Modifying
-    @Query("DELETE FROM RedisMessageBackup r WHERE r.status = 1 AND r.ackAt < :beforeTime")
-    void cleanAcknowledgedMessages(@Param("beforeTime") Long beforeTime);
+    @Transactional
+    @Query("DELETE FROM RedisMessageBackup r WHERE r.createAt < :beforeTime")
+    void cleanOldMessages(@Param("beforeTime") Long beforeTime);
 
     /**
      * 查找发送失败的消息（用于重试）

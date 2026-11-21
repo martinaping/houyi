@@ -23,17 +23,16 @@ public class RedisMessageBackupCleaner {
     private RedisMessageBackupRepo messageBackupRepo;
     
     /**
-     * 定期清理已确认的旧消息备份
-     * 每天凌晨 3 点执行，清理 7 天前的已确认消息
+     * 定期清理旧消息备份
+     * 每天凌晨 3 点执行，保留最近 7 天的备份
      */
     @Scheduled(cron = "0 0 3 * * ?") // 每天凌晨 3 点执行
     @Transactional
     public void cleanOldBackups() {
         try {
-            // 清理 7 天前的已确认消息
             long beforeTime = System.currentTimeMillis() - (7L * 24 * 60 * 60 * 1000);
-            messageBackupRepo.cleanAcknowledgedMessages(beforeTime);
-            log.info("清理已确认的 Redis 消息备份: 删除了 7 天前的记录");
+            messageBackupRepo.cleanOldMessages(beforeTime);
+            log.info("清理 Redis 消息备份: 删除了 7 天前的记录");
         } catch (Exception e) {
             log.error("清理 Redis 消息备份失败: {}", e.getMessage(), e);
         }
