@@ -1,6 +1,6 @@
 # 后羿（Houyi）系统架构文档
 
-**当前版本：v0.8.0**
+**当前版本：v0.9.0**
 
 ## 📋 系统概述
 
@@ -604,8 +604,33 @@ houyi/
 | GET | `/api/admin/logs/tail` | 读取日志尾部（来源/文件/级别/关键字过滤，8 MB、2000 行上限） |
 | GET | `/api/admin/logs/download` | 下载日志文件（路径白名单校验，写审计） |
 | GET | `/api/admin/monitor/overview` | 抓取主应用 Prometheus 指标并汇总 JVM/HTTP/连接池/线程池/业务指标 |
+| GET | `/api/admin/rocketmq/overview` | RocketMQ 集群、Topic/消费组、Lag、DLQ、Broker 与 gRPC 探测 |
+| GET | `/api/admin/rocketmq/groups` | 消费组清单与 Lag（默认隐藏 RocketMQ 内置组） |
+| GET | `/api/admin/rocketmq/groups/{group}` | 消费组配置、队列 Offset、在线连接、订阅 Topic |
+| GET | `/api/admin/rocketmq/topics` | Topic 清单（可含系统 Topic） |
+| GET | `/api/admin/rocketmq/topic` | Topic 路由、队列配置/位点、订阅组 |
+| GET | `/api/admin/rocketmq/brokers` | Broker 列表、运行时指标与 gRPC 探测 |
+| GET | `/api/admin/rocketmq/dlq/topics` | 死信 Topic 与消息数 |
+| GET | `/api/admin/rocketmq/dlq/messages` | 拉取死信消息（不消费、不删除） |
+| POST | `/api/admin/rocketmq/dlq/resend` | 死信重投到目标 Topic（写审计） |
+| POST | `/api/admin/rocketmq/messages/query` | 按 MsgID 或 Key + 时间范围查询消息（写审计） |
+| POST | `/api/admin/rocketmq/messages/trace` | 查询消息轨迹（写审计） |
+| GET | `/api/admin/rocketmq/retry` | Redis 模式 `delay_message` 重试队列 |
+| POST | `/api/admin/rocketmq/retry/{id}/requeue` | 立即重投并重置重试次数（写审计） |
+| POST | `/api/admin/rocketmq/retry/{id}/discard` | 标记丢弃（状态 3，不删除记录，写审计） |
+| POST | `/api/admin/rocketmq/test-send` | 发送测试消息（≤64 KB，禁止系统 Topic，写审计） |
+| GET | `/api/admin/rocketmq/config` | 管理端 RocketMQ 生效配置、来源与重启提示 |
 | GET | `/api/admin/retention/preview` | 预览可清理数据量与最早时间 |
 | POST | `/api/admin/retention/execute` | 执行清理（需开启开关并输入 `DELETE` 确认） |
+
+### RocketMQ 管理
+
+- **连接方式**：主应用与管理端重试使用 gRPC Endpoint（`ROCKETMQ_ENDPOINT`）；管理端查询消费进度、Topic、Broker 使用 remoting NameServer（`rocketmq.namesrv-addr` / `ROCKETMQ_NAMESRV_ADDR`）。两者是不同入口。
+- **客户端**：`RocketMqAdminService` 基于 `rocketmq-tools` 的 `DefaultMQAdminExt`，按 NameServer/超时变化懒加载并复用；调用失败只返回本页面错误，不影响其他管理功能。
+- **缓存**：概览、消费组、Topic、DLQ、Broker 清单缓存 15 秒；写操作后由前端主动刷新。
+- **DLQ 读取**：使用临时 Pull Consumer 读取 `%DLQ%<group>` 的消息，不提交 Offset、不删除原消息；重投会向目标 Topic 发送新消息。
+- **审计**：DLQ 重投、消息查询/轨迹、测试发送、重试队列重投/丢弃均写 `admin_audit_log`，不记录消息体本身。
+- **告警**：`AlertService` 复用现有 Webhook/冷却/静默时段，新增消费组 Lag 与 DLQ 总数阈值；RocketMQ 不可用时只记录 WARN。
 
 ### 管理端自建表
 

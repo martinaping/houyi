@@ -1,5 +1,30 @@
 # 更新日志
 
+## v0.9.0（2026-11-21）
+
+### 新增
+
+- 新增「RocketMQ」管理页：概览、消费组 Lag/队列进度/在线连接、Topic 拓扑、Broker/Proxy 运行时指标。
+- 新增死信队列管理：DLQ Topic 与消息数、消息体/属性查看、指定目标 Topic 重投。
+- 新增消息查询与轨迹：按 MsgID 或 Key + Topic + 时间范围查询，查看消息属性与消费轨迹。
+- 新增 Redis 重试队列可视化：`delay_message` 状态/重试次数/投递时间/错误查看，支持立即重投与标记丢弃（状态 3，不删除记录）。
+- 新增 RocketMQ 有效配置页与测试发送：展示配置来源/生效方式、主服务重启提示；测试消息最大 64 KB，禁止系统 Topic。
+- 新增 RocketMQ 告警：消费组 Lag 阈值、DLQ 总数阈值接入现有 Webhook/冷却/静默时段。
+- 新增设置项：`rocketmq.namesrv-addr`、`rocketmq.cluster-name`、`rocketmq.admin-timeout-ms`，以及 5 个 RocketMQ 告警配置。
+- 新增审计动作：`ROCKETMQ_DLQ_RESEND`、`ROCKETMQ_MESSAGE_QUERY`、`ROCKETMQ_MESSAGE_TRACE`、`ROCKETMQ_TEST_SEND`、`RETRY_QUEUE_REQUEUE`、`RETRY_QUEUE_DISCARD`。
+
+### 优化
+
+- 消费组/Topic 列表默认隐藏 RocketMQ 内置组与系统 Topic，支持显式显示。
+- 管理端引入 `rocketmq-tools`，通过 NameServer 读取消费进度、Topic、Broker 元数据；概览类数据缓存 15 秒。
+- 设置项增至 60 项，分组扩展为 8 组。
+
+### 安全
+
+- 消息查询、轨迹、死信重投、测试发送、重试队列操作全部写入审计，审计不记录消息体。
+- 测试发送禁止 `%DLQ%`、`RMQ_SYS_*`、`SCHEDULE_TOPIC_*` 等系统 Topic，并限制消息大小。
+- DLQ 读取使用临时 Pull Consumer，不提交 Offset、不删除原消息；重投只发送新消息。
+
 ## v0.8.0（2026-11-20）
 
 ### 安全

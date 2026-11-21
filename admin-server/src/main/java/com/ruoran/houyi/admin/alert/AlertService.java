@@ -3,6 +3,8 @@ package com.ruoran.houyi.admin.alert;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoran.houyi.admin.error.ApiException;
+import com.ruoran.houyi.admin.rocketmq.RocketMqAdminService;
+import com.ruoran.houyi.admin.rocketmq.RocketMqViews;
 import com.ruoran.houyi.admin.settings.SettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +22,11 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -45,15 +49,18 @@ public class AlertService {
     private final StringRedisTemplate redisTemplate;
     private final SettingsService settingsService;
     private final ObjectMapper objectMapper;
+    private final RocketMqAdminService rocketMqAdminService;
     private final RestClient restClient = createRestClient();
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     public AlertService(JdbcTemplate jdbcTemplate, StringRedisTemplate redisTemplate,
-                        SettingsService settingsService, ObjectMapper objectMapper) {
+                        SettingsService settingsService, ObjectMapper objectMapper,
+                        RocketMqAdminService rocketMqAdminService) {
         this.jdbcTemplate = jdbcTemplate;
         this.redisTemplate = redisTemplate;
         this.settingsService = settingsService;
         this.objectMapper = objectMapper;
+        this.rocketMqAdminService = rocketMqAdminService;
     }
 
     @Scheduled(initialDelay = 30_000, fixedDelayString = "${admin.alert.check-interval-ms:60000}")
@@ -168,7 +175,71 @@ public class AlertService {
         if (settingsService.booleanValue("alert.corp-stall-enabled")) {
             messages.addAll(collectStalledCorps());
         }
+        messages.addAll(collectRocketMqMessages());
         return messages;
+    }
+
+    /**
+     * RocketMQ 消费组积压与死信队列告警。RocketMQ 不可用时只记录 WARN，不影响现有告警。
+     */
+    private List<AlertMessage> collectRocketMqMessages() {
+        boolean lagEnabled = settingsService.booleanValue("alert.rocketmq-lag-enabled");
+        boolean dlqEnabled = settingsService.booleanValue("alert.rocketmq-dlq-enabled");
+        if (!lagEnabled && !dlqEnabled) {
+            return List.of();
+        }
+        List<AlertMessage> messages = new ArrayList<>();
+        try {
+            if (lagEnabled) {
+                long threshold = settingsService.longValue("alert.rocketmq-lag-threshold", 1000);
+                Set<String> filters = lagGroupFilters();
+                rocketMqAdminService.groups(false).stream()
+                        .filter(group -> !RocketMqAdminService.isInternalGroup(group.group()))
+                        .filter(group -> filters.isEmpty() || filters.contains(group.group()))
+                        .filter(group -> group.diffTotal() > threshold)
+                        .sorted((left, right) -> Long.compare(right.diffTotal(), left.diffTotal()))
+                        .limit(5)
+                        .forEach(group -> messages.add(new AlertMessage(
+                                "rocketmq-lag:" + group.group(), "WARN", "RocketMQ 消费组积压",
+                                "消费组 " + group.group() + " 堆积 " + group.diffTotal()
+                                        + " 条，超过阈值 " + threshold + "，消费 TPS="
+                                        + String.format("%.2f", group.consumeTps()),
+                                group.diffTotal(), threshold)));
+            }
+            if (dlqEnabled) {
+                long threshold = settingsService.longValue("alert.rocketmq-dlq-threshold", 1);
+                RocketMqViews.DlqList dlq = rocketMqAdminService.dlqTopics(false);
+                if (dlq.totalMessages() > threshold) {
+                    String detail = dlq.topics().stream()
+                            .filter(topic -> topic.messageCount() > 0)
+                            .limit(5)
+                            .map(topic -> topic.consumerGroup() + "=" + topic.messageCount())
+                            .reduce((left, right) -> left + ", " + right)
+                            .orElse("-");
+                    messages.add(new AlertMessage("rocketmq-dlq", "WARN", "RocketMQ 死信队列增长",
+                            "死信消息总数 " + dlq.totalMessages() + " 条，超过阈值 " + threshold
+                                    + "；Top: " + detail,
+                            dlq.totalMessages(), threshold));
+                }
+            }
+        } catch (RuntimeException ex) {
+            log.warn("RocketMQ 告警检查失败: {}", ex.getMessage());
+        }
+        return messages;
+    }
+
+    private Set<String> lagGroupFilters() {
+        String configured = settingsService.stringValue("alert.rocketmq-lag-groups", "");
+        if (configured.isBlank()) {
+            return Set.of();
+        }
+        Set<String> result = new HashSet<>();
+        for (String item : configured.split(",")) {
+            if (!item.isBlank()) {
+                result.add(item.trim());
+            }
+        }
+        return result;
     }
 
     private List<AlertMessage> collectStalledCorps() {

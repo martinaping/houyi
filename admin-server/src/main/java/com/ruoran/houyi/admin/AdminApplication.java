@@ -4,6 +4,7 @@ import com.ruoran.houyi.admin.config.AdminCorsProperties;
 import com.ruoran.houyi.admin.config.AdminRetryProperties;
 import com.ruoran.houyi.admin.config.AdminSecurityProperties;
 import com.ruoran.houyi.admin.config.RedisMqProperties;
+import com.ruoran.houyi.admin.config.RocketMqAdminProperties;
 import com.ruoran.houyi.admin.config.RocketMqProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -22,6 +23,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         AdminCorsProperties.class,
         AdminRetryProperties.class,
         RocketMqProperties.class,
+        RocketMqAdminProperties.class,
         RedisMqProperties.class
 })
 public class AdminApplication {

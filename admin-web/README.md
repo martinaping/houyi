@@ -5,7 +5,7 @@
 - React 19.3 + TypeScript 5.9（strict）
 - Ant Design 6.7 + Vite 7.3
 - React Router 7、TanStack Query 5、i18next
-- 版本：`0.8.0`
+- 版本：`0.9.0`
 
 ## 本地开发
 
@@ -37,7 +37,7 @@ src/
 ├── auth/         # 登录状态与路由守卫
 ├── components/   # 布局等通用组件
 ├── i18n/         # 中英文文案
-├── pages/        # 概览 / 健康巡检 / 企业 / 消息 / 队列 / 系统设置 / 审计日志 / 数据清理 / 系统信息 / 登录
+├── pages/        # 概览 / 健康巡检 / 企业 / 消息 / 队列 / RocketMQ / 系统设置 / 审计日志 / 数据清理 / 系统信息 / 登录
 └── utils/        # 格式化工具
 ```
 
@@ -54,4 +54,4 @@ src/
 - 用户可见文案统一走 i18n，不在组件里写死中文/英文。
 - 服务端状态使用 React Query 管理，变更后按 key 失效缓存。
 - 所有请求通过 `src/api/client.ts`，access token 只保存在内存，刷新页面用 HttpOnly cookie 恢复会话。
-- 前端版本需与 admin-server 保持 `0.8.0`。
+- 前端版本需与 admin-server 保持 `0.9.0`。

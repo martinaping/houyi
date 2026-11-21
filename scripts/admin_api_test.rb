@@ -126,6 +126,11 @@ class Runner
     export_audit_csv
     message_not_found
     queue_overview
+    rocketmq_overview
+    rocketmq_groups
+    rocketmq_topics
+    rocketmq_config
+    rocketmq_retry
     list_settings
     update_setting_rejects_invalid_value
     setting_reset_rejects_unknown_key
@@ -199,6 +204,20 @@ class Runner
       [response.status == 404 && response.body['code'] == 'MESSAGE_NOT_FOUND', "code=#{response.body['code']}"]
     when 'queue_overview'
       [response.status == 200 && response.body.key?('redisMqEnabled'), "status=#{response.status}"]
+    when 'rocketmq_overview'
+      ok = response.status == 200 && response.body.key?('available') &&
+           response.body.key?('namesrvAddr')
+      [ok, "available=#{response.body['available']} namesrv=#{response.body['namesrvAddr']}"]
+    when 'rocketmq_groups'
+      [response.status == 200 && response.body.is_a?(Array), "count=#{response.body.is_a?(Array) ? response.body.length : 'n/a'}"]
+    when 'rocketmq_topics'
+      [response.status == 200 && response.body.is_a?(Array), "count=#{response.body.is_a?(Array) ? response.body.length : 'n/a'}"]
+    when 'rocketmq_config'
+      ok = response.status == 200 && response.body.key?('items') &&
+           response.body['items'].is_a?(Array)
+      [ok, "items=#{response.body['items'].is_a?(Array) ? response.body['items'].length : 'n/a'}"]
+    when 'rocketmq_retry'
+      [response.status == 200 && response.body.key?('available'), "available=#{response.body['available']}"]
     when 'list_settings'
       ok = response.status == 200 && response.body.is_a?(Array) && !response.body.empty? &&
            response.body.all? { |item| item.key?('applyMode') && item.key?('unit') }
@@ -356,6 +375,26 @@ class Runner
 
   def queue_overview
     check('queue_overview') { @client.get('/api/admin/queue/overview', token: @token) }
+  end
+
+  def rocketmq_overview
+    check('rocketmq_overview') { @client.get('/api/admin/rocketmq/overview', token: @token) }
+  end
+
+  def rocketmq_groups
+    check('rocketmq_groups') { @client.get('/api/admin/rocketmq/groups', token: @token) }
+  end
+
+  def rocketmq_topics
+    check('rocketmq_topics') { @client.get('/api/admin/rocketmq/topics', token: @token) }
+  end
+
+  def rocketmq_config
+    check('rocketmq_config') { @client.get('/api/admin/rocketmq/config', token: @token) }
+  end
+
+  def rocketmq_retry
+    check('rocketmq_retry') { @client.get('/api/admin/rocketmq/retry?limit=5', token: @token) }
   end
 
   def list_settings

@@ -30,7 +30,12 @@ log:
   path: ${LOG_PATH:/tmp/}
 
 admin:
-  version: 0.8.0
+  version: 0.9.0
+  rocketmq:
+    # 管理端通过 NameServer 查询消费进度/Topic/Broker，与 gRPC Endpoint 不同
+    namesrv-addr: ${ROCKETMQ_NAMESRV_ADDR:127.0.0.1:9876}
+    cluster-name: ${ROCKETMQ_CLUSTER_NAME:DefaultCluster}
+    timeout-ms: ${ROCKETMQ_ADMIN_TIMEOUT_MS:5000}
   security:
     # 必须通过环境变量提供，未配置时服务拒绝启动
     username: ${ADMIN_USERNAME:admin}

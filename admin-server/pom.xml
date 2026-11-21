@@ -13,13 +13,14 @@
 
     <groupId>com.ruoran.houyi</groupId>
     <artifactId>admin-server</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
     <name>houyi-admin-server</name>
     <description>houyi 会话存档管理端后端，独立部署，共享主服务的数据库与消息队列</description>
 
     <properties>
         <java.version>21</java.version>
         <rocketmq-client.version>5.0.7</rocketmq-client.version>
+        <rocketmq-tools.version>5.3.2</rocketmq-tools.version>
     </properties>
 
     <dependencies>
@@ -51,6 +52,17 @@
             <groupId>org.apache.rocketmq</groupId>
             <artifactId>rocketmq-client-java</artifactId>
             <version>${rocketmq-client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-tools</artifactId>
+            <version>${rocketmq-tools.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.mysql</groupId>

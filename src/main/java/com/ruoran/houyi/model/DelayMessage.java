@@ -59,7 +59,7 @@ public class DelayMessage {
     private Long deliverTime;
     
     /**
-     * 消息状态：0-待投递，1-已投递，2-投递失败
+     * 消息状态：0-待投递，1-已投递，2-投递失败，3-管理端已丢弃
      */
     @Column(name = "status", columnDefinition = "TINYINT DEFAULT 0")
     private Integer status = 0;

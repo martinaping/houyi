@@ -10,6 +10,7 @@ import {
   LineChartOutlined,
   LogoutOutlined,
   MessageOutlined,
+  RocketOutlined,
   SettingOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
@@ -38,6 +39,7 @@ export function AdminLayout() {
       { key: '/corps', icon: <TeamOutlined />, label: t('nav.corps') },
       { key: '/messages', icon: <MessageOutlined />, label: t('nav.messages') },
       { key: '/queue', icon: <DatabaseOutlined />, label: t('nav.queue') },
+      { key: '/rocketmq', icon: <RocketOutlined />, label: t('nav.rocketmq') },
       { key: '/retention', icon: <DeleteOutlined />, label: t('nav.retention') },
       { key: '/audit', icon: <AuditOutlined />, label: t('nav.audit') },
       { key: '/logs', icon: <FileTextOutlined />, label: t('nav.logs') },

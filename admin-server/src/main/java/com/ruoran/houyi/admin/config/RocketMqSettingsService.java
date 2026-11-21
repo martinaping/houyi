@@ -15,13 +15,19 @@ public class RocketMqSettingsService {
     public static final String KEY_USERNAME = "rocketmq.username";
     public static final String KEY_PASSWORD = "rocketmq.password";
     public static final String KEY_RETRY_TOPIC = "rocketmq.retry-topic";
+    public static final String KEY_NAMESRV_ADDR = "rocketmq.namesrv-addr";
+    public static final String KEY_CLUSTER_NAME = "rocketmq.cluster-name";
+    public static final String KEY_ADMIN_TIMEOUT_MS = "rocketmq.admin-timeout-ms";
 
     private final SettingsService settingsService;
     private final RocketMqProperties properties;
+    private final RocketMqAdminProperties adminProperties;
 
-    public RocketMqSettingsService(SettingsService settingsService, RocketMqProperties properties) {
+    public RocketMqSettingsService(SettingsService settingsService, RocketMqProperties properties,
+                                   RocketMqAdminProperties adminProperties) {
         this.settingsService = settingsService;
         this.properties = properties;
+        this.adminProperties = adminProperties;
     }
 
     public String endpoint() {
@@ -42,6 +48,26 @@ public class RocketMqSettingsService {
 
     public boolean configured() {
         return !isBlank(endpoint());
+    }
+
+    public String namesrvAddr() {
+        String value = value(KEY_NAMESRV_ADDR, adminProperties.namesrvAddr());
+        return isBlank(value) ? "127.0.0.1:9876" : value;
+    }
+
+    public String clusterName() {
+        String value = value(KEY_CLUSTER_NAME, adminProperties.clusterName());
+        return isBlank(value) ? "DefaultCluster" : value;
+    }
+
+    public long adminTimeoutMs() {
+        String value = value(KEY_ADMIN_TIMEOUT_MS, String.valueOf(adminProperties.timeoutMs()));
+        try {
+            long parsed = Long.parseLong(value.trim());
+            return Math.max(1_000L, Math.min(parsed, 30_000L));
+        } catch (NumberFormatException ex) {
+            return adminProperties.timeoutMs();
+        }
     }
 
     private String value(String key, String fallback) {

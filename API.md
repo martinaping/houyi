@@ -1,6 +1,6 @@
 # 后羿（houyi）API 文档
 
-> 版本：0.8.0
+> 版本：0.9.0
 > 适用服务：`admin-server`（管理端，默认 18081）、`houyi`（主服务，默认 18080）
 > 最后更新：2026-11-20
 
@@ -30,7 +30,7 @@
 | 响应头 | 说明 |
 | --- | --- |
 | `X-Trace-Id` | 本次请求的链路 ID。客户端可主动传入（`^[A-Za-z0-9_-]{8,64}$`），否则由服务端生成 |
-| `X-App-Version` | 服务端版本号，当前为 `0.8.0` |
+| `X-App-Version` | 服务端版本号，当前为 `0.9.0` |
 
 **错误响应**（非 2xx）
 
@@ -89,7 +89,7 @@
   "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
   "tokenType": "Bearer",
   "expiresIn": 7200,
-  "user": { "username": "admin", "version": "0.8.0" }
+  "user": { "username": "admin", "version": "0.9.0" }
 }
 ```
 
@@ -130,7 +130,7 @@
 响应 `200`：
 
 ```json
-{ "username": "admin", "version": "0.8.0" }
+{ "username": "admin", "version": "0.9.0" }
 ```
 
 ---
@@ -490,7 +490,7 @@
              "rocketMqEndpoint": "http://127.0.0.1:8081", "rocketMqLatencyMs": 5,
              "rocketMqCheckedAt": 1763000000000, "rocketMqError": "Endpoint 可达，客户端创建成功" },
   "recentFailures": [],
-  "version": "0.8.0",
+  "version": "0.9.0",
   "serverTime": 1763000000000
 }
 ```
@@ -518,7 +518,7 @@
 ```json
 {
   "status": "UP",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "uptimeSeconds": 3600,
   "checkedAt": 1763000000000,
   "database": { "ok": true, "latencyMs": 1, "message": "ok" },
@@ -562,7 +562,7 @@
 
 ```json
 {
-  "version": "0.8.0",
+  "version": "0.9.0",
   "uptimeSeconds": 3600,
   "javaVersion": "21.0.2",
   "jdbcUrl": "jdbc:h2:file:/Users/jc/.houyi-local/db/houyi",
@@ -1265,7 +1265,136 @@ GET /api/admin/monitor/overview
 
 ---
 
-## 16. 错误码总表
+## 16. RocketMQ 管理（`/api/admin/rocketmq`）
+
+管理端通过 RocketMQ remoting NameServer 查询消费组、Topic、Broker 与消息。NameServer 地址来自
+`rocketmq.namesrv-addr`（环境变量 `ROCKETMQ_NAMESRV_ADDR`，默认 `127.0.0.1:9876`），与主应用使用的
+gRPC `ROCKETMQ_ENDPOINT` 是两个不同入口。
+
+> 本地/自建 RocketMQ 5.3.2 已验证；阿里云 Serverless 实例请使用其控制台或 OpenAPI，当前面板的元数据查询依赖 remoting NameServer。
+> 所有写操作（重投、修改重试队列、测试发送）都会写入审计日志。消息体可能包含敏感会话内容，接口仅对已登录管理员开放。
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/overview?refresh=` | 集群、Topic/消费组数量、总 Lag、DLQ 数量、Top Lag、Broker、gRPC 探测 |
+| GET | `/groups?keyword=&includeInternal=&refresh=&limit=` | 消费组列表（默认隐藏 RocketMQ 内置组） |
+| GET | `/groups/{group}` | 消费组详情：配置、队列 Offset、在线连接、订阅 Topic |
+| GET | `/topics?keyword=&includeSystem=&refresh=&limit=` | Topic 列表 |
+| GET | `/topic?topic=` | Topic 详情：路由、队列配置、队列位点、订阅组 |
+| GET | `/brokers?refresh=` | Broker 列表与运行时指标、gRPC 探测 |
+| GET | `/dlq/topics?refresh=` | 死信 Topic 与消息数 |
+| GET | `/dlq/messages?topic=&limit=` | 拉取死信消息（不消费、不删除） |
+| POST | `/dlq/resend` | 重投死信消息到目标 Topic |
+| POST | `/messages/query` | 按 MsgID 或 Key + Topic + 时间范围查询消息 |
+| POST | `/messages/trace` | 查询消息轨迹 |
+| GET | `/retry?status=&keyword=&offset=&limit=` | Redis 模式 `delay_message` 重试队列 |
+| GET | `/retry/{id}` | 重试消息详情 |
+| POST | `/retry/{id}/requeue` | 立即重新投递并重置重试次数 |
+| POST | `/retry/{id}/discard` | 丢弃重试消息（状态置为 3，不删除记录） |
+| POST | `/test-send` | 发送测试消息（最大 64 KB，禁止系统 Topic） |
+| GET | `/config` | 管理端 RocketMQ 生效配置、来源与重启提示 |
+
+### 16.1 消费组 Lag
+
+`GET /api/admin/rocketmq/groups?includeInternal=false`
+
+```json
+[
+  {
+    "group": "GID_order_consumer",
+    "brokerAddr": "127.0.0.1:10911",
+    "diffTotal": 128,
+    "consumeTps": 12.5,
+    "lastTimestamp": 1795255100000,
+    "note": null
+  }
+]
+```
+
+`diffTotal` 为各队列 `brokerOffset - consumerOffset` 之和；广播模式或无位点的内置组会返回 `note` 说明。
+
+### 16.2 死信重投
+
+`POST /api/admin/rocketmq/dlq/resend`
+
+```json
+{
+  "topic": "%DLQ%GID_order_consumer",
+  "msgId": "24098A1E...A3F0000",
+  "targetTopic": "wechat-archive-msg",
+  "tag": "ChatDataJava",
+  "key": "msg-123"
+}
+```
+
+响应：
+
+```json
+{ "msgId": "新消息ID", "targetTopic": "wechat-archive-msg", "sentAt": 1795255124330 }
+```
+
+### 16.3 消息查询与轨迹
+
+`POST /api/admin/rocketmq/messages/query`
+
+```json
+{ "topic": "wechat-archive-msg", "key": "msg-123", "beginTimestamp": 0, "endTimestamp": 1795255200000, "max": 20 }
+```
+
+按 MsgID 查询时传 `msgId`，按 Key 查询时传 `key`，两者至少一个。单次最多 50 条，消息体最多返回前 20,000 个字符。
+
+`POST /api/admin/rocketmq/messages/trace`：
+
+```json
+{ "topic": "wechat-archive-msg", "msgId": "24098A1E...A3F0000" }
+```
+
+轨迹依赖 Broker 开启 `traceTopicEnable`；未开启时返回空数组。
+
+### 16.4 重试队列状态
+
+`delay_message.status`：`0` 待投递、`1` 已投递、`2` 投递失败、`3` 管理端已丢弃。
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "topic": "mq:topic:retry",
+      "messageKey": "msg-123",
+      "status": 2,
+      "retryCount": 3,
+      "deliverTime": 1795255100000,
+      "errorMsg": "timeout",
+      "bodyPreview": "{\"corp_id\":\"ww...\"}",
+      "bodyLength": 256
+    }
+  ],
+  "total": 1,
+  "offset": 0,
+  "limit": 50,
+  "available": true
+}
+```
+
+### 16.5 测试发送
+
+`POST /api/admin/rocketmq/test-send`
+
+```json
+{ "topic": "houyi-admin-smoke", "tag": "ADMIN_TEST", "key": "smoke-1", "body": "{\"test\":true}" }
+```
+
+禁止发送到 `%DLQ%`、`RMQ_SYS_*`、`SCHEDULE_TOPIC_*`、`TBW102` 等系统 Topic；消息最大 64 KB。
+
+### 16.6 审计动作
+
+`ROCKETMQ_DLQ_RESEND`、`ROCKETMQ_MESSAGE_QUERY`、`ROCKETMQ_MESSAGE_TRACE`、`ROCKETMQ_TEST_SEND`、
+`RETRY_QUEUE_REQUEUE`、`RETRY_QUEUE_DISCARD`。
+
+---
+
+## 17. 错误码总表
 
 | HTTP | code | 说明 | 出现位置 |
 | --- | --- | --- | --- |
@@ -1297,6 +1426,24 @@ GET /api/admin/monitor/overview
 | 400 | `RETENTION_DISABLED` | 数据清理未启用 | 执行清理 |
 | 400 | `RETENTION_CONFIRM_REQUIRED` | `confirm` 不等于 `DELETE` | 执行清理 |
 | 400 | `RETENTION_INVALID_CATEGORY` | 清理类别不在白名单 | 执行清理 |
+| 503 | `ROCKETMQ_ADMIN_UNAVAILABLE` | NameServer/Admin 客户端不可用 | RocketMQ 管理 |
+| 400 | `ROCKETMQ_NAMESRV_NOT_CONFIGURED` | 未配置 NameServer | RocketMQ 管理 |
+| 400 | `ROCKETMQ_GROUP_REQUIRED` | 缺少消费组名称 | 消费组详情 |
+| 404 | `ROCKETMQ_GROUP_NOT_FOUND` | 消费组不存在 | 消费组详情 |
+| 400 | `ROCKETMQ_TOPIC_REQUIRED` | 缺少 Topic 名称 | Topic/消息查询 |
+| 404 | `ROCKETMQ_TOPIC_NOT_FOUND` | Topic 不存在或路由不可用 | Topic 详情 |
+| 400 | `ROCKETMQ_TOPIC_INVALID` | 操作系统 Topic 或非法 Topic | 测试发送/重投 |
+| 400 | `ROCKETMQ_DLQ_TOPIC_INVALID` | 死信 Topic 格式不正确 | 死信队列 |
+| 400 | `ROCKETMQ_MESSAGE_REQUIRED` | 缺少 MsgID 或消息内容 | 消息查询/重投/测试发送 |
+| 404 | `ROCKETMQ_MESSAGE_NOT_FOUND` | 消息不存在或不可读 | 消息查询/轨迹/重投 |
+| 400 | `ROCKETMQ_MESSAGE_TOO_LARGE` | 测试消息超过 64 KB | 测试发送 |
+| 400 | `ROCKETMQ_RESEND_TARGET_REQUIRED` | 无法确定重投目标 Topic | 死信重投 |
+| 400 | `ROCKETMQ_QUERY_REQUIRED` | 查询未提供 MsgID 或 Key | 消息查询 |
+| 502 | `ROCKETMQ_SEND_FAILED` | RocketMQ 发送失败 | 测试发送/死信重投 |
+| 404 | `RETRY_MESSAGE_NOT_FOUND` | 重试消息不存在 | 重试队列 |
+| 503 | `RETRY_QUEUE_UNAVAILABLE` | 重试队列表读取失败 | 重试队列 |
+| 400 | `RETRY_STATUS_INVALID` | 不支持的重试状态 | 重试队列 |
+| 400 | `RETRY_REASON_TOO_LONG` | 丢弃原因超过 500 字符 | 重试队列 |
 | 400 | `PARAM_INVALID` | 路径或查询参数类型不合法（如 `id=abc`） | 全局 |
 | 400 | `PARAM_MISSING` | 缺少必需的查询参数 | 全局 |
 | 400 | `BODY_INVALID` | 请求体缺失或 JSON 格式不正确 | 全局 |

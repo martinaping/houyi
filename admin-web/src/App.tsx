@@ -22,6 +22,7 @@ import { MessagesPage } from './pages/MessagesPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { QueuePage } from './pages/QueuePage';
 import { RetentionPage } from './pages/RetentionPage';
+import { RocketMqPage } from './pages/rocketmq/RocketMqPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { SystemPage } from './pages/SystemPage';
 
@@ -52,6 +53,7 @@ const router = createBrowserRouter([
       { path: 'corps', element: <CorpsPage /> },
       { path: 'messages', element: <MessagesPage /> },
       { path: 'queue', element: <QueuePage /> },
+      { path: 'rocketmq', element: <RocketMqPage /> },
       { path: 'retention', element: <RetentionPage /> },
       { path: 'audit', element: <AuditLogsPage /> },
       { path: 'logs', element: <LogsPage /> },

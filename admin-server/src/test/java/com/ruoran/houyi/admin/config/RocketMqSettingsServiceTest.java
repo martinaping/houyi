@@ -20,7 +20,9 @@ class RocketMqSettingsServiceTest {
         settingsService = mock(SettingsService.class);
         RocketMqProperties properties = new RocketMqProperties(
                 "http://env:8081", "envUser", "envPass", "env-retry", "default");
-        service = new RocketMqSettingsService(settingsService, properties);
+        RocketMqAdminProperties adminProperties = new RocketMqAdminProperties(
+                "127.0.0.1:9876", "DefaultCluster", 5000);
+        service = new RocketMqSettingsService(settingsService, properties, adminProperties);
     }
 
     @Test
@@ -52,7 +54,10 @@ class RocketMqSettingsServiceTest {
     @Test
     void notConfiguredWhenBothEmpty() {
         RocketMqProperties properties = new RocketMqProperties("", "", "", "default", "");
-        RocketMqSettingsService empty = new RocketMqSettingsService(settingsService, properties);
+        RocketMqAdminProperties adminProperties = new RocketMqAdminProperties(
+                "127.0.0.1:9876", "DefaultCluster", 5000);
+        RocketMqSettingsService empty = new RocketMqSettingsService(settingsService, properties,
+                adminProperties);
         when(settingsService.stringValue(RocketMqSettingsService.KEY_ENDPOINT, ""))
                 .thenReturn("");
 

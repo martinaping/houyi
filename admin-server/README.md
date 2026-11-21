@@ -4,7 +4,7 @@
 
 - 技术栈：Java 21、Spring Boot 3.2.11、JdbcTemplate、Spring Data Redis、RocketMQ Client 5.0.7
 - 端口：`18081`
-- 版本：`0.8.0`
+- 版本：`0.9.0`
 
 ## 构建与启动
 
@@ -52,6 +52,9 @@ H2 开启 `AUTO_SERVER=TRUE` 后可与主服务同时连接；仅用于本地验
 | `REDIS_MQ_TOPIC` / `REDIS_MQ_RETRY_TOPIC` | `mq:topic:main` / `mq:topic:retry` | 与主服务保持一致 |
 | `ROCKETMQ_ENDPOINT` / `ROCKETMQ_USERNAME` / `ROCKETMQ_PASSWORD` | 空 | 配置后重试改发 RocketMQ |
 | `ROCKETMQ_RETRY_TOPIC` / `ROCKETMQ_TAG` | `wechat-archive-retry` / `default` | 重试主题与 Tag |
+| `ROCKETMQ_NAMESRV_ADDR` | `127.0.0.1:9876` | 管理端查询消费进度/Topic/Broker 的 NameServer |
+| `ROCKETMQ_CLUSTER_NAME` | `DefaultCluster` | 管理端展示的集群名称 |
+| `ROCKETMQ_ADMIN_TIMEOUT_MS` | `5000` | 管理端访问 NameServer/Broker 的超时时间 |
 
 ## 接口
 
@@ -75,6 +78,23 @@ H2 开启 `AUTO_SERVER=TRUE` 后可与主服务同时连接；仅用于本地验
 | GET | `/api/admin/messages/{id}` | 消息详情 |
 | POST | `/api/admin/messages/{id}/retry` | 触发重试 |
 | GET | `/api/admin/queue/overview` | 队列概览 |
+| GET | `/api/admin/rocketmq/overview` | RocketMQ 概览（集群/Lag/DLQ/Broker） |
+| GET | `/api/admin/rocketmq/groups` | 消费组清单与 Lag |
+| GET | `/api/admin/rocketmq/groups/{group}` | 消费组详情 |
+| GET | `/api/admin/rocketmq/topics` | Topic 清单 |
+| GET | `/api/admin/rocketmq/topic` | Topic 详情与位点 |
+| GET | `/api/admin/rocketmq/brokers` | Broker 运行状态 |
+| GET | `/api/admin/rocketmq/dlq/topics` | 死信 Topic 与消息数 |
+| GET | `/api/admin/rocketmq/dlq/messages` | 死信消息（只读） |
+| POST | `/api/admin/rocketmq/dlq/resend` | 死信重投 |
+| POST | `/api/admin/rocketmq/messages/query` | 按 MsgID/Key 查询消息 |
+| POST | `/api/admin/rocketmq/messages/trace` | 消息轨迹 |
+| GET | `/api/admin/rocketmq/retry` | 重试队列（delay_message） |
+| GET | `/api/admin/rocketmq/retry/{id}` | 重试消息详情 |
+| POST | `/api/admin/rocketmq/retry/{id}/requeue` | 重新投递 |
+| POST | `/api/admin/rocketmq/retry/{id}/discard` | 丢弃重试消息 |
+| POST | `/api/admin/rocketmq/test-send` | 发送测试消息 |
+| GET | `/api/admin/rocketmq/config` | RocketMQ 生效配置 |
 | GET | `/api/admin/settings` | 配置项列表（范围/单位/生效方式） |
 | PUT | `/api/admin/settings` | 更新配置项 |
 | POST | `/api/admin/settings/reset` | 按 key 恢复默认值 |
@@ -117,14 +137,16 @@ H2 开启 `AUTO_SERVER=TRUE` 后可与主服务同时连接；仅用于本地验
 
 ## 配置分组与生效方式
 
-`SettingsCatalog` 为白名单（28 项），分为四组：
+`SettingsCatalog` 为白名单（60 项），分为八组：
 
 | 分组 | 内容 | 生效方式 |
 | --- | --- | --- |
-| `alert` | 开关、Webhook、冷却、静默时段、积压/失败/停滞阈值 | 即时 |
+| `alert` | 开关、Webhook、冷却、静默时段、积压/失败/停滞阈值、RocketMQ Lag/DLQ 阈值 | 即时 |
 | `retention` | 清理开关、各类保留天数、单批条数 | 即时 |
 | `security` | 登录失败锁定次数/时长、审计开关、明细长度 | 即时 |
 | `runtime` | 企业扫描间隔、拉取间隔、下载重试/超时、下载与 OSS 线程池 | 热更新（主服务 30 秒轮询） |
+| `rocketmq` | gRPC Endpoint、NameServer、集群、超时、重试 Topic | 管理端即时；主服务需重启 |
+| `oss` / `mns` / `redismq` | 对象存储、备份队列与 Redis MQ 参数 | 主服务重启 |
 
 - `runtime.*` 写入后由主服务 `DynamicRuntimeConfig` 读取并应用，无需重启。
 - 每项均带最小值/最大值/单位，超范围直接拒绝保存；支持按 key 恢复默认。
