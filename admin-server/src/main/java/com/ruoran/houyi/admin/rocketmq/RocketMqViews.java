@@ -87,6 +87,10 @@ public final class RocketMqViews {
     public record MessageQueryResult(List<MessageView> messages) {
     }
 
+    public record RecentMessages(List<MessageView> messages, int scannedTopics, boolean truncated,
+                                 long elapsedMs, List<String> notes) {
+    }
+
     public record MessageTrackResult(List<MessageTrace> tracks) {
     }
 

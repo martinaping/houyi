@@ -536,7 +536,7 @@
   },
   "apiDocs": {
     "title": "API documentation",
-    "versionTag": "v0.9.0",
+    "versionTag": "v0.10.0",
     "description": "All HTTP endpoints of admin-server and houyi, rendered directly from API.md at the repository root.",
     "toc": "Contents",
     "searchPlaceholder": "Search endpoints, fields or error codes",
@@ -723,6 +723,11 @@
       "sourceMessage": "Source message: {{msgId}}"
     },
     "messages": {
+      "mode": {
+        "recent": "Recent messages",
+        "exact": "Exact query"
+      },
+      "allTopics": "All business topics",
       "topicPlaceholder": "Select a topic",
       "queryType": "Query by",
       "byKey": "Key",
@@ -730,9 +735,16 @@
       "queryValue": "Query value",
       "queryPlaceholder": "Enter MsgID or message key",
       "queryRequired": "Please enter MsgID or message key",
+      "keyword": "Keyword",
+      "keywordPlaceholder": "Match MsgID / key / tag / body",
       "timeRange": "Time range",
       "max": "Max rows",
       "hint": "Query by MsgID, or by key + topic + time range. Up to 50 rows per query. Message bodies may contain sensitive conversation data.",
+      "recentHint": "Shows recent messages by default; no key or MsgID required. Select all business topics or filter by time and keyword. Scanning does not consume or delete messages; up to 200 messages and 20 topics per request.",
+      "recentTitle": "Recent messages",
+      "exactTitle": "Exact query results",
+      "recentEmpty": "No recent messages",
+      "scanSummary": "Scanned {{topics}} topics, returned {{count}} rows in {{ms}} ms",
       "results": "Results ({{count}})",
       "empty": "No messages found",
       "detailTitle": "Message detail",

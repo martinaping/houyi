@@ -1,5 +1,19 @@
 # 更新日志
 
+## v0.10.0（2026-11-21）
+
+### 新增
+
+- RocketMQ → 消息查询默认展示“最近消息”：无需填写 Key/MsgID，自动扫描业务 Topic 并展示最近 100 条。
+- 支持「全部业务 Topic」或指定 Topic，按时间范围、关键字（MsgID/Key/Tag/消息体）和条数筛选。
+- 新增 `GET /api/admin/rocketmq/messages/recent`：临时 Pull Consumer 扫描队列，不提交 Offset、不消费/删除原消息；单次最多 200 条、最多 20 个 Topic。
+- 保留「精确查询」模式：按 MsgID 或 Key + Topic + 时间范围精确查询，并支持消息轨迹。
+- 最近消息结果展示扫描 Topic 数、耗时、截断与队列读取错误提示。
+
+### 说明
+
+- 全部 Topic 浏览为有界扫描，多 Topic 时按 Topic 分配条数；更早消息请使用时间范围或精确查询。
+
 ## v0.9.0（2026-11-21）
 
 ### 新增

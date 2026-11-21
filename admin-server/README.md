@@ -4,7 +4,7 @@
 
 - 技术栈：Java 21、Spring Boot 3.2.11、JdbcTemplate、Spring Data Redis、RocketMQ Client 5.0.7
 - 端口：`18081`
-- 版本：`0.9.0`
+- 版本：`0.10.0`
 
 ## 构建与启动
 
@@ -87,6 +87,7 @@ H2 开启 `AUTO_SERVER=TRUE` 后可与主服务同时连接；仅用于本地验
 | GET | `/api/admin/rocketmq/dlq/topics` | 死信 Topic 与消息数 |
 | GET | `/api/admin/rocketmq/dlq/messages` | 死信消息（只读） |
 | POST | `/api/admin/rocketmq/dlq/resend` | 死信重投 |
+| GET | `/api/admin/rocketmq/messages/recent` | 最近消息浏览（默认全部业务 Topic） |
 | POST | `/api/admin/rocketmq/messages/query` | 按 MsgID/Key 查询消息 |
 | POST | `/api/admin/rocketmq/messages/trace` | 消息轨迹 |
 | GET | `/api/admin/rocketmq/retry` | 重试队列（delay_message） |

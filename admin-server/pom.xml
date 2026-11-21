@@ -13,7 +13,7 @@
 
     <groupId>com.ruoran.houyi</groupId>
     <artifactId>admin-server</artifactId>
-    <version>0.9.0</version>
+    <version>0.10.0</version>
     <name>houyi-admin-server</name>
     <description>houyi 会话存档管理端后端，独立部署，共享主服务的数据库与消息队列</description>
 

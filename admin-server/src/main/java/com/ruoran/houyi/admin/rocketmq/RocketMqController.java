@@ -116,6 +116,16 @@ public class RocketMqController {
         return result;
     }
 
+    @GetMapping("/messages/recent")
+    public RocketMqViews.RecentMessages recentMessages(
+            @RequestParam(required = false) String topic,
+            @RequestParam(required = false) Long beginTimestamp,
+            @RequestParam(required = false) Long endTimestamp,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "100") Integer limit) {
+        return adminService.recentMessages(topic, beginTimestamp, endTimestamp, keyword, limit);
+    }
+
     @PostMapping("/messages/query")
     public List<RocketMqViews.MessageView> queryMessages(@Valid @RequestBody MessageQueryRequest request,
                                                          HttpServletRequest servletRequest) {

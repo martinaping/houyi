@@ -536,7 +536,7 @@
   },
   "apiDocs": {
     "title": "API 文档",
-    "versionTag": "v0.9.0",
+    "versionTag": "v0.10.0",
     "description": "管理端与主服务的全部 HTTP 接口说明，内容直接渲染仓库根目录的 API.md。",
     "toc": "目录",
     "searchPlaceholder": "搜索接口、字段或错误码",
@@ -723,6 +723,11 @@
       "sourceMessage": "源消息：{{msgId}}"
     },
     "messages": {
+      "mode": {
+        "recent": "最近消息",
+        "exact": "精确查询"
+      },
+      "allTopics": "全部业务 Topic",
       "topicPlaceholder": "选择 Topic",
       "queryType": "查询方式",
       "byKey": "按 Key",
@@ -730,9 +735,16 @@
       "queryValue": "查询值",
       "queryPlaceholder": "输入 MsgID 或消息 Key",
       "queryRequired": "请填写 MsgID 或消息 Key",
+      "keyword": "关键字",
+      "keywordPlaceholder": "匹配 MsgID / Key / Tag / 消息体",
       "timeRange": "时间范围",
       "max": "最多条数",
       "hint": "按 MsgID 精确查询，或按 Key + Topic + 时间范围查询；单次最多 50 条。消息体可能包含敏感会话内容。",
+      "recentHint": "默认展示最近消息，无需填写 Key/MsgID；可选择全部业务 Topic，或按时间范围、关键字筛选。扫描不消费、不删除消息，单次最多 200 条、最多 20 个 Topic。",
+      "recentTitle": "最近消息",
+      "exactTitle": "精确查询结果",
+      "recentEmpty": "暂无最近消息",
+      "scanSummary": "已扫描 {{topics}} 个 Topic，返回 {{count}} 条，耗时 {{ms}} ms",
       "results": "查询结果（{{count}} 条）",
       "empty": "未查询到消息",
       "detailTitle": "消息详情",

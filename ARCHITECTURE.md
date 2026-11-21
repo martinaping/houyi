@@ -1,6 +1,6 @@
 # 后羿（Houyi）系统架构文档
 
-**当前版本：v0.9.0**
+**当前版本：v0.10.0**
 
 ## 📋 系统概述
 
@@ -613,6 +613,7 @@ houyi/
 | GET | `/api/admin/rocketmq/dlq/topics` | 死信 Topic 与消息数 |
 | GET | `/api/admin/rocketmq/dlq/messages` | 拉取死信消息（不消费、不删除） |
 | POST | `/api/admin/rocketmq/dlq/resend` | 死信重投到目标 Topic（写审计） |
+| GET | `/api/admin/rocketmq/messages/recent` | 最近消息浏览（全部业务 Topic/时间/关键字，不消费） |
 | POST | `/api/admin/rocketmq/messages/query` | 按 MsgID 或 Key + 时间范围查询消息（写审计） |
 | POST | `/api/admin/rocketmq/messages/trace` | 查询消息轨迹（写审计） |
 | GET | `/api/admin/rocketmq/retry` | Redis 模式 `delay_message` 重试队列 |
@@ -629,6 +630,7 @@ houyi/
 - **客户端**：`RocketMqAdminService` 基于 `rocketmq-tools` 的 `DefaultMQAdminExt`，按 NameServer/超时变化懒加载并复用；调用失败只返回本页面错误，不影响其他管理功能。
 - **缓存**：概览、消费组、Topic、DLQ、Broker 清单缓存 15 秒；写操作后由前端主动刷新。
 - **DLQ 读取**：使用临时 Pull Consumer 读取 `%DLQ%<group>` 的消息，不提交 Offset、不删除原消息；重投会向目标 Topic 发送新消息。
+- **最近消息浏览**：使用临时 Pull Consumer 按 Topic 队列读取最近消息；全部业务 Topic 时最多扫描 20 个 Topic，单次最多 200 条，按时间范围/关键字过滤；不提交 Offset、不消费原消息。
 - **审计**：DLQ 重投、消息查询/轨迹、测试发送、重试队列重投/丢弃均写 `admin_audit_log`，不记录消息体本身。
 - **告警**：`AlertService` 复用现有 Webhook/冷却/静默时段，新增消费组 Lag 与 DLQ 总数阈值；RocketMQ 不可用时只记录 WARN。
 

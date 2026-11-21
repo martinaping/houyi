@@ -131,6 +131,7 @@ class Runner
     rocketmq_topics
     rocketmq_config
     rocketmq_retry
+    rocketmq_recent_messages
     list_settings
     update_setting_rejects_invalid_value
     setting_reset_rejects_unknown_key
@@ -218,6 +219,10 @@ class Runner
       [ok, "items=#{response.body['items'].is_a?(Array) ? response.body['items'].length : 'n/a'}"]
     when 'rocketmq_retry'
       [response.status == 200 && response.body.key?('available'), "available=#{response.body['available']}"]
+    when 'rocketmq_recent_messages'
+      ok = response.status == 200 && response.body['messages'].is_a?(Array) &&
+           response.body.key?('scannedTopics')
+      [ok, "rows=#{response.body['messages'].is_a?(Array) ? response.body['messages'].length : 'n/a'}"]
     when 'list_settings'
       ok = response.status == 200 && response.body.is_a?(Array) && !response.body.empty? &&
            response.body.all? { |item| item.key?('applyMode') && item.key?('unit') }
@@ -395,6 +400,12 @@ class Runner
 
   def rocketmq_retry
     check('rocketmq_retry') { @client.get('/api/admin/rocketmq/retry?limit=5', token: @token) }
+  end
+
+  def rocketmq_recent_messages
+    check('rocketmq_recent_messages') do
+      @client.get('/api/admin/rocketmq/messages/recent?limit=20', token: @token)
+    end
   end
 
   def list_settings

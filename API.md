@@ -1,6 +1,6 @@
 # 后羿（houyi）API 文档
 
-> 版本：0.9.0
+> 版本：0.10.0
 > 适用服务：`admin-server`（管理端，默认 18081）、`houyi`（主服务，默认 18080）
 > 最后更新：2026-11-20
 
@@ -30,7 +30,7 @@
 | 响应头 | 说明 |
 | --- | --- |
 | `X-Trace-Id` | 本次请求的链路 ID。客户端可主动传入（`^[A-Za-z0-9_-]{8,64}$`），否则由服务端生成 |
-| `X-App-Version` | 服务端版本号，当前为 `0.9.0` |
+| `X-App-Version` | 服务端版本号，当前为 `0.10.0` |
 
 **错误响应**（非 2xx）
 
@@ -89,7 +89,7 @@
   "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
   "tokenType": "Bearer",
   "expiresIn": 7200,
-  "user": { "username": "admin", "version": "0.9.0" }
+  "user": { "username": "admin", "version": "0.10.0" }
 }
 ```
 
@@ -130,7 +130,7 @@
 响应 `200`：
 
 ```json
-{ "username": "admin", "version": "0.9.0" }
+{ "username": "admin", "version": "0.10.0" }
 ```
 
 ---
@@ -490,7 +490,7 @@
              "rocketMqEndpoint": "http://127.0.0.1:8081", "rocketMqLatencyMs": 5,
              "rocketMqCheckedAt": 1763000000000, "rocketMqError": "Endpoint 可达，客户端创建成功" },
   "recentFailures": [],
-  "version": "0.9.0",
+  "version": "0.10.0",
   "serverTime": 1763000000000
 }
 ```
@@ -518,7 +518,7 @@
 ```json
 {
   "status": "UP",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "uptimeSeconds": 3600,
   "checkedAt": 1763000000000,
   "database": { "ok": true, "latencyMs": 1, "message": "ok" },
@@ -562,7 +562,7 @@
 
 ```json
 {
-  "version": "0.9.0",
+  "version": "0.10.0",
   "uptimeSeconds": 3600,
   "javaVersion": "21.0.2",
   "jdbcUrl": "jdbc:h2:file:/Users/jc/.houyi-local/db/houyi",
@@ -1285,7 +1285,8 @@ gRPC `ROCKETMQ_ENDPOINT` 是两个不同入口。
 | GET | `/dlq/topics?refresh=` | 死信 Topic 与消息数 |
 | GET | `/dlq/messages?topic=&limit=` | 拉取死信消息（不消费、不删除） |
 | POST | `/dlq/resend` | 重投死信消息到目标 Topic |
-| POST | `/messages/query` | 按 MsgID 或 Key + Topic + 时间范围查询消息 |
+| GET | `/messages/recent` | 默认最近消息浏览：Topic（可全部业务 Topic）、时间范围、关键字、条数 |
+| POST | `/messages/query` | 按 MsgID 或 Key + Topic + 时间范围精确查询消息 |
 | POST | `/messages/trace` | 查询消息轨迹 |
 | GET | `/retry?status=&keyword=&offset=&limit=` | Redis 模式 `delay_message` 重试队列 |
 | GET | `/retry/{id}` | 重试消息详情 |
@@ -1333,7 +1334,44 @@ gRPC `ROCKETMQ_ENDPOINT` 是两个不同入口。
 { "msgId": "新消息ID", "targetTopic": "wechat-archive-msg", "sentAt": 1795255124330 }
 ```
 
-### 16.3 消息查询与轨迹
+### 16.3 最近消息浏览
+
+`GET /api/admin/rocketmq/messages/recent?topic=&beginTimestamp=&endTimestamp=&keyword=&limit=`
+
+- `topic` 留空表示全部业务 Topic；单次最多扫描 20 个 Topic。
+- 不要求 Key/MsgID；按队列读取最近消息，不提交 Offset、不消费/删除原消息。
+- `keyword` 匹配 MsgID、Key、Tag 与消息体（不区分大小写）。
+- `limit` 默认 100，最大 200；多 Topic 时按 Topic 分配条数。
+- 结果附带扫描 Topic 数、耗时、是否截断与错误提示。
+
+响应：
+
+```json
+{
+  "messages": [
+    {
+      "msgId": "24098A1E...0001",
+      "topic": "wechat-archive-msg",
+      "tags": "ADMIN_TEST",
+      "keys": "query-check-185200",
+      "queueId": 0,
+      "queueOffset": 2,
+      "bornTimestamp": 1795258320951,
+      "storeTimestamp": 1795258320960,
+      "reconsumeTimes": 0,
+      "body": "{\"check\":\"query-check-185200\"}",
+      "bodyTruncated": false,
+      "properties": {"TAGS": "ADMIN_TEST"}
+    }
+  ],
+  "scannedTopics": 2,
+  "truncated": false,
+  "elapsedMs": 204,
+  "notes": []
+}
+```
+
+### 16.4 消息精确查询与轨迹
 
 `POST /api/admin/rocketmq/messages/query`
 
@@ -1351,7 +1389,7 @@ gRPC `ROCKETMQ_ENDPOINT` 是两个不同入口。
 
 轨迹依赖 Broker 开启 `traceTopicEnable`；未开启时返回空数组。
 
-### 16.4 重试队列状态
+### 16.5 重试队列状态
 
 `delay_message.status`：`0` 待投递、`1` 已投递、`2` 投递失败、`3` 管理端已丢弃。
 
@@ -1377,7 +1415,7 @@ gRPC `ROCKETMQ_ENDPOINT` 是两个不同入口。
 }
 ```
 
-### 16.5 测试发送
+### 16.6 测试发送
 
 `POST /api/admin/rocketmq/test-send`
 
@@ -1387,7 +1425,7 @@ gRPC `ROCKETMQ_ENDPOINT` 是两个不同入口。
 
 禁止发送到 `%DLQ%`、`RMQ_SYS_*`、`SCHEDULE_TOPIC_*`、`TBW102` 等系统 Topic；消息最大 64 KB。
 
-### 16.6 审计动作
+### 16.7 审计动作
 
 `ROCKETMQ_DLQ_RESEND`、`ROCKETMQ_MESSAGE_QUERY`、`ROCKETMQ_MESSAGE_TRACE`、`ROCKETMQ_TEST_SEND`、
 `RETRY_QUEUE_REQUEUE`、`RETRY_QUEUE_DISCARD`。

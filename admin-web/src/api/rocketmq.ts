@@ -155,6 +155,14 @@ export type RocketMqMessage = {
   targetTopic: string | null;
 };
 
+export type RocketMqRecentMessages = {
+  messages: RocketMqMessage[];
+  scannedTopics: number;
+  truncated: boolean;
+  elapsedMs: number;
+  notes: string[];
+};
+
 export type RocketMqMessageTrace = {
   consumerGroup: string;
   trackType: string;
@@ -290,6 +298,13 @@ export const rocketMqApi = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  recentMessages: (params: {
+    topic?: string;
+    beginTimestamp?: number;
+    endTimestamp?: number;
+    keyword?: string;
+    limit?: number;
+  } = {}) => request<RocketMqRecentMessages>(`/api/admin/rocketmq/messages/recent${query(params)}`),
   trace: (payload: { topic: string; msgId: string }) =>
     request<{ tracks: RocketMqMessageTrace[] }>('/api/admin/rocketmq/messages/trace', {
       method: 'POST',

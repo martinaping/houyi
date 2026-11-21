@@ -596,6 +596,165 @@ public class RocketMqAdminService {
                 System.currentTimeMillis());
     }
 
+    /**
+     * 浏览最近消息：不要求 Key/MsgID，按 Topic（可全部业务 Topic）+ 时间范围 + 关键字扫描队列。
+     *
+     * <p>RocketMQ 没有“列出全部消息”的原生 API，这里使用临时 Pull Consumer 读取队列，
+     * 不提交 Offset、不消费原消息；单次最多 200 条，全部 Topic 时最多扫描 20 个 Topic。</p>
+     */
+    public RocketMqViews.RecentMessages recentMessages(String topic, Long beginTimestamp,
+                                                        Long endTimestamp, String keyword,
+                                                        Integer limit) {
+        int max = Math.min(limit == null || limit <= 0 ? 100 : limit, 200);
+        long begin = beginTimestamp == null ? 0L : beginTimestamp;
+        long end = endTimestamp == null ? 0L : endTimestamp;
+        String needle = keyword == null ? "" : keyword.trim().toLowerCase(java.util.Locale.ROOT);
+        long startedAt = System.currentTimeMillis();
+        List<RocketMqViews.TopicSummary> allTopics = topics(false).stream()
+                .filter(item -> !item.system())
+                .toList();
+        List<String> selected;
+        if (topic != null && !topic.isBlank()) {
+            validateBusinessTopic(topic);
+            selected = List.of(topic.trim());
+        } else {
+            selected = allTopics.stream().map(RocketMqViews.TopicSummary::topic).limit(20).toList();
+        }
+        if (selected.isEmpty()) {
+            return new RocketMqViews.RecentMessages(List.of(), 0, false,
+                    System.currentTimeMillis() - startedAt, List.of("没有可扫描的业务 Topic"));
+        }
+        List<String> notes = new ArrayList<>();
+        if (topic == null || topic.isBlank()) {
+            if (allTopics.size() > 20) {
+                notes.add("业务 Topic 共 " + allTopics.size() + " 个，本次仅扫描前 20 个");
+            }
+        }
+        List<RocketMqViews.MessageView> result = new ArrayList<>();
+        DefaultMQPullConsumer consumer = new DefaultMQPullConsumer("houyi-admin-message-scanner");
+        consumer.setNamesrvAddr(settings.namesrvAddr());
+        consumer.setInstanceName("houyi-admin-message-scanner-" + UUID.randomUUID());
+        int perTopic = topic != null && !topic.isBlank()
+                ? max : Math.max(10, max / Math.max(1, selected.size()));
+        int scanned = 0;
+        boolean truncated = false;
+        try {
+            consumer.start();
+            for (String current : selected) {
+                if (result.size() >= max) {
+                    truncated = true;
+                    break;
+                }
+                scanned++;
+                int remaining = Math.min(perTopic, max - result.size());
+                result.addAll(scanTopic(consumer, current, begin, end, needle, remaining, notes));
+                if (result.size() >= max) {
+                    truncated = true;
+                    break;
+                }
+            }
+        } catch (Exception ex) {
+            throw unavailable("扫描 RocketMQ 消息失败", ex);
+        } finally {
+            consumer.shutdown();
+        }
+        result.sort(Comparator.comparingLong(RocketMqViews.MessageView::bornTimestamp).reversed());
+        List<RocketMqViews.MessageView> limited = result.size() > max ? result.subList(0, max) : result;
+        if (result.size() > max) {
+            truncated = true;
+        }
+        return new RocketMqViews.RecentMessages(List.copyOf(limited), scanned, truncated,
+                System.currentTimeMillis() - startedAt, List.copyOf(notes));
+    }
+
+    private List<RocketMqViews.MessageView> scanTopic(DefaultMQPullConsumer consumer, String topic,
+                                                       long begin, long end, String needle,
+                                                       int limit, List<String> notes) {
+        if (limit <= 0) {
+            return List.of();
+        }
+        List<RocketMqViews.MessageView> result = new ArrayList<>();
+        Set<MessageQueue> queues;
+        try {
+            queues = consumer.fetchSubscribeMessageQueues(topic);
+        } catch (Exception ex) {
+            notes.add(topic + ": 读取队列失败 - " + abbreviate(ex.getMessage(), 120));
+            return List.of();
+        }
+        int perQueue = Math.max(5, limit / Math.max(1, queues.size()) + 5);
+        for (MessageQueue queue : queues) {
+            if (result.size() >= limit) {
+                break;
+            }
+            try {
+                long maxOffset = consumer.maxOffset(queue);
+                long minOffset = consumer.minOffset(queue);
+                if (maxOffset <= minOffset) {
+                    continue;
+                }
+                long offset = begin > 0
+                        ? consumer.searchOffset(queue, begin)
+                        : Math.max(minOffset, maxOffset - perQueue);
+                int collected = 0;
+                while (collected < perQueue && result.size() < limit) {
+                    int count = Math.min(32, perQueue - collected);
+                    long previousOffset = offset;
+                    PullResult pull = consumer.pull(queue, "*", offset, count);
+                    if (pull.getPullStatus() != PullStatus.FOUND || pull.getMsgFoundList() == null) {
+                        break;
+                    }
+                    boolean stop = false;
+                    for (MessageExt message : pull.getMsgFoundList()) {
+                        long born = message.getBornTimestamp();
+                        if (end > 0 && born > end) {
+                            stop = true;
+                            break;
+                        }
+                        if (born < begin || !matches(message, needle)) {
+                            continue;
+                        }
+                        result.add(toMessageView(message));
+                        collected++;
+                        if (result.size() >= limit) {
+                            break;
+                        }
+                    }
+                    offset = pull.getNextBeginOffset();
+                    if (stop || offset >= maxOffset || offset <= previousOffset) {
+                        break;
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                notes.add(topic + "/" + queue.getQueueId() + ": 扫描被中断");
+                return result;
+            } catch (Exception ex) {
+                notes.add(topic + "/" + queue.getQueueId() + ": "
+                        + abbreviate(ex.getMessage(), 120));
+            }
+        }
+        return result;
+    }
+
+    private boolean matches(MessageExt message, String needle) {
+        if (needle.isEmpty()) {
+            return true;
+        }
+        if (contains(message.getMsgId(), needle) || contains(message.getKeys(), needle)
+                || contains(message.getTags(), needle)) {
+            return true;
+        }
+        if (message.getBody() != null) {
+            String body = new String(message.getBody(), StandardCharsets.UTF_8);
+            return body.toLowerCase(java.util.Locale.ROOT).contains(needle);
+        }
+        return false;
+    }
+
+    private static boolean contains(String value, String needle) {
+        return value != null && value.toLowerCase(java.util.Locale.ROOT).contains(needle);
+    }
+
     public List<RocketMqViews.MessageView> queryMessages(String topic, String msgId, String key,
                                                          Long beginTimestamp, Long endTimestamp,
                                                          Integer max) {
@@ -777,7 +936,8 @@ public class RocketMqAdminService {
                 || group.startsWith("CID_ONS") || group.startsWith("CID_RMQ_SYS")
                 || group.startsWith("FILTERSRV_") || group.startsWith("CID_SYS_")
                 || "SELF_TEST_C_GROUP".equals(group) || "TOOLS_CONSUMER".equals(group)
-                || "houyi-admin-dlq-inspector".equals(group);
+                || "houyi-admin-dlq-inspector".equals(group)
+                || "houyi-admin-message-scanner".equals(group);
     }
 
     private static boolean isSystemTopic(String topic) {
