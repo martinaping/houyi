@@ -23,6 +23,7 @@ import type { RocketMqRetryDetail, RocketMqRetryMessage } from '../../api/rocket
 import { errorMessage } from '../../api/errors';
 import { formatCount, MessageBody, statusColor, statusLabel } from './shared';
 import { formatTime } from '../../utils/format';
+import { Can } from '../../components/Can';
 
 const PAGE_SIZE = 50;
 
@@ -117,26 +118,28 @@ export function RetryTab() {
       width: 200,
       render: (_value, record) => (
         <Space size="small" onClick={(event) => event.stopPropagation()}>
-          <Button
-            size="small"
-            icon={<RedoOutlined />}
-            loading={requeueMutation.isPending && requeueMutation.variables === record.id}
-            onClick={() => confirmRequeue(record)}
-          >
-            {t('rocketmq.retry.requeue')}
-          </Button>
-          <Button
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            disabled={record.status === 3}
-            onClick={() => {
-              setDiscardId(record.id);
-              setDiscardReason('');
-            }}
-          >
-            {t('rocketmq.retry.discard')}
-          </Button>
+          <Can permission="rocketmq.write">
+            <Button
+              size="small"
+              icon={<RedoOutlined />}
+              loading={requeueMutation.isPending && requeueMutation.variables === record.id}
+              onClick={() => confirmRequeue(record)}
+            >
+              {t('rocketmq.retry.requeue')}
+            </Button>
+            <Button
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              disabled={record.status === 3}
+              onClick={() => {
+                setDiscardId(record.id);
+                setDiscardReason('');
+              }}
+            >
+              {t('rocketmq.retry.discard')}
+            </Button>
+          </Can>
         </Space>
       ),
     },
@@ -234,34 +237,36 @@ export function RetryTab() {
         onClose={() => setSelectedId(null)}
         extra={
           detail ? (
-            <Space>
-              <Button
-                icon={<RedoOutlined />}
-                loading={requeueMutation.isPending}
-                onClick={() => {
-                  modal.confirm({
-                    title: t('rocketmq.retry.requeueTitle'),
-                    content: t('rocketmq.retry.requeueHint', {
-                      key: detail.messageKey || detail.id,
-                    }),
-                    onOk: () => requeueMutation.mutateAsync(detail.id),
-                  });
-                }}
-              >
-                {t('rocketmq.retry.requeue')}
-              </Button>
-              <Button
-                danger
-                icon={<DeleteOutlined />}
-                disabled={detail.status === 3}
-                onClick={() => {
-                  setDiscardId(detail.id);
-                  setDiscardReason('');
-                }}
-              >
-                {t('rocketmq.retry.discard')}
-              </Button>
-            </Space>
+            <Can permission="rocketmq.write">
+              <Space>
+                <Button
+                  icon={<RedoOutlined />}
+                  loading={requeueMutation.isPending}
+                  onClick={() => {
+                    modal.confirm({
+                      title: t('rocketmq.retry.requeueTitle'),
+                      content: t('rocketmq.retry.requeueHint', {
+                        key: detail.messageKey || detail.id,
+                      }),
+                      onOk: () => requeueMutation.mutateAsync(detail.id),
+                    });
+                  }}
+                >
+                  {t('rocketmq.retry.requeue')}
+                </Button>
+                <Button
+                  danger
+                  icon={<DeleteOutlined />}
+                  disabled={detail.status === 3}
+                  onClick={() => {
+                    setDiscardId(detail.id);
+                    setDiscardReason('');
+                  }}
+                >
+                  {t('rocketmq.retry.discard')}
+                </Button>
+              </Space>
+            </Can>
           ) : null
         }
       >

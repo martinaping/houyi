@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import com.ruoran.houyi.admin.rbac.RequiresPermission;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 /**
  * 告警状态、记录与测试发送。
  */
+@RequiresPermission("alert.read")
 @RestController
 @RequestMapping("/api/admin/alerts")
 public class AlertController {
@@ -36,6 +38,7 @@ public class AlertController {
         return alertService.recentLogs(limit);
     }
 
+    @RequiresPermission("alert.write")
     @PostMapping("/test")
     public AlertService.AlertTestResult test(HttpServletRequest servletRequest) {
         String operator = String.valueOf(servletRequest.getAttribute(AuthFilter.ATTR_USERNAME));

@@ -6,6 +6,7 @@ import {
   logout as logoutRequest,
   onUnauthorized,
   refreshSession,
+  request,
   setAccessToken,
 } from '../api/client';
 import type { UserView } from '../api/types';
@@ -15,8 +16,9 @@ type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 type AuthContextValue = {
   status: AuthStatus;
   user: UserView | null;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<UserView>;
   logout: () => Promise<void>;
+  hasPermission: (permission: string | string[]) => boolean;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -44,6 +46,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    // 角色/权限可能被其他管理员调整，定期同步当前账号，菜单与按钮随之更新。
+    const timer = window.setInterval(() => {
+      request<UserView>('/api/admin/auth/me')
+        .then((view) => setUser(view))
+        .catch(() => undefined);
+    }, 300_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   useEffect(
     () =>
       onUnauthorized(() => {
@@ -58,7 +70,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const session = await loginRequest(username, password);
     setUser(session.user);
     setStatus('authenticated');
+    return session.user;
   }, []);
+
+  const hasPermission = useCallback(
+    (permission: string | string[]) => {
+      const granted = user?.permissions ?? [];
+      if (granted.includes('*')) {
+        return true;
+      }
+      const required = Array.isArray(permission) ? permission : [permission];
+      return required.some((item) => granted.includes(item));
+    },
+    [user],
+  );
 
   const logout = useCallback(async () => {
     try {
@@ -73,8 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user, login, logout }),
-    [status, user, login, logout],
+    () => ({ status, user, login, logout, hasPermission }),
+    [status, user, login, logout, hasPermission],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

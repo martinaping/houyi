@@ -4,7 +4,7 @@
 
 - 技术栈：Java 21、Spring Boot 3.2.11、JdbcTemplate、Spring Data Redis、RocketMQ Client 5.0.7
 - 端口：`18081`
-- 版本：`0.12.0`
+- 版本：`0.13.0`
 
 ## 构建与启动
 
@@ -41,8 +41,8 @@ H2 开启 `AUTO_SERVER=TRUE` 后可与主服务同时连接；仅用于本地验
 | `ADMIN_SERVER_PORT` | `18081` | HTTP 端口 |
 | `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | 本地 MySQL | 数据库连接 |
 | `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` / `REDIS_DATABASE` | `127.0.0.1`/`6379`/空/`0` | Redis 连接，应与主服务一致 |
-| `ADMIN_USERNAME` | `admin` | 管理员账号 |
-| `ADMIN_PASSWORD` | 无 | 必填 |
+| `ADMIN_USERNAME` | `admin` | 内置超级管理员账号；其他账号在「访问控制」页面维护 |
+| `ADMIN_PASSWORD` | 无 | 必填；内置超级管理员密码 |
 | `ADMIN_JWT_SECRET` | 无 | 必填，至少 32 字符 |
 | `ADMIN_COOKIE_SECURE` | `false` | HTTPS 部署时设为 `true` |
 | `ADMIN_TRUST_FORWARDED_FOR` | `false` | 仅在可信反向代理之后才设为 `true`，否则客户端可伪造来源 IP |
@@ -56,6 +56,15 @@ H2 开启 `AUTO_SERVER=TRUE` 后可与主服务同时连接；仅用于本地验
 | `ROCKETMQ_CLUSTER_NAME` | `DefaultCluster` | 管理端展示的集群名称 |
 | `ROCKETMQ_ADMIN_TIMEOUT_MS` | `5000` | 管理端访问 NameServer/Broker 的超时时间 |
 | `ALIYUN_MNS_ENABLED` | `true` | 主服务是否启用 MNS 备份（管理端可在线修改，需重启） |
+
+## 访问控制（RBAC）
+
+- 内置账号（`ADMIN_USERNAME` / `ADMIN_PASSWORD`）固定为超级管理员，不可删除、不可在页面改密；数据库账号由内置账号创建。
+- 表：`admin_user`、`admin_role`、`admin_role_permission`、`admin_user_role`；密码为 PBKDF2-HMAC-SHA256（随机盐、210,000 次迭代）。
+- 权限码由 `RbacPermissions` 固定声明；内置角色 `SUPER_ADMIN`（全权限）、`OPERATOR`、`VIEWER`，内置角色不可删除。
+- 控制器通过 `@RequiresPermission` 声明权限，`PermissionInterceptor` 统一拦截并返回 `403 FORBIDDEN`。
+- 停用用户、重置密码、修改密码会提升令牌版本号，立即失效旧会话；所有变更写审计日志。
+- 登录成功后前端获得 `roles` 与 `permissions`，用于菜单、路由与按钮裁剪。
 
 ## 接口
 

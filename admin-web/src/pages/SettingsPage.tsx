@@ -30,6 +30,7 @@ import type {
   SettingView,
 } from '../api/types';
 import { formatTime } from '../utils/format';
+import { Can } from '../components/Can';
 
 const GROUP_ORDER = [
   'alert',
@@ -426,13 +427,15 @@ export function SettingsPage() {
                     <Card
                       title={t('settings.alert.title')}
                       extra={
-                        <Button
-                          icon={<SendOutlined />}
-                          loading={testMutation.isPending}
-                          onClick={() => testMutation.mutate()}
-                        >
-                          {t('settings.alert.test')}
-                        </Button>
+                        <Can permission="alert.write">
+                          <Button
+                            icon={<SendOutlined />}
+                            loading={testMutation.isPending}
+                            onClick={() => testMutation.mutate()}
+                          >
+                            {t('settings.alert.test')}
+                          </Button>
+                        </Can>
                       }
                     >
                       {alertStatusQuery.isError ? (
@@ -463,13 +466,15 @@ export function SettingsPage() {
                     <Card
                       title={t('settings.rocketMq.title')}
                       extra={
-                        <Button
-                          icon={<ApiOutlined />}
-                          loading={rocketMqTestMutation.isPending}
-                          onClick={handleRocketMqTest}
-                        >
-                          {t('settings.rocketMq.test')}
-                        </Button>
+                        <Can permission="settings.write">
+                          <Button
+                            icon={<ApiOutlined />}
+                            loading={rocketMqTestMutation.isPending}
+                            onClick={handleRocketMqTest}
+                          >
+                            {t('settings.rocketMq.test')}
+                          </Button>
+                        </Can>
                       }
                     >
                       {rocketMqTestResult ? (
@@ -516,14 +521,16 @@ export function SettingsPage() {
 
                   <Card
                     extra={
-                      <Button
-                        type="primary"
-                        disabled={!dirty}
-                        loading={saveMutation.isPending && saveMutation.variables === group}
-                        onClick={() => saveMutation.mutate(group)}
-                      >
-                        {t('settings.save')}
-                      </Button>
+                      <Can permission="settings.write">
+                        <Button
+                          type="primary"
+                          disabled={!dirty}
+                          loading={saveMutation.isPending && saveMutation.variables === group}
+                          onClick={() => saveMutation.mutate(group)}
+                        >
+                          {t('settings.save')}
+                        </Button>
+                      </Can>
                     }
                   >
                     <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
@@ -584,16 +591,18 @@ export function SettingsPage() {
                             </div>
                             <div style={{ flex: 1 }}>{control(item)}</div>
                             {item.editable === false ? null : (
-                              <Button
-                                size="small"
-                                icon={<UndoOutlined />}
-                                loading={
-                                  resetMutation.isPending && resetMutation.variables === item.key
-                                }
-                                onClick={() => confirmReset(item)}
-                              >
-                                {t('settings.reset')}
-                              </Button>
+                              <Can permission="settings.write">
+                                <Button
+                                  size="small"
+                                  icon={<UndoOutlined />}
+                                  loading={
+                                    resetMutation.isPending && resetMutation.variables === item.key
+                                  }
+                                  onClick={() => confirmReset(item)}
+                                >
+                                  {t('settings.reset')}
+                                </Button>
+                              </Can>
                             )}
                           </div>
                         );

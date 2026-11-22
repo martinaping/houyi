@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { mnsApi } from '../../api/mns';
 import type { MnsConfigItem, MnsSendResult } from '../../api/mns';
 import { errorMessage } from '../../api/errors';
+import { Can } from '../../components/Can';
 
 type TestForm = {
   queue?: string;
@@ -182,9 +183,11 @@ export function MnsConfigTab({ queue }: { queue: string }) {
           >
             <Input.TextArea rows={5} style={{ fontFamily: 'monospace' }} placeholder='{"test":true}' />
           </Form.Item>
-          <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={sendMutation.isPending}>
-            {t('mns.config.testSend')}
-          </Button>
+          <Can permission="mns.write">
+            <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={sendMutation.isPending}>
+              {t('mns.config.testSend')}
+            </Button>
+          </Can>
         </Form>
         {result ? (
           <Alert

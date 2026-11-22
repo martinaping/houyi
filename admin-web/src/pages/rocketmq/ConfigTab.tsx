@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { rocketMqApi } from '../../api/rocketmq';
 import type { RocketMqConfigItem, RocketMqTestSendResult } from '../../api/rocketmq';
 import { errorMessage } from '../../api/errors';
+import { Can } from '../../components/Can';
 import { ApplyModeTag, SourceTag } from './shared';
 
 type TestSendForm = {
@@ -189,9 +190,11 @@ export function ConfigTab() {
           >
             <Input.TextArea rows={5} style={{ fontFamily: 'monospace' }} placeholder='{"test":true}' />
           </Form.Item>
-          <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={testMutation.isPending}>
-            {t('rocketmq.config.testSend')}
-          </Button>
+          <Can permission="rocketmq.write">
+            <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={testMutation.isPending}>
+              {t('rocketmq.config.testSend')}
+            </Button>
+          </Can>
         </Form>
         {result ? (
           <Alert

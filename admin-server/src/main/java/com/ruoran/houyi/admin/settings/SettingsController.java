@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import com.ruoran.houyi.admin.rbac.RequiresPermission;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.List;
 /**
  * 管理端在线配置接口。
  */
+@RequiresPermission("settings.read")
 @RestController
 @RequestMapping("/api/admin/settings")
 public class SettingsController {
@@ -38,6 +40,7 @@ public class SettingsController {
         return settingsService.list();
     }
 
+    @RequiresPermission("settings.write")
     @PutMapping
     public SettingView update(@Valid @RequestBody UpdateRequest request, HttpServletRequest servletRequest) {
         String operator = String.valueOf(servletRequest.getAttribute(AuthFilter.ATTR_USERNAME));
@@ -55,6 +58,7 @@ public class SettingsController {
         return view;
     }
 
+    @RequiresPermission("settings.write")
     @PostMapping("/reset")
     public SettingView reset(@Valid @RequestBody ResetRequest request, HttpServletRequest servletRequest) {
         String operator = String.valueOf(servletRequest.getAttribute(AuthFilter.ATTR_USERNAME));
@@ -64,6 +68,7 @@ public class SettingsController {
         return view;
     }
 
+    @RequiresPermission("settings.write")
     @PostMapping("/rocketmq/test")
     public RocketMqProbeService.ProbeResult testRocketMq(
             @RequestBody(required = false) RocketMqTestRequest request, HttpServletRequest servletRequest) {

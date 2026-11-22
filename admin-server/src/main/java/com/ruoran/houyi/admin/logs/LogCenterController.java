@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import com.ruoran.houyi.admin.rbac.RequiresPermission;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
@@ -19,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * 日志中心只读接口：来源列表、尾部内容、文件下载。
  */
+@RequiresPermission("logs.read")
 @RestController
 @RequestMapping("/api/admin/logs")
 public class LogCenterController {

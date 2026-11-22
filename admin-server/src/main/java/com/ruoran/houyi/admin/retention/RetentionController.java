@@ -1,6 +1,7 @@
 package com.ruoran.houyi.admin.retention;
 
 import com.ruoran.houyi.admin.audit.AuditLogService;
+import com.ruoran.houyi.admin.rbac.RequiresPermission;
 import com.ruoran.houyi.admin.security.AuthFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -26,11 +27,13 @@ public class RetentionController {
         this.auditLogService = auditLogService;
     }
 
+    @RequiresPermission("retention.read")
     @GetMapping("/preview")
     public RetentionPreview preview() {
         return retentionService.preview();
     }
 
+    @RequiresPermission("retention.write")
     @PostMapping("/execute")
     public CleanupResult execute(@Valid @RequestBody ExecuteRequest request,
                                  HttpServletRequest servletRequest) {

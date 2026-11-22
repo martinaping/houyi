@@ -29,6 +29,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { request } from '../api/client';
 import { errorMessage } from '../api/errors';
+import { Can } from '../components/Can';
 import type {
   CorpBatchStatusResult,
   CorpCreateRequest,
@@ -321,23 +322,29 @@ export function CorpsPage() {
       width: 380,
       render: (_value, record) => (
         <Space size="small" wrap>
-          <Switch
-            checked={record.status > 0}
-            loading={toggleMutation.isPending && toggleMutation.variables?.id === record.id}
-            onChange={(checked) => handleToggle(record, checked)}
-          />
+          <Can permission="corps.write">
+            <Switch
+              checked={record.status > 0}
+              loading={toggleMutation.isPending && toggleMutation.variables?.id === record.id}
+              onChange={(checked) => handleToggle(record, checked)}
+            />
+          </Can>
           <Button size="small" onClick={() => setDetailTarget(record)}>
             {t('common.detail')}
           </Button>
-          <Button size="small" onClick={() => openEdit(record)}>
-            {t('common.edit')}
-          </Button>
-          <Button size="small" icon={<KeyOutlined />} onClick={() => openReveal(record)}>
-            {t('corps.reveal')}
-          </Button>
-          <Button size="small" onClick={() => openRotate(record)}>
-            {t('corps.rotate')}
-          </Button>
+          <Can permission="corps.write">
+            <Button size="small" onClick={() => openEdit(record)}>
+              {t('common.edit')}
+            </Button>
+          </Can>
+          <Can permission="corps.secret">
+            <Button size="small" icon={<KeyOutlined />} onClick={() => openReveal(record)}>
+              {t('corps.reveal')}
+            </Button>
+            <Button size="small" onClick={() => openRotate(record)}>
+              {t('corps.rotate')}
+            </Button>
+          </Can>
         </Space>
       ),
     },
@@ -357,9 +364,11 @@ export function CorpsPage() {
           {t('corps.title')}
         </Typography.Title>
         <Space>
-          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-            {t('corps.create')}
-          </Button>
+          <Can permission="corps.write">
+            <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+              {t('corps.create')}
+            </Button>
+          </Can>
           <Button
             icon={<ReloadOutlined />}
             loading={corpsQuery.isFetching}
@@ -394,25 +403,27 @@ export function CorpsPage() {
               <Tag color="blue">{t('corps.selected', { count: selectedRowKeys.length })}</Tag>
             ) : null}
           </Space>
-          <Space>
-            <Button
-              icon={<PlusOutlined />}
-              disabled={selectedRowKeys.length === 0}
-              loading={batchMutation.isPending && batchMutation.variables?.enabled === true}
-              onClick={() => handleBatch(true)}
-            >
-              {t('corps.batchEnable')}
-            </Button>
-            <Button
-              icon={<StopOutlined />}
-              danger
-              disabled={selectedRowKeys.length === 0}
-              loading={batchMutation.isPending && batchMutation.variables?.enabled === false}
-              onClick={() => handleBatch(false)}
-            >
-              {t('corps.batchDisable')}
-            </Button>
-          </Space>
+          <Can permission="corps.write">
+            <Space>
+              <Button
+                icon={<PlusOutlined />}
+                disabled={selectedRowKeys.length === 0}
+                loading={batchMutation.isPending && batchMutation.variables?.enabled === true}
+                onClick={() => handleBatch(true)}
+              >
+                {t('corps.batchEnable')}
+              </Button>
+              <Button
+                icon={<StopOutlined />}
+                danger
+                disabled={selectedRowKeys.length === 0}
+                loading={batchMutation.isPending && batchMutation.variables?.enabled === false}
+                onClick={() => handleBatch(false)}
+              >
+                {t('corps.batchDisable')}
+              </Button>
+            </Space>
+          </Can>
         </Space>
 
         {corpsQuery.isError ? (

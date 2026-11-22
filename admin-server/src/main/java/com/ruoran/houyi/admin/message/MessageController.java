@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import com.ruoran.houyi.admin.rbac.RequiresPermission;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
@@ -26,6 +27,7 @@ import java.util.List;
 /**
  * 归档消息查询与手工重试。
  */
+@RequiresPermission("messages.read")
 @RestController
 @RequestMapping("/api/admin/messages")
 public class MessageController {
@@ -75,6 +77,7 @@ public class MessageController {
         return messageService.detail(id);
     }
 
+    @RequiresPermission("messages.retry")
     @PostMapping("/{id}/retry")
     public RetryResult retry(@PathVariable long id, HttpServletRequest servletRequest) {
         String operator = String.valueOf(servletRequest.getAttribute(AuthFilter.ATTR_USERNAME));

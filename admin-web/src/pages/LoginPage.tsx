@@ -6,6 +6,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { consumeSessionExpired } from '../api/client';
 import { errorMessage } from '../api/errors';
 import { useAuth } from '../auth/AuthContext';
+import { canAccessPath, firstAllowedPath } from '../auth/permissions';
 
 type LoginForm = {
   username: string;
@@ -45,9 +46,13 @@ export function LoginPage() {
     }
     setSubmitting(true);
     try {
-      await login(values.username, values.password);
+      const session = await login(values.username, values.password);
       message.success(t('auth.loginSuccess'));
-      navigate(from, { replace: true });
+      const target =
+        from !== '/' && canAccessPath(from, session.permissions)
+          ? from
+          : firstAllowedPath(session.permissions);
+      navigate(target, { replace: true });
     } catch (error) {
       message.error(errorMessage(t, error));
     } finally {

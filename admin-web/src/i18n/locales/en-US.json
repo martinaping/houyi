@@ -15,7 +15,8 @@
     "logs": "Log center",
     "settings": "Settings",
     "system": "System info",
-    "apiDocs": "API docs"
+    "apiDocs": "API docs",
+    "access": "Access control"
   },
   "common": {
     "refresh": "Refresh",
@@ -46,7 +47,10 @@
     "backHome": "Back to overview",
     "renderErrorTitle": "Page render error",
     "renderErrorHint": "Reload to retry. If it keeps happening, check the server logs in Log Center.",
-    "reload": "Reload page"
+    "reload": "Reload page",
+    "delete": "Delete",
+    "forbiddenHint": "Your account has no permission for this page. Ask an administrator to adjust your roles.",
+    "backAllowed": "Go to an accessible page"
   },
   "auth": {
     "subtitle": "WeCom message archive operations console",
@@ -56,7 +60,19 @@
     "passwordRequired": "Please enter password",
     "submit": "Sign in",
     "loginSuccess": "Signed in",
-    "sessionExpired": "Session expired, please sign in again"
+    "sessionExpired": "Session expired, please sign in again",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "currentPasswordRequired": "Enter your current password",
+    "newPassword": "New password",
+    "newPasswordRequired": "Enter a new password",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordRequired": "Enter the new password again",
+    "passwordMismatch": "Passwords do not match",
+    "passwordPolicy": "Password must be 10-128 characters with letters and digits",
+    "passwordChanged": "Password changed. Please sign in again.",
+    "builtinPasswordHint": "The built-in administrator password is managed by ADMIN_PASSWORD.",
+    "builtinTag": "Built-in"
   },
   "overview": {
     "title": "Overview",
@@ -510,7 +526,14 @@
       "RETRY_QUEUE_REQUEUE": "Requeue retry message",
       "RETRY_QUEUE_DISCARD": "Discard retry message",
       "REDIS_KEY_DELETE": "Delete Redis key",
-      "MNS_TEST_SEND": "Send MNS test message"
+      "MNS_TEST_SEND": "Send MNS test message",
+      "USER_CREATE": "Create admin user",
+      "USER_UPDATE": "Update admin user",
+      "USER_RESET_PASSWORD": "Reset admin password",
+      "ROLE_CREATE": "Create role",
+      "ROLE_UPDATE": "Update role",
+      "ROLE_DELETE": "Delete role",
+      "PASSWORD_CHANGE": "Change password"
     }
   },
   "logs": {
@@ -545,7 +568,7 @@
   },
   "apiDocs": {
     "title": "API documentation",
-    "versionTag": "v0.12.0",
+    "versionTag": "v0.13.0",
     "description": "All HTTP endpoints of admin-server and houyi, rendered directly from API.md at the repository root.",
     "toc": "Contents",
     "searchPlaceholder": "Search endpoints, fields or error codes",
@@ -1084,6 +1107,82 @@
     "MNS_NOT_CONFIGURED": "MNS is not fully configured",
     "MNS_MESSAGE_REQUIRED": "Message body is required",
     "MNS_MESSAGE_TOO_LARGE": "Test message cannot exceed 64 KB",
-    "MNS_DELAY_INVALID": "Invalid MNS delay seconds"
+    "MNS_DELAY_INVALID": "Invalid MNS delay seconds",
+    "FORBIDDEN": "You do not have permission for this operation",
+    "RBAC_ESCALATION": "Cannot grant or manage permissions beyond your own",
+    "RBAC_SUPER_ROLE": "Only the built-in super administrator can modify the super role",
+    "USERNAME_RESERVED": "This username is reserved for the built-in administrator",
+    "USERNAME_INVALID": "Username must be 3-32 letters, digits, dots, underscores or hyphens",
+    "PASSWORD_POLICY": "Password must be 10-128 characters with letters and digits",
+    "USER_EXISTS": "Username already exists",
+    "USER_ROLE_REQUIRED": "Select at least one role for the user",
+    "USER_SELF_EDIT": "You cannot change your own roles or disable your own account",
+    "PASSWORD_ENV_MANAGED": "The built-in administrator password is managed by an environment variable",
+    "ROLE_CODE_EXISTS": "Role code already exists",
+    "ROLE_CODE_INVALID": "Invalid role code format",
+    "ROLE_NAME_INVALID": "Role name is required and must be at most 64 characters",
+    "ROLE_PERMISSION_REQUIRED": "Select at least one permission",
+    "ROLE_PERMISSION_INVALID": "Invalid permission code",
+    "ROLE_BUILTIN": "Built-in roles cannot be deleted",
+    "ROLE_IN_USE": "The role is still assigned to users",
+    "ROLE_NOT_FOUND": "Role not found",
+    "USER_NOT_FOUND": "Administrator not found",
+    "DISPLAY_NAME_INVALID": "Display name must be at most 64 characters"
+  },
+  "access": {
+    "title": "Access control",
+    "hint": "Users get permissions through roles. The built-in administrator always has all permissions.",
+    "tabs": {
+      "users": "Users",
+      "roles": "Roles"
+    },
+    "users": {
+      "username": "Username",
+      "displayName": "Display name",
+      "password": "Initial password",
+      "roles": "Roles",
+      "status": "Status",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "self": "You",
+      "lastLogin": "Last login",
+      "lastLoginIp": "Login IP",
+      "searchPlaceholder": "Search username or display name",
+      "create": "New user",
+      "editTitle": "Edit user",
+      "createTitle": "New user",
+      "saved": "User saved",
+      "resetPassword": "Reset password",
+      "resetPasswordTitle": "Reset password for {{username}}",
+      "newPassword": "New password",
+      "passwordReset": "Password reset. The user must sign in again.",
+      "usernameRequired": "Enter a username",
+      "usernameInvalid": "Username must be 3-32 letters, digits, dots, underscores or hyphens",
+      "passwordRequired": "Enter a password",
+      "rolesRequired": "Select at least one role",
+      "rolesPlaceholder": "Select roles",
+      "disableHint": "Disabling blocks login immediately and invalidates sessions"
+    },
+    "roles": {
+      "code": "Role code",
+      "name": "Role name",
+      "description": "Description",
+      "permissions": "Permissions",
+      "users": "Users",
+      "builtin": "Built-in",
+      "all": "All permissions",
+      "create": "New role",
+      "editTitle": "Edit role",
+      "createTitle": "New role",
+      "saved": "Role saved",
+      "deleted": "Role deleted",
+      "deleteConfirm": "Delete role \"{{name}}\"?",
+      "codeRequired": "Enter a role code",
+      "codeInvalid": "2-32 uppercase letters, digits or underscores, starting with a letter",
+      "nameRequired": "Enter a role name",
+      "permissionRequired": "Select at least one permission",
+      "selectAll": "Select group",
+      "superLocked": "The super administrator always has all permissions"
+    }
   }
 }

@@ -10,7 +10,9 @@ import { useTranslation } from 'react-i18next';
 import { createBrowserRouter, Navigate, RouterProvider, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { RequireAuth } from './auth/RequireAuth';
+import { RequirePermission } from './auth/RequirePermission';
 import { AdminLayout } from './components/AdminLayout';
+import { AccessPage } from './pages/AccessPage';
 import { ApiDocsPage } from './pages/ApiDocsPage';
 import { AuditLogsPage } from './pages/AuditLogsPage';
 import { CorpsPage } from './pages/CorpsPage';
@@ -46,20 +48,105 @@ const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <OverviewPage /> },
-      { path: 'health', element: <HealthPage /> },
-      { path: 'monitor', element: <MonitorPage /> },
-      { path: 'corps', element: <CorpsPage /> },
-      { path: 'messages', element: <MessagesPage /> },
-      { path: 'queue', element: <QueuePage /> },
+      {
+        index: true,
+        element: (
+          <RequirePermission permission="overview.read">
+            <OverviewPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'health',
+        element: (
+          <RequirePermission permission="health.read">
+            <HealthPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'monitor',
+        element: (
+          <RequirePermission permission="monitor.read">
+            <MonitorPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'corps',
+        element: (
+          <RequirePermission permission="corps.read">
+            <CorpsPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'messages',
+        element: (
+          <RequirePermission permission="messages.read">
+            <MessagesPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'queue',
+        element: (
+          <RequirePermission permission="queue.read">
+            <QueuePage />
+          </RequirePermission>
+        ),
+      },
       { path: 'rocketmq', element: <Navigate to="/queue?tab=rocketmq" replace /> },
       { path: 'redis', element: <Navigate to="/queue?tab=redis" replace /> },
       { path: 'mns', element: <Navigate to="/queue?tab=mns" replace /> },
-      { path: 'retention', element: <RetentionPage /> },
-      { path: 'audit', element: <AuditLogsPage /> },
-      { path: 'logs', element: <LogsPage /> },
-      { path: 'settings', element: <SettingsPage /> },
-      { path: 'system', element: <SystemPage /> },
+      {
+        path: 'retention',
+        element: (
+          <RequirePermission permission="retention.read">
+            <RetentionPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'audit',
+        element: (
+          <RequirePermission permission="audit.read">
+            <AuditLogsPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'logs',
+        element: (
+          <RequirePermission permission="logs.read">
+            <LogsPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'settings',
+        element: (
+          <RequirePermission permission="settings.read">
+            <SettingsPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'system',
+        element: (
+          <RequirePermission permission="system.read">
+            <SystemPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'access',
+        element: (
+          <RequirePermission permission={['users.manage', 'roles.manage']}>
+            <AccessPage />
+          </RequirePermission>
+        ),
+      },
       { path: 'api-docs', element: <ApiDocsPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],

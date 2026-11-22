@@ -3,6 +3,9 @@ package com.ruoran.houyi.admin.security;
 import com.ruoran.houyi.admin.audit.AuditLogService;
 import com.ruoran.houyi.admin.config.AdminSecurityProperties;
 import com.ruoran.houyi.admin.error.ApiException;
+import com.ruoran.houyi.admin.rbac.AdminPrincipal;
+import com.ruoran.houyi.admin.rbac.AuthorizationService;
+import com.ruoran.houyi.admin.rbac.RbacService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -19,10 +22,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * 登录、刷新、退出与当前用户信息。
+ * 登录、刷新、退出、当前用户信息与自助修改密码。
  */
 @RestController
 @RequestMapping("/api/admin/auth")
@@ -34,16 +38,21 @@ public class AuthController {
     private final JwtService jwtService;
     private final AdminSecurityProperties properties;
     private final AuditLogService auditLogService;
+    private final AuthorizationService authorizationService;
+    private final RbacService rbacService;
 
     @Value("${admin.version}")
     private String version;
 
-    public AuthController(AuthService authService, JwtService jwtService, AdminSecurityProperties properties,
-                          AuditLogService auditLogService) {
+    public AuthController(AuthService authService, JwtService jwtService,
+                          AdminSecurityProperties properties, AuditLogService auditLogService,
+                          AuthorizationService authorizationService, RbacService rbacService) {
         this.authService = authService;
         this.jwtService = jwtService;
         this.properties = properties;
         this.auditLogService = auditLogService;
+        this.authorizationService = authorizationService;
+        this.rbacService = rbacService;
     }
 
     @PostMapping("/login")
@@ -51,11 +60,11 @@ public class AuthController {
                                                HttpServletRequest servletRequest) {
         String attemptedUser = request.username() == null ? "" : request.username().trim();
         try {
-            String username = authService.authenticate(request.username(), request.password(),
+            AdminPrincipal principal = authService.authenticate(request.username(), request.password(),
                     clientIp(servletRequest));
-            auditLogService.record(username, "LOGIN_SUCCESS", "session", "ip=" + clientIp(servletRequest),
-                    servletRequest);
-            return tokenResponse(username);
+            auditLogService.record(principal.username(), "LOGIN_SUCCESS", "session",
+                    "ip=" + clientIp(servletRequest), servletRequest);
+            return tokenResponse(principal);
         } catch (ApiException ex) {
             auditLogService.record(attemptedUser, "LOGIN_FAILED", "session",
                     "reason=" + ex.getCode(), servletRequest);
@@ -71,7 +80,13 @@ public class AuthController {
         }
         try {
             JwtService.Claims claims = jwtService.verify(refreshToken, JwtService.TYPE_REFRESH);
-            return tokenResponse(claims.subject());
+            AdminPrincipal principal = authorizationService.resolve(claims.subject()).orElse(null);
+            if (principal == null
+                    || claims.userId() < 0
+                    || claims.tokenVersion() != principal.tokenVersion()) {
+                return clearCookieResponse(HttpStatus.UNAUTHORIZED);
+            }
+            return tokenResponse(principal);
         } catch (JwtService.TokenInvalidException ex) {
             return clearCookieResponse(HttpStatus.UNAUTHORIZED);
         }
@@ -87,28 +102,58 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public Map<String, String> me(HttpServletRequest request) {
-        Object username = request.getAttribute(AuthFilter.ATTR_USERNAME);
-        return Map.of(
-                "username", username == null ? "" : username.toString(),
-                "version", version
-        );
+    public UserView me(HttpServletRequest request) {
+        return userView(principal(request));
     }
 
-    private ResponseEntity<LoginResponse> tokenResponse(String username) {
-        String accessToken = jwtService.createAccessToken(username);
-        String refreshToken = jwtService.createRefreshToken(username);
+    @PostMapping("/password")
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody PasswordRequest body,
+                                               HttpServletRequest request) {
+        AdminPrincipal principal = principal(request);
+        rbacService.changeOwnPassword(principal, body.currentPassword(), body.newPassword());
+        auditLogService.recordForced(principal.username(), "PASSWORD_CHANGE", "self",
+                "password=****", request);
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .build();
+    }
+
+    private AdminPrincipal principal(HttpServletRequest request) {
+        Object attribute = request.getAttribute(AuthorizationService.ATTR_PRINCIPAL);
+        if (attribute instanceof AdminPrincipal principal) {
+            return principal;
+        }
+        throw new ApiException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "登录状态已失效，请重新登录");
+    }
+
+    private ResponseEntity<LoginResponse> tokenResponse(AdminPrincipal principal) {
+        String accessToken = jwtService.createAccessToken(principal);
+        String refreshToken = jwtService.createRefreshToken(principal);
         ResponseCookie cookie = baseCookie(refreshToken, jwtService.refreshTtl());
         LoginResponse body = new LoginResponse(
                 accessToken,
                 "Bearer",
                 jwtService.accessTtlSeconds(),
-                new UserView(username, version)
+                userView(principal)
         );
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .body(body);
+    }
+
+    private UserView userView(AdminPrincipal principal) {
+        List<RoleView> roles = principal.roles().stream()
+                .map(role -> new RoleView(role.code(), role.name()))
+                .toList();
+        List<String> permissions = new ArrayList<>(principal.permissions());
+        if (principal.permissions().contains("*")) {
+            permissions = List.of("*");
+        } else {
+            permissions.sort(String::compareTo);
+        }
+        return new UserView(principal.username(), principal.displayName(), principal.builtin(),
+                roles, permissions, version);
     }
 
     private ResponseEntity<LoginResponse> clearCookieResponse(HttpStatus status) {
@@ -149,7 +194,14 @@ public class AuthController {
     public record LoginRequest(@NotBlank String username, @NotBlank String password) {
     }
 
-    public record UserView(String username, String version) {
+    public record PasswordRequest(@NotBlank String currentPassword, @NotBlank String newPassword) {
+    }
+
+    public record RoleView(String code, String name) {
+    }
+
+    public record UserView(String username, String displayName, boolean builtin, List<RoleView> roles,
+                           List<String> permissions, String version) {
     }
 
     public record LoginResponse(String accessToken, String tokenType, long expiresIn, UserView user) {

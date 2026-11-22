@@ -2,11 +2,13 @@ package com.ruoran.houyi.admin.queue;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import com.ruoran.houyi.admin.rbac.RequiresPermission;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 队列概览接口。
  */
+@RequiresPermission("queue.read")
 @RestController
 @RequestMapping("/api/admin/queue")
 public class QueueController {

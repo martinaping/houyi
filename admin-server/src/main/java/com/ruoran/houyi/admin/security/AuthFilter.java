@@ -1,6 +1,8 @@
 package com.ruoran.houyi.admin.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ruoran.houyi.admin.rbac.AdminPrincipal;
+import com.ruoran.houyi.admin.rbac.AuthorizationService;
 import com.ruoran.houyi.admin.web.TraceIdFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -34,10 +36,13 @@ public class AuthFilter extends OncePerRequestFilter {
     );
 
     private final JwtService jwtService;
+    private final AuthorizationService authorizationService;
     private final ObjectMapper objectMapper;
 
-    public AuthFilter(JwtService jwtService, ObjectMapper objectMapper) {
+    public AuthFilter(JwtService jwtService, AuthorizationService authorizationService,
+                      ObjectMapper objectMapper) {
         this.jwtService = jwtService;
+        this.authorizationService = authorizationService;
         this.objectMapper = objectMapper;
     }
 
@@ -63,7 +68,21 @@ public class AuthFilter extends OncePerRequestFilter {
         }
         try {
             JwtService.Claims claims = jwtService.verify(header.substring(7), JwtService.TYPE_ACCESS);
-            request.setAttribute(ATTR_USERNAME, claims.subject());
+            if (claims.userId() < 0 || claims.tokenVersion() < 0) {
+                writeUnauthorized(response, "登录状态已失效，请重新登录");
+                return;
+            }
+            AdminPrincipal principal = authorizationService.resolve(claims.subject()).orElse(null);
+            if (principal == null) {
+                writeUnauthorized(response, "账号不存在或已停用，请重新登录");
+                return;
+            }
+            if (principal.tokenVersion() != claims.tokenVersion()) {
+                writeUnauthorized(response, "登录状态已失效，请重新登录");
+                return;
+            }
+            request.setAttribute(ATTR_USERNAME, principal.username());
+            request.setAttribute(AuthorizationService.ATTR_PRINCIPAL, principal);
             chain.doFilter(request, response);
         } catch (JwtService.TokenInvalidException ex) {
             writeUnauthorized(response, ex.getMessage());

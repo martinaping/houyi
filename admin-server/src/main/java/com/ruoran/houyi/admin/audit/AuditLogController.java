@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import com.ruoran.houyi.admin.rbac.RequiresPermission;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
@@ -21,6 +22,7 @@ import java.util.List;
 /**
  * 审计日志查询接口。
  */
+@RequiresPermission("audit.read")
 @RestController
 @RequestMapping("/api/admin/audit-logs")
 public class AuditLogController {
@@ -41,6 +43,7 @@ public class AuditLogController {
         return auditLogService.page(action, operator, cursor, limit, startAt, endAt);
     }
 
+    @RequiresPermission("audit.export")
     @GetMapping("/export")
     public ResponseEntity<byte[]> export(@RequestParam(required = false) String action,
                                          @RequestParam(required = false) String operator,

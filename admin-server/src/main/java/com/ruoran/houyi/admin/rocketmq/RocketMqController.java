@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import com.ruoran.houyi.admin.rbac.RequiresPermission;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.Locale;
 /**
  * RocketMQ 管理面板接口：集群观测、消费组、Topic、DLQ、消息查询、重试队列与测试发送。
  */
+@RequiresPermission("rocketmq.read")
 @RestController
 @RequestMapping("/api/admin/rocketmq")
 public class RocketMqController {
@@ -105,6 +107,7 @@ public class RocketMqController {
         return adminService.dlqMessages(topic, limit);
     }
 
+    @RequiresPermission("rocketmq.write")
     @PostMapping("/dlq/resend")
     public RocketMqViews.ResendResult resendDlq(@Valid @RequestBody DlqResendRequest request,
                                                 HttpServletRequest servletRequest) {
@@ -160,6 +163,7 @@ public class RocketMqController {
         return retryQueueService.detail(id);
     }
 
+    @RequiresPermission("rocketmq.write")
     @PostMapping("/retry/{id}/requeue")
     public RocketMqViews.RetryMessageDetail requeue(@PathVariable long id,
                                                     HttpServletRequest servletRequest) {
@@ -169,6 +173,7 @@ public class RocketMqController {
         return result;
     }
 
+    @RequiresPermission("rocketmq.write")
     @PostMapping("/retry/{id}/discard")
     public RocketMqViews.RetryMessageDetail discard(@PathVariable long id,
                                                     @RequestBody(required = false) DiscardRequest request,
@@ -180,6 +185,7 @@ public class RocketMqController {
         return result;
     }
 
+    @RequiresPermission("rocketmq.write")
     @PostMapping("/test-send")
     public RocketMqViews.TestSendResult testSend(@Valid @RequestBody TestSendRequest request,
                                                  HttpServletRequest servletRequest) {

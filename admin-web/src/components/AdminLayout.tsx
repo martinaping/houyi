@@ -4,52 +4,80 @@ import {
   AuditOutlined,
   DatabaseOutlined,
   DeleteOutlined,
+  DownOutlined,
   FileTextOutlined,
   HeartOutlined,
   InfoCircleOutlined,
   LineChartOutlined,
+  LockOutlined,
   LogoutOutlined,
   MessageOutlined,
+  SafetyCertificateOutlined,
   SettingOutlined,
   TeamOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
-import { Button, Layout, Menu, Segmented, Space, Tag, Typography, theme } from 'antd';
-import { useEffect, useMemo, useRef } from 'react';
+import { Button, Dropdown, Layout, Menu, Segmented, Space, Tag, Typography, theme } from 'antd';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { ChangePasswordModal } from '../components/ChangePasswordModal';
 import { changeLanguage } from '../i18n';
 import type { AppLanguage } from '../i18n';
 
 const { Header, Sider, Content } = Layout;
 
+type MenuEntry = {
+  key: string;
+  icon: ReactNode;
+  label: string;
+  permission?: string | string[];
+};
+
 export function AdminLayout() {
   const { t, i18n } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { token } = theme.useToken();
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
-  const menuItems = useMemo(
+  const menuEntries = useMemo<MenuEntry[]>(
     () => [
-      { key: '/', icon: <AppstoreOutlined />, label: t('nav.overview') },
-      { key: '/health', icon: <HeartOutlined />, label: t('nav.health') },
-      { key: '/monitor', icon: <LineChartOutlined />, label: t('nav.monitor') },
-      { key: '/corps', icon: <TeamOutlined />, label: t('nav.corps') },
-      { key: '/messages', icon: <MessageOutlined />, label: t('nav.messages') },
-      { key: '/queue', icon: <DatabaseOutlined />, label: t('nav.queue') },
-      { key: '/retention', icon: <DeleteOutlined />, label: t('nav.retention') },
-      { key: '/audit', icon: <AuditOutlined />, label: t('nav.audit') },
-      { key: '/logs', icon: <FileTextOutlined />, label: t('nav.logs') },
-      { key: '/settings', icon: <SettingOutlined />, label: t('nav.settings') },
-      { key: '/system', icon: <InfoCircleOutlined />, label: t('nav.system') },
+      { key: '/', icon: <AppstoreOutlined />, label: t('nav.overview'), permission: 'overview.read' },
+      { key: '/health', icon: <HeartOutlined />, label: t('nav.health'), permission: 'health.read' },
+      { key: '/monitor', icon: <LineChartOutlined />, label: t('nav.monitor'), permission: 'monitor.read' },
+      { key: '/corps', icon: <TeamOutlined />, label: t('nav.corps'), permission: 'corps.read' },
+      { key: '/messages', icon: <MessageOutlined />, label: t('nav.messages'), permission: 'messages.read' },
+      { key: '/queue', icon: <DatabaseOutlined />, label: t('nav.queue'), permission: 'queue.read' },
+      { key: '/retention', icon: <DeleteOutlined />, label: t('nav.retention'), permission: 'retention.read' },
+      { key: '/audit', icon: <AuditOutlined />, label: t('nav.audit'), permission: 'audit.read' },
+      { key: '/logs', icon: <FileTextOutlined />, label: t('nav.logs'), permission: 'logs.read' },
+      { key: '/settings', icon: <SettingOutlined />, label: t('nav.settings'), permission: 'settings.read' },
+      { key: '/system', icon: <InfoCircleOutlined />, label: t('nav.system'), permission: 'system.read' },
+      {
+        key: '/access',
+        icon: <SafetyCertificateOutlined />,
+        label: t('nav.access'),
+        permission: ['users.manage', 'roles.manage'],
+      },
       { key: '/api-docs', icon: <ApiOutlined />, label: t('nav.apiDocs') },
     ],
     [t],
   );
 
+  const menuItems = useMemo(
+    () =>
+      menuEntries
+        .filter((item) => !item.permission || hasPermission(item.permission))
+        .map((item) => ({ key: item.key, icon: item.icon, label: item.label })),
+    [menuEntries, hasPermission],
+  );
+
   const selectedKey =
-    menuItems.find((item) => item.key !== '/' && location.pathname.startsWith(item.key))?.key ?? '/';
+    menuEntries.find((item) => item.key !== '/' && location.pathname.startsWith(item.key))?.key ?? '/';
 
   const language: AppLanguage = i18n.language === 'en-US' ? 'en-US' : 'zh-CN';
   const contentRef = useRef<HTMLDivElement>(null);
@@ -91,7 +119,15 @@ export function AdminLayout() {
             borderBottom: `1px solid ${token.colorBorderSecondary}`,
           }}
         >
-          <Typography.Text type="secondary">{user?.username}</Typography.Text>
+          <Space size={8}>
+            <Typography.Text strong>{user?.displayName || user?.username}</Typography.Text>
+            {user?.builtin ? <Tag color="gold">{t('auth.builtinTag')}</Tag> : null}
+            {user?.roles.slice(0, 2).map((role) => (
+              <Tag key={role.code} color="blue">
+                {role.name}
+              </Tag>
+            ))}
+          </Space>
           {user ? <Tag>{t('app.version', { version: user.version })}</Tag> : null}
           <Segmented<AppLanguage>
             size="small"
@@ -102,9 +138,27 @@ export function AdminLayout() {
               { label: 'EN', value: 'en-US' },
             ]}
           />
-          <Button icon={<LogoutOutlined />} onClick={() => void logout()}>
-            {t('common.logout')}
-          </Button>
+          <Dropdown
+            trigger={['click']}
+            menu={{
+              items: [
+                { key: 'password', icon: <LockOutlined />, label: t('auth.changePassword') },
+                { type: 'divider' },
+                { key: 'logout', icon: <LogoutOutlined />, label: t('common.logout') },
+              ],
+              onClick: ({ key }) => {
+                if (key === 'logout') {
+                  void logout();
+                } else if (key === 'password') {
+                  setPasswordOpen(true);
+                }
+              },
+            }}
+          >
+            <Button icon={<UserOutlined />}>
+              <DownOutlined />
+            </Button>
+          </Dropdown>
         </Header>
         <Content style={{ flex: 1, minHeight: 0, padding: 24, overflow: 'hidden' }}>
           <div ref={contentRef} style={{ height: '100%', overflowY: 'auto' }}>
@@ -114,6 +168,7 @@ export function AdminLayout() {
           </div>
         </Content>
       </Layout>
+      <ChangePasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} />
     </Layout>
   );
 }

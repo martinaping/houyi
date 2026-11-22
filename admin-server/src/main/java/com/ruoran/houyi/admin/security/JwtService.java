@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ruoran.houyi.admin.config.AdminSecurityProperties;
+import com.ruoran.houyi.admin.rbac.AdminPrincipal;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
@@ -48,12 +49,23 @@ public class JwtService {
         secret = configuredSecret.getBytes(StandardCharsets.UTF_8);
     }
 
+    public String createAccessToken(AdminPrincipal principal) {
+        return createToken(principal.username(), TYPE_ACCESS, accessTtl(),
+                principal.userId(), principal.tokenVersion());
+    }
+
+    public String createRefreshToken(AdminPrincipal principal) {
+        return createToken(principal.username(), TYPE_REFRESH, refreshTtl(),
+                principal.userId(), principal.tokenVersion());
+    }
+
+    /** 兼容测试与旧调用：不携带用户 ID / 版本，认证过滤器会要求重新登录。 */
     public String createAccessToken(String username) {
-        return createToken(username, TYPE_ACCESS, accessTtl());
+        return createToken(username, TYPE_ACCESS, accessTtl(), -1L, -1L);
     }
 
     public String createRefreshToken(String username) {
-        return createToken(username, TYPE_REFRESH, refreshTtl());
+        return createToken(username, TYPE_REFRESH, refreshTtl(), -1L, -1L);
     }
 
     public long accessTtlSeconds() {
@@ -106,14 +118,19 @@ public class JwtService {
         if (subject.isBlank()) {
             throw new TokenInvalidException("令牌缺少用户信息");
         }
-        return new Claims(subject, type, exp);
+        long userId = payload.path("uid").asLong(-1L);
+        long tokenVersion = payload.path("ver").asLong(-1L);
+        return new Claims(subject, type, exp, userId, tokenVersion);
     }
 
-    private String createToken(String username, String type, Duration ttl) {
+    private String createToken(String username, String type, Duration ttl, long userId,
+                               long tokenVersion) {
         long now = Instant.now().getEpochSecond();
         ObjectNode payload = objectMapper.createObjectNode();
         payload.put("sub", username);
         payload.put("typ", type);
+        payload.put("uid", userId);
+        payload.put("ver", tokenVersion);
         payload.put("iat", now);
         payload.put("exp", now + ttl.toSeconds());
         payload.put("jti", UUID.randomUUID().toString());
@@ -144,7 +161,8 @@ public class JwtService {
         return properties.accessTtl() == null ? Duration.ofMinutes(30) : properties.accessTtl();
     }
 
-    public record Claims(String subject, String type, long expiresAt) {
+    public record Claims(String subject, String type, long expiresAt, long userId,
+                         long tokenVersion) {
     }
 
     public static class TokenInvalidException extends RuntimeException {

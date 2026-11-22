@@ -1,6 +1,6 @@
 # 后羿（Houyi）系统架构文档
 
-**当前版本：v0.12.0**
+**当前版本：v0.13.0**
 
 ## 📋 系统概述
 
@@ -710,11 +710,14 @@ admin-web 设置页 ──PUT /api/admin/settings──> admin_config(group='run
 
 ### 鉴权与安全
 
-- 单管理员账号，账号密码通过 `ADMIN_USERNAME` / `ADMIN_PASSWORD` 环境变量注入，不落库、不写日志。
-- access token 为 HS256 JWT，仅存前端内存；refresh token 放 `HttpOnly` + `SameSite=Strict` cookie，有效期 12 小时。
+- **账号体系**：环境变量 `ADMIN_USERNAME` / `ADMIN_PASSWORD` 提供内置超级管理员（始终全部权限，不落库）；其他管理员存放在 `admin_user`，密码使用 PBKDF2-HMAC-SHA256（随机盐、210,000 次迭代）哈希。
+- **RBAC**：`admin_role` / `admin_role_permission` / `admin_user_role` 三表，用户可绑定多个角色，权限取并集；内置 `SUPER_ADMIN`（全权限、不可改）、`OPERATOR`、`VIEWER`，内置角色不可删除。
+- **接口授权**：控制器用 `@RequiresPermission` 声明所需权限（支持任一满足），`PermissionInterceptor` 统一返回 `403 FORBIDDEN`；`/api/admin/auth/**` 仅做认证不做权限校验。
+- **防越权**：非超级管理员不能授予自身没有的权限，也不能编辑、停用或重置密码于权限高于自己的账号/角色，违规返回 `RBAC_ESCALATION`。
+- **令牌**：access token 为 HS256 JWT（含用户 ID 与令牌版本号），仅存前端内存；refresh token 放 `HttpOnly` + `SameSite=Strict` cookie，有效期 12 小时。停用用户、重置密码、修改密码会提升令牌版本，旧会话立即失效。
 - 同 IP 连续登录失败默认 5 次锁定 5 分钟，次数与时长可在系统设置调整；密码比较使用常量时间算法。
-- 登录成功与失败均写审计（`LOGIN_SUCCESS` / `LOGIN_FAILED`）。
-- 会话失效时前端跳转登录页并一次性提示“登录状态已失效”。
+- 登录成功与失败、用户/角色变更、密码修改均写审计（密码只记 `****`）。
+- 会话失效时前端跳转登录页并一次性提示“登录状态已失效”；前端按权限裁剪菜单、路由与写操作按钮。
 - 所有响应带 `X-Trace-Id` 与 `X-App-Version`；服务日志为 JSON 行格式，敏感字段不落日志。
 - 生产环境建议 Nginx 同源反代，并通过 `ADMIN_CORS_ORIGINS` 收紧来源。
 
@@ -725,7 +728,7 @@ admin-web 设置页 ──PUT /api/admin/settings──> admin_config(group='run
 | `ADMIN_SERVER_PORT` | `18081` | 管理 API 端口 |
 | `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | 无 | 与主服务共用的数据库 |
 | `REDIS_HOST` / `REDIS_PORT` / `REDIS_DATABASE` | 无 | 与主服务共用的 Redis |
-| `ADMIN_USERNAME` | `admin` | 管理员账号 |
+| `ADMIN_USERNAME` | `admin` | 内置超级管理员账号（其他账号由访问控制页维护） |
 | `ADMIN_PASSWORD` | 无 | 必填，未配置时拒绝启动 |
 | `ADMIN_JWT_SECRET` | 无 | 必填，至少 32 字符 |
 | `ADMIN_CORS_ORIGINS` | 本地 5173 两个来源 | 逗号分隔的前端来源 |

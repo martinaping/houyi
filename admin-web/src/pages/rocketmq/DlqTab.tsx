@@ -22,6 +22,7 @@ import type { RocketMqDlqTopic, RocketMqMessage, RocketMqResendResult } from '..
 import { errorMessage } from '../../api/errors';
 import { formatCount, MessageBody } from './shared';
 import { formatTime } from '../../utils/format';
+import { Can } from '../../components/Can';
 
 type ResendForm = {
   targetTopic: string;
@@ -209,9 +210,11 @@ export function DlqTab() {
         onClose={() => setSelectedMessage(null)}
         extra={
           selectedMessage ? (
-            <Button type="primary" onClick={openResend}>
-              {t('rocketmq.dlq.resend')}
-            </Button>
+            <Can permission="rocketmq.write">
+              <Button type="primary" onClick={openResend}>
+                {t('rocketmq.dlq.resend')}
+              </Button>
+            </Can>
           ) : null
         }
       >

@@ -69,6 +69,46 @@ public class AdminSchemaInitializer {
                     updated_at BIGINT NOT NULL
                 )
                 """);
+        jdbcTemplate.execute("""
+                CREATE TABLE IF NOT EXISTS admin_role (
+                    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    code VARCHAR(64) NOT NULL UNIQUE,
+                    name VARCHAR(64) NOT NULL,
+                    description VARCHAR(255),
+                    builtin BIGINT NOT NULL DEFAULT 0,
+                    created_at BIGINT NOT NULL,
+                    updated_at BIGINT NOT NULL
+                )
+                """);
+        jdbcTemplate.execute("""
+                CREATE TABLE IF NOT EXISTS admin_role_permission (
+                    role_id BIGINT NOT NULL,
+                    permission VARCHAR(64) NOT NULL,
+                    PRIMARY KEY (role_id, permission)
+                )
+                """);
+        jdbcTemplate.execute("""
+                CREATE TABLE IF NOT EXISTS admin_user (
+                    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    username VARCHAR(64) NOT NULL UNIQUE,
+                    display_name VARCHAR(64),
+                    password_hash VARCHAR(255) NOT NULL,
+                    status BIGINT NOT NULL DEFAULT 1,
+                    token_version BIGINT NOT NULL DEFAULT 1,
+                    last_login_at BIGINT,
+                    last_login_ip VARCHAR(64),
+                    created_at BIGINT NOT NULL,
+                    updated_at BIGINT NOT NULL,
+                    created_by VARCHAR(64)
+                )
+                """);
+        jdbcTemplate.execute("""
+                CREATE TABLE IF NOT EXISTS admin_user_role (
+                    user_id BIGINT NOT NULL,
+                    role_id BIGINT NOT NULL,
+                    PRIMARY KEY (user_id, role_id)
+                )
+                """);
         log.info("管理端数据表检查完成");
     }
 }

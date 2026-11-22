@@ -23,6 +23,7 @@ import { download, request } from '../api/client';
 import { errorMessage } from '../api/errors';
 import type { AuditLogPage, AuditLogView } from '../api/types';
 import { formatTime } from '../utils/format';
+import { Can } from '../components/Can';
 
 const PAGE_SIZE = 50;
 
@@ -189,13 +190,15 @@ export function AuditLogsPage() {
           {t('audit.title')}
         </Typography.Title>
         <Space>
-          <Button
-            icon={<DownloadOutlined />}
-            loading={exportMutation.isPending}
-            onClick={() => exportMutation.mutate()}
-          >
-            {t('common.export')}
-          </Button>
+          <Can permission="audit.export">
+            <Button
+              icon={<DownloadOutlined />}
+              loading={exportMutation.isPending}
+              onClick={() => exportMutation.mutate()}
+            >
+              {t('common.export')}
+            </Button>
+          </Can>
           <Button
             icon={<ReloadOutlined />}
             loading={logsQuery.isFetching}

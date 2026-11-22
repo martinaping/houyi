@@ -1,7 +1,9 @@
 package com.ruoran.houyi.admin.config;
 
+import com.ruoran.houyi.admin.rbac.PermissionInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -11,9 +13,18 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     private final AdminCorsProperties corsProperties;
+    private final PermissionInterceptor permissionInterceptor;
 
-    public WebConfig(AdminCorsProperties corsProperties) {
+    public WebConfig(AdminCorsProperties corsProperties, PermissionInterceptor permissionInterceptor) {
         this.corsProperties = corsProperties;
+        this.permissionInterceptor = permissionInterceptor;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(permissionInterceptor)
+                .addPathPatterns("/api/admin/**")
+                .excludePathPatterns("/api/admin/auth/**");
     }
 
     @Override
@@ -29,7 +40,7 @@ public class WebConfig implements WebMvcConfigurer {
         }
         registry.addMapping("/api/**")
                 .allowedOrigins(origins)
-                .allowedMethods("GET", "POST", "PUT", "PATCH", "OPTIONS")
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("Authorization", "Content-Type", "X-Request-Id")
                 .exposedHeaders("X-Trace-Id", "X-App-Version")
                 .allowCredentials(true)

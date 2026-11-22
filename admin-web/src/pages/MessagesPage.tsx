@@ -30,6 +30,7 @@ import type {
   RetryResult,
 } from '../api/types';
 import { formatTime } from '../utils/format';
+import { Can } from '../components/Can';
 
 const PAGE_SIZE = 20;
 
@@ -339,13 +340,15 @@ export function MessagesPage() {
         onClose={() => setSelectedId(null)}
         extra={
           detail && detail.hasFile && !(detail.pushAt != null && detail.pushAt > 0) && !detail.ossPath ? (
-            <Button
-              type="primary"
-              loading={retryMutation.isPending}
-              onClick={() => handleRetry(detail)}
-            >
-              {t('common.retry')}
-            </Button>
+            <Can permission="messages.retry">
+              <Button
+                type="primary"
+                loading={retryMutation.isPending}
+                onClick={() => handleRetry(detail)}
+              >
+                {t('common.retry')}
+              </Button>
+            </Can>
           ) : null
         }
       >

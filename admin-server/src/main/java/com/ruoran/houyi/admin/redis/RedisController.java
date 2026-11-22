@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import com.ruoran.houyi.admin.rbac.RequiresPermission;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.List;
 /**
  * Redis 管理接口。
  */
+@RequiresPermission("redis.read")
 @RestController
 @RequestMapping("/api/admin/redis")
 public class RedisController {
@@ -50,6 +52,7 @@ public class RedisController {
         return redisAdminService.keys(pattern, limit);
     }
 
+    @RequiresPermission("redis.write")
     @PostMapping("/keys/delete")
     public RedisViews.DeleteResult deleteKey(@Valid @RequestBody DeleteRequest request,
                                              HttpServletRequest servletRequest) {

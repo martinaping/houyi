@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import com.ruoran.houyi.admin.rbac.RequiresPermission;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.List;
 /**
  * 企业列表、启停与 Secret 管理。
  */
+@RequiresPermission("corps.read")
 @RestController
 @RequestMapping("/api/admin/corps")
 public class CorpController {
@@ -50,6 +52,7 @@ public class CorpController {
         return corpService.detail(id);
     }
 
+    @RequiresPermission("corps.write")
     @PostMapping
     public CorpView create(@RequestBody CorpRequests.Create request,
                            HttpServletRequest servletRequest) {
@@ -60,6 +63,7 @@ public class CorpController {
         return view;
     }
 
+    @RequiresPermission("corps.write")
     @PutMapping("/{id}")
     public CorpView update(@PathVariable long id,
                            @RequestBody CorpRequests.Update request,
@@ -71,6 +75,7 @@ public class CorpController {
         return view;
     }
 
+    @RequiresPermission("corps.write")
     @PatchMapping("/batch-status")
     public BatchStatusView batchStatus(@RequestBody CorpRequests.BatchStatus request,
                                        HttpServletRequest servletRequest) {
@@ -81,6 +86,7 @@ public class CorpController {
         return new BatchStatusView(updated);
     }
 
+    @RequiresPermission("corps.write")
     @PatchMapping("/{id}/status")
     public CorpView updateStatus(@PathVariable long id,
                                  @Valid @RequestBody StatusRequest request,
@@ -92,6 +98,7 @@ public class CorpController {
         return view;
     }
 
+    @RequiresPermission("corps.secret")
     @PutMapping("/{id}/secret")
     public CorpView rotateSecret(@PathVariable long id,
                                  @Valid @RequestBody SecretRequest request,
@@ -103,12 +110,13 @@ public class CorpController {
         return view;
     }
 
+    @RequiresPermission("corps.secret")
     @PostMapping("/{id}/reveal")
     public SecretView revealSecret(@PathVariable long id,
                                    @Valid @RequestBody RevealRequest request,
                                    HttpServletRequest servletRequest) {
         String operator = operator(servletRequest);
-        if (!authService.verifyPassword(request.password())) {
+        if (!authService.verifyPassword(operator, request.password())) {
             auditLogService.record(operator, "CORP_SECRET_REVEAL_FAILED", "corp:" + id,
                     "reason=INVALID_PASSWORD", servletRequest);
             throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", "密码不正确，无法查看密钥");

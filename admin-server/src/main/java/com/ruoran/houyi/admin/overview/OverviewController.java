@@ -6,11 +6,13 @@ import com.ruoran.houyi.admin.queue.QueueService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import com.ruoran.houyi.admin.rbac.RequiresPermission;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 首页概览接口。
  */
+@RequiresPermission("overview.read")
 @RestController
 @RequestMapping("/api/admin/overview")
 public class OverviewController {

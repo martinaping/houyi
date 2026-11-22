@@ -1,6 +1,6 @@
 # 后羿（houyi）API 文档
 
-> 版本：0.12.0
+> 版本：0.13.0
 > 适用服务：`admin-server`（管理端，默认 18081）、`houyi`（主服务，默认 18080）
 > 最后更新：2026-11-20
 
@@ -30,7 +30,7 @@
 | 响应头 | 说明 |
 | --- | --- |
 | `X-Trace-Id` | 本次请求的链路 ID。客户端可主动传入（`^[A-Za-z0-9_-]{8,64}$`），否则由服务端生成 |
-| `X-App-Version` | 服务端版本号，当前为 `0.12.0` |
+| `X-App-Version` | 服务端版本号，当前为 `0.13.0` |
 
 **错误响应**（非 2xx）
 
@@ -61,8 +61,9 @@
 
 ## 2. 认证（`/api/admin/auth`）
 
-管理端使用「Access Token（内存）+ Refresh Token（HttpOnly Cookie）」双令牌：
+管理端使用「Access Token（内存）+ Refresh Token（HttpOnly Cookie）」双令牌，并基于 RBAC 授权：
 
+- 内置账号由环境变量 `ADMIN_USERNAME` / `ADMIN_PASSWORD` 提供，固定为超级管理员；数据库管理员由「访问控制」页面维护。
 - 登录/刷新成功后在响应头下发 `Set-Cookie: admin_refresh=...`，属性为 `HttpOnly; SameSite=Strict; Path=/api/admin/auth`，`Secure` 由配置决定。
 - 业务请求携带 `Authorization: Bearer <accessToken>`。
 - Access Token 过期后调用 `POST /api/admin/auth/refresh` 换新；刷新失败返回 401 并清除 Cookie。
@@ -89,7 +90,14 @@
   "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
   "tokenType": "Bearer",
   "expiresIn": 7200,
-  "user": { "username": "admin", "version": "0.12.0" }
+  "user": {
+    "username": "admin",
+    "displayName": "内置超级管理员",
+    "builtin": true,
+    "roles": [{ "code": "SUPER_ADMIN", "name": "内置超级管理员" }],
+    "permissions": ["*"],
+    "version": "0.13.0"
+  }
 }
 ```
 
@@ -99,6 +107,10 @@
 | `tokenType` | string | 固定 `Bearer` |
 | `expiresIn` | long | Access Token 有效期（秒） |
 | `user.username` | string | 当前账号 |
+| `user.displayName` | string | 显示名称 |
+| `user.builtin` | boolean | 是否为环境变量内置账号 |
+| `user.roles` | array | 角色列表（`code` / `name`） |
+| `user.permissions` | string[] | 权限码并集；超级管理员返回 `["*"]` |
 | `user.version` | string | 服务端版本 |
 
 错误：
@@ -127,11 +139,19 @@
 
 `GET /api/admin/auth/me`
 
-响应 `200`：
+响应 `200`：结构同登录响应中的 `user`（含 `displayName`、`builtin`、`roles`、`permissions`、`version`）。
+
+### 2.5 修改自己的密码
+
+`POST /api/admin/auth/password`
 
 ```json
-{ "username": "admin", "version": "0.12.0" }
+{ "currentPassword": "old-pass-123", "newPassword": "new-pass-456" }
 ```
+
+响应 `204`。密码轮换后该账号所有已签发令牌立即失效（令牌版本号提升），需重新登录。
+内置账号密码由环境变量管理，返回 `409 PASSWORD_ENV_MANAGED`；当前密码错误返回 `401 INVALID_CREDENTIALS`。
+密码要求 10-128 位且同时包含字母和数字（`400 PASSWORD_POLICY`）。
 
 ---
 
@@ -490,7 +510,7 @@
              "rocketMqEndpoint": "http://127.0.0.1:8081", "rocketMqLatencyMs": 5,
              "rocketMqCheckedAt": 1763000000000, "rocketMqError": "Endpoint 可达，客户端创建成功" },
   "recentFailures": [],
-  "version": "0.12.0",
+  "version": "0.13.0",
   "serverTime": 1763000000000
 }
 ```
@@ -518,7 +538,7 @@
 ```json
 {
   "status": "UP",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "uptimeSeconds": 3600,
   "checkedAt": 1763000000000,
   "database": { "ok": true, "latencyMs": 1, "message": "ok" },
@@ -562,7 +582,7 @@
 
 ```json
 {
-  "version": "0.12.0",
+  "version": "0.13.0",
   "uptimeSeconds": 3600,
   "javaVersion": "21.0.2",
   "jdbcUrl": "jdbc:h2:file:/Users/jc/.houyi-local/db/houyi",
@@ -1467,7 +1487,35 @@ MNS 凭据从管理端配置（`mns.*`，敏感项 AES 加密）或环境变量�
 
 ---
 
-## 18. 错误码总表
+
+## 18. 用户与角色（`/api/admin/rbac`）
+
+权限码由代码固定声明（分组：总览/企业/队列/审计/系统/访问控制），角色可组合任意权限；用户可绑定多个角色，权限取并集。
+内置角色：`SUPER_ADMIN`（全部权限，权限不可修改）、`OPERATOR`（日常运维）、`VIEWER`（只读）；内置角色不可删除。
+内置环境变量账号固定为超级管理员，且不会出现在用户列表中。
+
+| 方法 | 路径 | 权限 | 说明 |
+| --- | --- | --- | --- |
+| GET | `/permissions` | `roles.manage` 或 `users.manage` | 权限目录（含中英文标签） |
+| GET | `/roles` | `roles.manage` 或 `users.manage` | 角色列表（含权限、用户数） |
+| POST | `/roles` | `roles.manage` | 新建角色 |
+| PUT | `/roles/{id}` | `roles.manage` | 编辑角色名称/说明/权限 |
+| DELETE | `/roles/{id}` | `roles.manage` | 删除自定义角色（内置或仍有用户时拒绝） |
+| GET | `/users?keyword=` | `users.manage` | 管理员列表 |
+| POST | `/users` | `users.manage` | 新建管理员 |
+| PUT | `/users/{id}` | `users.manage` | 编辑显示名/角色/启停 |
+| POST | `/users/{id}/password` | `users.manage` | 重置密码（使该用户所有会话失效） |
+
+安全约束：
+
+- 密码使用 PBKDF2-HMAC-SHA256（随机盐，210,000 次迭代）存储，接口与日志不回传密码。
+- 不能停用或修改自己的角色；停用用户、重置密码、修改密码会提升令牌版本号，立即踢出旧会话。
+- 用户名 3-32 位（字母/数字/点/下划线/短横线），内置账号用户名为保留名。
+- 非超级管理员只能授予自己已拥有的权限，且不能编辑/停用/重置密码于权限高于自己的账号或角色，否则返回 `403 RBAC_ESCALATION`。
+- 角色编码需为大写字母开头的 2-32 位大写字母/数字/下划线。
+- 角色或用户变更后权限缓存立即失效；所有写操作写入审计日志（`USER_*` / `ROLE_*`）。
+
+## 19. 错误码总表
 
 | HTTP | code | 说明 | 出现位置 |
 | --- | --- | --- | --- |
@@ -1536,4 +1584,14 @@ MNS 凭据从管理端配置（`mns.*`，敏感项 AES 加密）或环境变量�
 | 405 | `METHOD_NOT_ALLOWED` | 接口不支持该 HTTP 方法 | 全局 |
 | 404 | `NOT_FOUND` | 请求的接口不存在 | 全局 |
 | 401 | `UNAUTHORIZED` | 未携带或携带了非法/过期的 access token | 全局（除登录/刷新） |
+| 403 | `FORBIDDEN` | 当前账号缺少接口所需权限 | 全局 |
+| 403 | `RBAC_ESCALATION` | 授予或管理了超出自身权限的内容 | 用户/角色管理 |
+| 403 | `RBAC_SUPER_ROLE` | 非超级管理员试图修改超级管理员角色 | 角色管理 |
+| 400 | `USERNAME_INVALID` / `USERNAME_RESERVED` | 用户名格式不合法或被内置账号占用 | 新建用户 |
+| 400 | `PASSWORD_POLICY` | 密码不满足 10-128 位且含字母和数字 | 新建/修改/重置密码 |
+| 409 | `USER_EXISTS` / `USER_SELF_EDIT` | 用户名已存在 / 修改自己的角色或停用自己 | 用户管理 |
+| 409 | `PASSWORD_ENV_MANAGED` | 内置管理员密码由环境变量管理 | 自助修改密码 |
+| 409 | `ROLE_BUILTIN` / `ROLE_IN_USE` / `ROLE_CODE_EXISTS` | 内置角色不可删除 / 角色仍被使用 / 编码重复 | 角色管理 |
+| 400 | `ROLE_PERMISSION_REQUIRED` / `ROLE_PERMISSION_INVALID` | 未选择权限或权限码不合法 | 角色管理 |
+| 404 | `USER_NOT_FOUND` / `ROLE_NOT_FOUND` | 用户或角色不存在 | 用户/角色管理 |
 | 500 | `INTERNAL_ERROR` | 未预期的服务端错误 | 全局兜底 |

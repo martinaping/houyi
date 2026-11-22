@@ -23,6 +23,7 @@ import { redisApi } from '../../api/redis';
 import type { RedisKey } from '../../api/redis';
 import { errorMessage } from '../../api/errors';
 import { formatCount } from '../rocketmq/shared';
+import { Can } from '../../components/Can';
 
 function ttlText(t: TFunction, ttl: number): string {
   if (ttl === -1) {
@@ -200,13 +201,15 @@ export function RedisKeysTab() {
         onClose={() => setSelected(null)}
         extra={
           selected?.deletable ? (
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => confirmDelete(selected.key)}
-            >
-              {t('redis.keys.delete')}
-            </Button>
+            <Can permission="redis.write">
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => confirmDelete(selected.key)}
+              >
+                {t('redis.keys.delete')}
+              </Button>
+            </Can>
           ) : null
         }
       >

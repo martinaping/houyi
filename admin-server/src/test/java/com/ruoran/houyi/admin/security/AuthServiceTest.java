@@ -2,10 +2,12 @@ package com.ruoran.houyi.admin.security;
 
 import com.ruoran.houyi.admin.config.AdminSecurityProperties;
 import com.ruoran.houyi.admin.error.ApiException;
+import com.ruoran.houyi.admin.rbac.AuthorizationService;
 import com.ruoran.houyi.admin.settings.SettingsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.time.Duration;
 
@@ -22,11 +24,18 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        AdminSecurityProperties properties = new AdminSecurityProperties(
-                "admin", "s3cret", "0123456789abcdef0123456789abcdef",
-                Duration.ofMinutes(30), Duration.ofHours(12), false, false);
-        authService = new AuthService(properties, newGuard());
+        authService = new AuthService(properties("s3cret"), newGuard(), authorization(properties("s3cret")));
         authService.validateConfiguration();
+    }
+
+    private static AdminSecurityProperties properties(String password) {
+        return new AdminSecurityProperties(
+                "admin", password, "0123456789abcdef0123456789abcdef",
+                Duration.ofMinutes(30), Duration.ofHours(12), false, false);
+    }
+
+    private static AuthorizationService authorization(AdminSecurityProperties properties) {
+        return new AuthorizationService(mock(JdbcTemplate.class), properties);
     }
 
     private static LoginAttemptGuard newGuard() {
@@ -38,7 +47,7 @@ class AuthServiceTest {
 
     @Test
     void authenticatesWithCorrectCredentials() {
-        assertEquals("admin", authService.authenticate("admin", "s3cret", "10.0.0.1"));
+        assertEquals("admin", authService.authenticate("admin", "s3cret", "10.0.0.1").username());
     }
 
     @Test
@@ -77,7 +86,7 @@ class AuthServiceTest {
         AdminSecurityProperties blank = new AdminSecurityProperties(
                 "admin", " ", "0123456789abcdef0123456789abcdef",
                 Duration.ofMinutes(30), Duration.ofHours(12), false, false);
-        AuthService service = new AuthService(blank, newGuard());
+        AuthService service = new AuthService(blank, newGuard(), authorization(blank));
 
         assertThrows(IllegalStateException.class, service::validateConfiguration);
     }

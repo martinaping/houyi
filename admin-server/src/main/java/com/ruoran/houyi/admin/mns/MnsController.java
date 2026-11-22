@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import com.ruoran.houyi.admin.rbac.RequiresPermission;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.List;
 /**
  * 阿里云 MNS 管理接口。
  */
+@RequiresPermission("mns.read")
 @RestController
 @RequestMapping("/api/admin/mns")
 public class MnsController {
@@ -46,6 +48,7 @@ public class MnsController {
         return mnsAdminService.peek(queue, limit);
     }
 
+    @RequiresPermission("mns.write")
     @PostMapping("/test-send")
     public MnsViews.SendResult testSend(@Valid @RequestBody SendRequest request,
                                         HttpServletRequest servletRequest) {

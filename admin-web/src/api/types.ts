@@ -1,5 +1,14 @@
+export type RoleBrief = {
+  code: string;
+  name: string;
+};
+
 export type UserView = {
   username: string;
+  displayName: string;
+  builtin: boolean;
+  roles: RoleBrief[];
+  permissions: string[];
   version: string;
 };
 

@@ -21,6 +21,7 @@ import { request } from '../api/client';
 import { errorMessage } from '../api/errors';
 import type { CleanupResult, RetentionCategoryPreview, RetentionPreview } from '../api/types';
 import { formatTime } from '../utils/format';
+import { Can } from '../components/Can';
 
 /** 后端返回英文类别码，展示时映射为当前语言。 */
 function categoryLabel(t: TFunction, category: string): string {
@@ -96,15 +97,17 @@ export function RetentionPage() {
       key: 'actions',
       width: 140,
       render: (_value, record) => (
-        <Button
-          danger
-          size="small"
-          icon={<DeleteOutlined />}
-          disabled={!preview?.cleanupEnabled || record.candidates === 0}
-          onClick={() => setTarget(record.category)}
-        >
-          {t('retention.execute')}
-        </Button>
+        <Can permission="retention.write">
+          <Button
+            danger
+            size="small"
+            icon={<DeleteOutlined />}
+            disabled={!preview?.cleanupEnabled || record.candidates === 0}
+            onClick={() => setTarget(record.category)}
+          >
+            {t('retention.execute')}
+          </Button>
+        </Can>
       ),
     },
   ];
