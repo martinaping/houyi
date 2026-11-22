@@ -568,7 +568,7 @@
   },
   "apiDocs": {
     "title": "API documentation",
-    "versionTag": "v0.13.0",
+    "versionTag": "v0.14.0",
     "description": "All HTTP endpoints of admin-server and houyi, rendered directly from API.md at the repository root.",
     "toc": "Contents",
     "searchPlaceholder": "Search endpoints, fields or error codes",
@@ -1184,5 +1184,10 @@
       "selectAll": "Select group",
       "superLocked": "The super administrator always has all permissions"
     }
+  },
+  "theme": {
+    "title": "Theme",
+    "lightGroup": "Light themes",
+    "darkGroup": "Dark themes"
   }
 }

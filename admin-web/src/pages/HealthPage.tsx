@@ -15,6 +15,7 @@ import {
 import type { DescriptionsProps, TableColumnsType } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { theme } from 'antd';
 import { request } from '../api/client';
 import { errorMessage } from '../api/errors';
 import type { CorpPullMetric, HealthCheck, HealthReport } from '../api/types';
@@ -24,6 +25,7 @@ const REFRESH_INTERVAL_MS = 30_000;
 
 export function HealthPage() {
   const { t } = useTranslation();
+  const { token } = theme.useToken();
   const healthQuery = useQuery({
     queryKey: ['health'],
     queryFn: () => request<HealthReport>('/api/admin/health'),
@@ -258,7 +260,7 @@ export function HealthPage() {
             <Statistic
               title={t('health.status')}
               value={statusOk ? t('health.up') : t('health.degraded')}
-              styles={{ content: { color: statusOk ? '#3f8600' : '#cf1322' } }}
+              styles={{ content: { color: statusOk ? token.colorSuccess : token.colorError } }}
             />
             <Typography.Text type="secondary">
               {t('health.checkedAt')}: {formatTime(data?.checkedAt)}

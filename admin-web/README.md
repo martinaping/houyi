@@ -5,7 +5,7 @@
 - React 19.3 + TypeScript 5.9（strict）
 - Ant Design 6.7 + Vite 7.3
 - React Router 7、TanStack Query 5、i18next
-- 版本：`0.13.0`
+- 版本：`0.14.0`
 
 ## 本地开发
 
@@ -54,4 +54,10 @@ src/
 - 用户可见文案统一走 i18n，不在组件里写死中文/英文。
 - 服务端状态使用 React Query 管理，变更后按 key 失效缓存。
 - 所有请求通过 `src/api/client.ts`，access token 只保存在内存，刷新页面用 HttpOnly cookie 恢复会话。
-- 前端版本需与 admin-server 保持 `0.13.0`。
+- 前端版本需与 admin-server 保持 `0.14.0`。
+
+## 主题
+
+- 内置 8 套主题：海雾蓝、翡翠绿、紫罗兰、日落橙、玫瑰粉（浅色），暗夜蓝、曜石青、极光紫（深色）。
+- 登录页右上角与主界面头部均可切换；选择保存在 `localStorage`（`houyi.admin.theme`），刷新后保持。
+- 新增主题只需在 `src/theme/themes.ts` 的 `THEME_PRESETS` 中追加一项（主色、圆角、布局/卡片/侧栏背景与登录渐变）。

@@ -6,6 +6,8 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { consumeSessionExpired } from '../api/client';
 import { errorMessage } from '../api/errors';
 import { useAuth } from '../auth/AuthContext';
+import { ThemeSwitcher } from '../components/ThemeSwitcher';
+import { useThemePreset } from '../theme/ThemeContext';
 import { canAccessPath, firstAllowedPath } from '../auth/permissions';
 
 type LoginForm = {
@@ -20,6 +22,7 @@ type LocationState = {
 export function LoginPage() {
   const { t } = useTranslation();
   const { status, login } = useAuth();
+  const { preset } = useThemePreset();
   const navigate = useNavigate();
   const location = useLocation();
   const { message } = App.useApp();
@@ -67,10 +70,14 @@ export function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)',
+        background: preset.loginGradient,
         padding: 24,
+        position: 'relative',
       }}
     >
+      <div style={{ position: 'absolute', top: 16, right: 16 }}>
+        <ThemeSwitcher floating />
+      </div>
       <Card style={{ width: 380 }}>
         <Typography.Title level={3} style={{ marginBottom: 4 }}>
           {t('app.title')}

@@ -2,6 +2,7 @@ import { Alert, Card, Col, Descriptions, Row, Space, Statistic, Table, Tag, Typo
 import type { TableColumnsType } from 'antd';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { theme } from 'antd';
 import type {
   RocketMqBroker,
   RocketMqGroupLag,
@@ -12,6 +13,7 @@ import { formatTime } from '../../utils/format';
 
 export function OverviewTab({ query }: { query: UseQueryResult<RocketMqOverview> }) {
   const { t } = useTranslation();
+  const { token } = theme.useToken();
   const data = query.data;
 
   const groupColumns: TableColumnsType<RocketMqGroupLag> = [
@@ -84,7 +86,7 @@ export function OverviewTab({ query }: { query: UseQueryResult<RocketMqOverview>
             <Statistic
               title={t('rocketmq.overview.totalLag')}
               value={formatCount(data?.totalLag)}
-              valueStyle={{ color: (data?.totalLag ?? 0) > 0 ? '#cf1322' : undefined }}
+              valueStyle={{ color: (data?.totalLag ?? 0) > 0 ? token.colorError : undefined }}
             />
           </Card>
         </Col>
@@ -93,7 +95,7 @@ export function OverviewTab({ query }: { query: UseQueryResult<RocketMqOverview>
             <Statistic
               title={t('rocketmq.overview.dlqMessages')}
               value={formatCount(data?.dlqMessageCount)}
-              valueStyle={{ color: (data?.dlqMessageCount ?? 0) > 0 ? '#cf1322' : undefined }}
+              valueStyle={{ color: (data?.dlqMessageCount ?? 0) > 0 ? token.colorError : undefined }}
             />
           </Card>
         </Col>

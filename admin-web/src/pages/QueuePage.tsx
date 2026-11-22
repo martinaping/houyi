@@ -1,5 +1,5 @@
 import { ReloadOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Col, Row, Space, Statistic, Table, Tabs, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Col, Row, Space, Statistic, Table, Tabs, Tag, Typography, theme } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -11,12 +11,6 @@ import { MnsPage } from './mns/MnsPage';
 import { RedisPage } from './redis/RedisPage';
 import { RocketMqPage } from './rocketmq/RocketMqPage';
 import { formatNumber, formatTime } from '../utils/format';
-
-const ROCKET_STATE_COLOR: Record<RocketMqState, string> = {
-  NOT_CONFIGURED: 'rgba(0, 0, 0, 0.45)',
-  UP: '#3f8600',
-  DOWN: '#cf1322',
-};
 
 const ROCKET_STATE_KEY: Record<RocketMqState, string> = {
   NOT_CONFIGURED: 'queue.rocketState.notConfigured',
@@ -74,6 +68,7 @@ export function QueuePage() {
 
 function QueueOverviewTab() {
   const { t } = useTranslation();
+  const { token } = theme.useToken();
   const queueQuery = useQuery({
     queryKey: ['queue'],
     queryFn: () => request<QueueOverview>('/api/admin/queue/overview'),
@@ -146,7 +141,12 @@ function QueueOverviewTab() {
               value={t(ROCKET_STATE_KEY[data?.rocketMqState ?? 'NOT_CONFIGURED'])}
               styles={{
                 content: {
-                  color: ROCKET_STATE_COLOR[data?.rocketMqState ?? 'NOT_CONFIGURED'],
+                  color:
+                    data?.rocketMqState === 'UP'
+                      ? token.colorSuccess
+                      : data?.rocketMqState === 'DOWN'
+                        ? token.colorError
+                        : token.colorTextSecondary,
                 },
               }}
             />

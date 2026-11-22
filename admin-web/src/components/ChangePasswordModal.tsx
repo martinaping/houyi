@@ -1,4 +1,4 @@
-import { App, Form, Input, Modal } from 'antd';
+import { App, Form, Input, Modal, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rbacApi } from '../api/rbac';
@@ -50,7 +50,7 @@ export function ChangePasswordModal({ open, onClose }: { open: boolean; onClose:
       destroyOnHidden
     >
       {user?.builtin ? (
-        <p style={{ color: 'rgba(0,0,0,0.55)' }}>{t('auth.builtinPasswordHint')}</p>
+        <Typography.Paragraph type="secondary">{t('auth.builtinPasswordHint')}</Typography.Paragraph>
       ) : null}
       <Form form={form} layout="vertical" disabled={user?.builtin}>
         <Form.Item

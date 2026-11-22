@@ -25,6 +25,8 @@ import { OverviewPage } from './pages/OverviewPage';
 import { QueuePage } from './pages/QueuePage';
 import { RetentionPage } from './pages/RetentionPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { ThemeProvider, useThemePreset } from './theme/ThemeContext';
+import { themeConfigOf } from './theme/themes';
 import { SystemPage } from './pages/SystemPage';
 
 const queryClient = new QueryClient({
@@ -154,7 +156,16 @@ const router = createBrowserRouter([
 ]);
 
 export function App() {
+  return (
+    <ThemeProvider>
+      <ThemedApp />
+    </ThemeProvider>
+  );
+}
+
+function ThemedApp() {
   const { t, i18n } = useTranslation();
+  const { preset } = useThemePreset();
   const antdLocale = i18n.language === 'en-US' ? enUS : zhCN;
 
   // antd 的日期组件依赖 dayjs 的全局 locale，需与界面语言保持一致。
@@ -163,10 +174,7 @@ export function App() {
   }, [i18n.language]);
 
   return (
-    <ConfigProvider
-      locale={antdLocale}
-      theme={{ token: { colorPrimary: '#1677ff', borderRadius: 6 } }}
-    >
+    <ConfigProvider locale={antdLocale} theme={themeConfigOf(preset)}>
       <AntdApp>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>

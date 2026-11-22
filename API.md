@@ -1,6 +1,6 @@
 # 后羿（houyi）API 文档
 
-> 版本：0.13.0
+> 版本：0.14.0
 > 适用服务：`admin-server`（管理端，默认 18081）、`houyi`（主服务，默认 18080）
 > 最后更新：2026-11-20
 
@@ -30,7 +30,7 @@
 | 响应头 | 说明 |
 | --- | --- |
 | `X-Trace-Id` | 本次请求的链路 ID。客户端可主动传入（`^[A-Za-z0-9_-]{8,64}$`），否则由服务端生成 |
-| `X-App-Version` | 服务端版本号，当前为 `0.13.0` |
+| `X-App-Version` | 服务端版本号，当前为 `0.14.0` |
 
 **错误响应**（非 2xx）
 
@@ -96,7 +96,7 @@
     "builtin": true,
     "roles": [{ "code": "SUPER_ADMIN", "name": "内置超级管理员" }],
     "permissions": ["*"],
-    "version": "0.13.0"
+    "version": "0.14.0"
   }
 }
 ```
@@ -510,7 +510,7 @@
              "rocketMqEndpoint": "http://127.0.0.1:8081", "rocketMqLatencyMs": 5,
              "rocketMqCheckedAt": 1763000000000, "rocketMqError": "Endpoint 可达，客户端创建成功" },
   "recentFailures": [],
-  "version": "0.13.0",
+  "version": "0.14.0",
   "serverTime": 1763000000000
 }
 ```
@@ -538,7 +538,7 @@
 ```json
 {
   "status": "UP",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "uptimeSeconds": 3600,
   "checkedAt": 1763000000000,
   "database": { "ok": true, "latencyMs": 1, "message": "ok" },
@@ -582,7 +582,7 @@
 
 ```json
 {
-  "version": "0.13.0",
+  "version": "0.14.0",
   "uptimeSeconds": 3600,
   "javaVersion": "21.0.2",
   "jdbcUrl": "jdbc:h2:file:/Users/jc/.houyi-local/db/houyi",

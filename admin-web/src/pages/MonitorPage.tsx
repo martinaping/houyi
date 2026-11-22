@@ -15,6 +15,7 @@ import {
 } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { theme } from 'antd';
 import { request } from '../api/client';
 import { errorMessage } from '../api/errors';
 import type {
@@ -73,6 +74,7 @@ function formatDuration(seconds: number | null): string {
 
 export function MonitorPage() {
   const { t } = useTranslation();
+  const { token } = theme.useToken();
 
   const query = useQuery({
     queryKey: ['monitorOverview'],
@@ -296,7 +298,7 @@ export function MonitorPage() {
                     <Statistic
                       title={t('monitor.serverErrors')}
                       value={http?.serverErrors ?? 0}
-                      valueStyle={{ color: (http?.serverErrors ?? 0) > 0 ? '#cf1322' : undefined }}
+                      valueStyle={{ color: (http?.serverErrors ?? 0) > 0 ? token.colorError : undefined }}
                     />
                   </Col>
                   <Col xs={12} sm={6}>
@@ -341,7 +343,7 @@ export function MonitorPage() {
                     <Statistic
                       title={t('monitor.timeout')}
                       value={pool?.timeoutTotal ?? 0}
-                      valueStyle={{ color: (pool?.timeoutTotal ?? 0) > 0 ? '#cf1322' : undefined }}
+                      valueStyle={{ color: (pool?.timeoutTotal ?? 0) > 0 ? token.colorError : undefined }}
                     />
                   </Col>
                 </Row>

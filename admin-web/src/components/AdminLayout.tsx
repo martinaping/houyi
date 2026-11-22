@@ -23,7 +23,9 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { useThemePreset } from '../theme/ThemeContext';
 import { ChangePasswordModal } from '../components/ChangePasswordModal';
+import { ThemeSwitcher } from '../components/ThemeSwitcher';
 import { changeLanguage } from '../i18n';
 import type { AppLanguage } from '../i18n';
 
@@ -42,6 +44,7 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { token } = theme.useToken();
+  const { preset } = useThemePreset();
   const [passwordOpen, setPasswordOpen] = useState(false);
 
   const menuEntries = useMemo<MenuEntry[]>(
@@ -94,7 +97,7 @@ export function AdminLayout() {
         theme="dark"
         breakpoint="lg"
         collapsedWidth={0}
-        style={{ height: '100vh', overflowY: 'auto' }}
+        style={{ height: '100vh', overflowY: 'auto', background: preset.siderBg }}
       >
         <div style={{ padding: '20px 16px', color: '#fff', fontSize: 16, fontWeight: 600 }}>
           {t('app.title')}
@@ -129,6 +132,7 @@ export function AdminLayout() {
             ))}
           </Space>
           {user ? <Tag>{t('app.version', { version: user.version })}</Tag> : null}
+          <ThemeSwitcher />
           <Segmented<AppLanguage>
             size="small"
             value={language}

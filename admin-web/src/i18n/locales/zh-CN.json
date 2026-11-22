@@ -568,7 +568,7 @@
   },
   "apiDocs": {
     "title": "API 文档",
-    "versionTag": "v0.13.0",
+    "versionTag": "v0.14.0",
     "description": "管理端与主服务的全部 HTTP 接口说明，内容直接渲染仓库根目录的 API.md。",
     "toc": "目录",
     "searchPlaceholder": "搜索接口、字段或错误码",
@@ -1184,5 +1184,10 @@
       "selectAll": "全选本组",
       "superLocked": "超级管理员固定拥有全部权限，不可修改"
     }
+  },
+  "theme": {
+    "title": "主题",
+    "lightGroup": "浅色主题",
+    "darkGroup": "深色主题"
   }
 }

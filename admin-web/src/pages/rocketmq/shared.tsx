@@ -1,4 +1,4 @@
-import { Tag, Typography } from 'antd';
+import { Tag, theme, Typography } from 'antd';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
@@ -68,6 +68,7 @@ export function MessageBody({
   maxHeight?: number;
 }) {
   const { t } = useTranslation();
+  const { token } = theme.useToken();
   return (
     <div>
       {truncated ? (
@@ -83,8 +84,8 @@ export function MessageBody({
           maxHeight,
           overflow: 'auto',
           padding: 12,
-          background: 'rgba(0, 0, 0, 0.03)',
-          borderRadius: 6,
+          background: token.colorFillQuaternary,
+          borderRadius: token.borderRadius,
           fontSize: 12,
         }}
       >
